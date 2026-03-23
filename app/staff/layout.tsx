@@ -1,10 +1,9 @@
 import { Sidebar } from '@/components/Sidebar';
 
-export default function StaffLayout({
-	children,
-}: {
+interface Props {
 	children: React.ReactNode;
-}) {
+}
+const StaffLayout: React.FC<Props> = ({ children }) => {
 	return (
 		<div className="flex min-h-screen bg-background">
 			<Sidebar />
@@ -13,4 +12,6 @@ export default function StaffLayout({
 			</main>
 		</div>
 	);
-}
+};
+
+export default StaffLayout;

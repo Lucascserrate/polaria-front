@@ -4,7 +4,7 @@ interface Props {
 	children: React.ReactNode;
 }
 
-const DashboardLayout: React.FC<Props> = ({ children }) => {
+const SettingsLayout: React.FC<Props> = ({ children }) => {
 	return (
 		<div className="flex min-h-screen bg-background">
 			<Sidebar />
@@ -14,4 +14,5 @@ const DashboardLayout: React.FC<Props> = ({ children }) => {
 		</div>
 	);
 };
-export default DashboardLayout;
+
+export default SettingsLayout;
