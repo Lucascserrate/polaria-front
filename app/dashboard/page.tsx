@@ -61,7 +61,7 @@ export default function DashboardPage() {
 					<div className="text-sm font-medium text-muted-foreground">
 						Ingresos de hoy
 					</div>
-					<div className="text-3xl font-bold mt-2">$450</div>
+					<div className="text-3xl font-bold mt-2">BOB 450</div>
 					<p className="text-xs text-muted-foreground mt-2">
 						Estimado según las citas
 					</p>

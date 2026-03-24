@@ -56,10 +56,10 @@ export const MOCK_STAFF = [
 ];
 
 export const MOCK_SERVICES = [
-	{ id: '1', name: 'Corte de Cabello', durationMinutes: 30 },
-	{ id: '2', name: 'Recorte de Barba', durationMinutes: 15 },
-	{ id: '3', name: 'Estilo', durationMinutes: 45 },
-	{ id: '4', name: 'Servicio Completo', durationMinutes: 60 },
+	{ id: '1', name: 'Corte de Cabello', durationMinutes: 30, price: 20 },
+	{ id: '2', name: 'Recorte de Barba', durationMinutes: 15, price: 15 },
+	{ id: '3', name: 'Estilo', durationMinutes: 45, price: 25 },
+	{ id: '4', name: 'Servicio Completo', durationMinutes: 60, price: 35 },
 ];
 
 export const MOCK_APPOINTMENTS = [
