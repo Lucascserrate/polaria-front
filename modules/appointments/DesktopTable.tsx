@@ -9,16 +9,14 @@ import {
 import { STATUS_COLORS } from '@/lib/mocks';
 import { formatDateTime } from '@/lib/date-utils';
 import { Badge } from '@/components/ui/badge';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { SquarePen, Trash2 } from 'lucide-react';
 import { Appointment, AppointmentStatus } from '@/types/appointments.types';
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface Props {
 	filtered: Appointment[];
@@ -59,28 +57,57 @@ const DesktopTable: React.FC<Props> = ({
 									<Badge className={colors.badge}>{apt.status}</Badge>
 								</TableCell>
 								<TableCell className="text-right space-x-2">
-									<Select
-										value={apt.status}
-										onValueChange={(newStatus: AppointmentStatus) =>
-											onStatusChange(apt.id, newStatus)
-										}
-									>
-										<SelectTrigger className="w-32">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="confirmed">Confirmada</SelectItem>
-											<SelectItem value="completed">Completada</SelectItem>
-											<SelectItem value="cancelled">Cancelada</SelectItem>
-										</SelectContent>
-									</Select>
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={() => onDelete(apt.id)}
-									>
-										<Trash2 className="w-4 h-4 text-destructive" />
-									</Button>
+									<div className="flex items-center justify-end gap-1">
+										<Popover>
+											<PopoverTrigger asChild>
+												<Button
+													variant="ghost"
+													size="sm"
+													title="Editar estado"
+													className="p-0 h-auto w-auto hover:opacity-60"
+												>
+													<SquarePen className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
+												</Button>
+											</PopoverTrigger>
+											<PopoverContent className="w-40 p-2" align="end">
+												<div className="space-y-1">
+													<Button
+														variant="ghost"
+														size="sm"
+														className="w-full justify-start text-sm"
+														onClick={() => onStatusChange(apt.id, 'confirmed')}
+													>
+														Confirmada
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														className="w-full justify-start text-sm"
+														onClick={() => onStatusChange(apt.id, 'completed')}
+													>
+														Completada
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														className="w-full justify-start text-sm"
+														onClick={() => onStatusChange(apt.id, 'cancelled')}
+													>
+														Cancelada
+													</Button>
+												</div>
+											</PopoverContent>
+										</Popover>
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => onDelete(apt.id)}
+											title="Eliminar"
+											className="p-0 h-auto w-auto hover:opacity-60"
+										>
+											<Trash2 className="w-4 h-4 text-destructive" />
+										</Button>
+									</div>
 								</TableCell>
 							</TableRow>
 						);
