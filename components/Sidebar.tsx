@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-	BarChart3,
 	Calendar,
 	Home,
 	Settings,
@@ -14,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { LuSnowflake } from 'react-icons/lu';
 
 const navItems = [
 	{ href: '/dashboard', label: 'Panel', icon: Home },

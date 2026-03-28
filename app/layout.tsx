@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
+import { QueryProvider } from '@/lib/query-provider';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -19,7 +20,9 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="es">
-			<body className={`${geistSans.className} antialiased`}>{children}</body>
+			<body className={`${geistSans.className} antialiased`}>
+				<QueryProvider>{children}</QueryProvider>
+			</body>
 		</html>
 	);
 }
