@@ -42,19 +42,19 @@ const AppointmentsPage = () => {
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Confirmadas</p>
-					<p className="text-2xl font-bold mt-1 text-blue-600 dark:text-blue-400">
+					<p className="text-2xl font-bold mt-1 text-blue-600">
 						{appointments.filter((a) => a.status === 'confirmed').length}
 					</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Completadas</p>
-					<p className="text-2xl font-bold mt-1 text-green-600 dark:text-green-400">
+					<p className="text-2xl font-bold mt-1 text-green-600">
 						{appointments.filter((a) => a.status === 'completed').length}
 					</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Canceladas</p>
-					<p className="text-2xl font-bold mt-1 text-red-600 dark:text-red-400">
+					<p className="text-2xl font-bold mt-1 text-red-600">
 						{appointments.filter((a) => a.status === 'cancelled').length}
 					</p>
 				</div>

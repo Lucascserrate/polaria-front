@@ -20,14 +20,14 @@ import {
 
 interface Props {
 	filtered: Appointment[];
-	onDelete: (id: string) => void;
+	setDeleteDialogOpen: (open: boolean) => void;
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
 }
 
 const DesktopTable: React.FC<Props> = ({
 	filtered,
 	onStatusChange,
-	onDelete,
+	setDeleteDialogOpen,
 }) => {
 	return (
 		<div className="hidden md:block border border-border rounded-lg overflow-hidden">
@@ -101,7 +101,7 @@ const DesktopTable: React.FC<Props> = ({
 										<Button
 											variant="ghost"
 											size="sm"
-											onClick={() => onDelete(apt.id)}
+											onClick={() => setDeleteDialogOpen(true)}
 											title="Eliminar"
 											className="p-0 h-auto w-auto hover:opacity-60"
 										>

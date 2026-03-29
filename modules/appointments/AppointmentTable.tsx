@@ -11,6 +11,7 @@ import {
 import { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import DesktopTable from './DesktopTable';
 import MobileCards from './MobileCards';
+import DeleteConfirmationDialog from './DeleteConfirmationDialog';
 
 interface Props {
 	appointments: Appointment[];
@@ -20,11 +21,12 @@ interface Props {
 
 const AppointmentsTable: React.FC<Props> = ({
 	appointments,
-	onDelete,
+	// onDelete,
 	onStatusChange,
 }) => {
 	const [filterStatus, setFilterStatus] = useState<string>('all');
 	const [sortBy, setSortBy] = useState<'date-asc' | 'date-desc'>('date-asc');
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
 
 	const filtered = useMemo(() => {
 		let result = appointments;
@@ -93,14 +95,19 @@ const AppointmentsTable: React.FC<Props> = ({
 
 			<DesktopTable
 				filtered={filtered}
-				onDelete={onDelete}
+				setDeleteDialogOpen={setDeleteDialogOpen}
 				onStatusChange={onStatusChange}
 			/>
 
 			<MobileCards
 				filtered={filtered}
-				onDelete={onDelete}
+				setDeleteDialogOpen={setDeleteDialogOpen}
 				onStatusChange={onStatusChange}
+			/>
+
+			<DeleteConfirmationDialog
+				open={deleteDialogOpen}
+				setOpen={setDeleteDialogOpen}
 			/>
 		</div>
 	);

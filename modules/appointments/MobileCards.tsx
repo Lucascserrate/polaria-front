@@ -14,13 +14,13 @@ import {
 
 interface Props {
 	filtered: Appointment[];
-	onDelete: (id: string) => void;
+	setDeleteDialogOpen: (open: boolean) => void;
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
 }
 
 const MobileCards: React.FC<Props> = ({
 	filtered,
-	onDelete,
+	setDeleteDialogOpen,
 	onStatusChange,
 }) => {
 	return (
@@ -78,7 +78,7 @@ const MobileCards: React.FC<Props> = ({
 								variant="ghost"
 								size="sm"
 								className="w-full"
-								onClick={() => onDelete(apt.id)}
+								onClick={() => setDeleteDialogOpen(true)}
 							>
 								<Trash2 className="w-4 h-4 mr-1 text-destructive" />
 								Eliminar

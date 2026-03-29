@@ -58,7 +58,7 @@ export default function StaffPage() {
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Activo</p>
-					<p className="text-2xl font-bold mt-1 text-green-600 dark:text-green-400">
+					<p className="text-2xl font-bold mt-1 text-green-600">
 						{activeCount}
 					</p>
 				</div>

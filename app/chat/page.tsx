@@ -63,7 +63,7 @@ const ChatPage = () => {
 			{/* Chat Container */}
 			<div className="bg-card border border-border rounded-lg flex flex-col flex-1 min-h-0">
 				{/* Header indicador de IA */}
-				<div className="border-b border-border px-6 py-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-t-lg">
+				<div className="border-b border-border px-6 py-4 bg-neutral-50 rounded-t-lg">
 					<div className="flex items-center gap-2">
 						<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
 						<p className="text-sm font-medium">Polaria</p>
