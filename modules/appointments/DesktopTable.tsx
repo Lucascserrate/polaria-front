@@ -6,7 +6,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { STATUS_COLORS } from '@/lib/mocks';
+import { STATUS_COLORS } from './utils/constants';
 import { formatDateTime } from '@/lib/date-utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

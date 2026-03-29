@@ -19,7 +19,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
-import { WORKING_DAYS, DEFAULT_SETTINGS } from '@/lib/mocks';
+import {
+	WORKING_DAYS,
+	DEFAULT_SETTINGS,
+} from '@/modules/settings/utils/constants';
 import { Check } from 'lucide-react';
 
 interface Settings {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MOCK_APPOINTMENTS } from '@/lib/mocks';
 import AppointmentsTable from '@/modules/appointments/AppointmentTable';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
+import { AppointmentStatus } from '@/types/appointments.types';
 
 const AppointmentsPage = () => {
 	const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
@@ -12,10 +13,7 @@ const AppointmentsPage = () => {
 		setAppointments(appointments.filter((a) => a.id !== id));
 	};
 
-	const handleStatusChange = (
-		id: string,
-		status: 'confirmed' | 'completed' | 'cancelled',
-	) => {
+	const handleStatusChange = (id: string, status: AppointmentStatus) => {
 		setAppointments(
 			appointments?.map((a) => (a.id === id ? { ...a, status } : a)),
 		);
