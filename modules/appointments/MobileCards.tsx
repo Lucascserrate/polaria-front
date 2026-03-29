@@ -1,7 +1,7 @@
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { STATUS_COLORS } from '@/lib/mocks';
+import { STATUS_COLORS } from '@/modules/appointments/utils/constants';
 import { formatDateTime } from '@/lib/date-utils';
 import { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import {

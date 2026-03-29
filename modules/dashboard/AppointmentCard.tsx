@@ -1,6 +1,6 @@
 import { Clock, User, Scissors, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { STATUS_COLORS } from '@/lib/mocks';
+import { STATUS_COLORS } from '@/modules/appointments/utils/constants';
 
 interface AppointmentCardProps {
 	id: string;
