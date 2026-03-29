@@ -17,7 +17,7 @@ const AppointmentsPage = () => {
 		status: 'confirmed' | 'completed' | 'cancelled',
 	) => {
 		setAppointments(
-			appointments.map((a) => (a.id === id ? { ...a, status } : a)),
+			appointments?.map((a) => (a.id === id ? { ...a, status } : a)),
 		);
 	};
 

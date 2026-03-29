@@ -4,7 +4,6 @@ import { useState } from 'react';
 import ChatInput from '@/modules/chat/ChatInput';
 import ChatWindow from '@/modules/chat/ChatWindow';
 import { getRandomAIResponse } from '@/lib/mocks';
-import { Sparkles } from 'lucide-react';
 
 interface Message {
 	id: string;
@@ -13,7 +12,7 @@ interface Message {
 	timestamp: Date;
 }
 
-export default function ChatPage() {
+const ChatPage = () => {
 	const [messages, setMessages] = useState<Message[]>([
 		{
 			id: '0',
@@ -81,4 +80,6 @@ export default function ChatPage() {
 			</div>
 		</div>
 	);
-}
+};
+
+export default ChatPage;
