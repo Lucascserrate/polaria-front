@@ -6,7 +6,7 @@ import { AppointmentTimeline } from '@/modules/dashboard/AppointmentTimeline';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
 import { SummaryCard } from '@/modules/dashboard/SummaryCard';
 
-export default function DashboardPage() {
+const DashboardPage = () => {
 	const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
 
 	// Get today's appointments
@@ -81,4 +81,6 @@ export default function DashboardPage() {
 			</div>
 		</div>
 	);
-}
+};
+
+export default DashboardPage;
