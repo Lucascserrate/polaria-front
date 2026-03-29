@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ChatInput from '@/modules/chat/ChatInput';
 import ChatWindow from '@/modules/chat/ChatWindow';
 import { getRandomAIResponse } from '@/lib/mocks';
+import { Sparkles } from 'lucide-react';
 
 interface Message {
 	id: string;
@@ -66,7 +67,7 @@ export default function ChatPage() {
 				<div className="border-b border-border px-6 py-4 bg-neutral-50 dark:bg-neutral-900/50 rounded-t-lg">
 					<div className="flex items-center gap-2">
 						<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-						<p className="text-sm font-medium">Asistente IA en línea</p>
+						<p className="text-sm font-medium">Polaria</p>
 					</div>
 				</div>
 
