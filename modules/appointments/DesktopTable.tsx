@@ -11,7 +11,7 @@ import { formatDateTime } from '@/lib/date-utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SquarePen, Trash2 } from 'lucide-react';
-import { Appointment, AppointmentStatus } from '@/types/appointments.types';
+import { Appointment, AppointmentStatus } from '@/interfaces/appointments.interfaces';
 import {
 	Popover,
 	PopoverContent,
@@ -119,3 +119,4 @@ const DesktopTable: React.FC<Props> = ({
 };
 
 export default DesktopTable;
+

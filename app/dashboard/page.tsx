@@ -1,26 +1,47 @@
 'use client';
 
-import { useState } from 'react';
-import { MOCK_APPOINTMENTS } from '@/lib/mocks';
+import { useEffect, useState } from 'react';
 import { AppointmentTimeline } from '@/modules/dashboard/AppointmentTimeline';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
 import { SummaryCard } from '@/modules/dashboard/SummaryCard';
+import type { Appointment } from '@/interfaces/appointments.interfaces';
+import { getTodayAppointments } from '@/services/appointments.service';
 
 export default function DashboardPage() {
-	const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
+	const [appointments, setAppointments] = useState<Appointment[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
-	// Get today's appointments
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
+	useEffect(() => {
+		let active = true;
 
-	const tomorrow = new Date(today);
-	tomorrow.setDate(tomorrow.getDate() + 1);
+		const load = async () => {
+			try {
+				setLoading(true);
+				const items = await getTodayAppointments();
+				if (active) {
+					setAppointments(items);
+					setError(null);
+				}
+			} catch {
+				if (active) {
+					setAppointments([]);
+					setError('No se pudieron cargar las citas');
+				}
+			} finally {
+				if (active) {
+					setLoading(false);
+				}
+			}
+		};
 
-	const todayAppointments = appointments.filter((a) => {
-		const apptDate = new Date(a.time);
-		apptDate.setHours(0, 0, 0, 0);
-		return apptDate.getTime() === today.getTime();
-	});
+		load();
+		return () => {
+			active = false;
+		};
+	}, []);
+
+	const todayAppointments = appointments;
 
 	const confirmedCount = todayAppointments.filter(
 		(a) => a.status === 'confirmed',
@@ -77,8 +98,15 @@ export default function DashboardPage() {
 					/>
 				</div>
 
-				<AppointmentTimeline appointments={todayAppointments} />
+				{loading ? (
+					<p className="text-muted-foreground">Cargando citas...</p>
+				) : error ? (
+					<p className="text-muted-foreground">{error}</p>
+				) : (
+					<AppointmentTimeline appointments={todayAppointments} />
+				)}
 			</div>
 		</div>
 	);
 }
+

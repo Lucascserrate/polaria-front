@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { STATUS_COLORS } from '@/lib/mocks';
 import { formatDateTime } from '@/lib/date-utils';
-import { Appointment, AppointmentStatus } from '@/types/appointments.types';
+import { Appointment, AppointmentStatus } from '@/interfaces/appointments.interfaces';
 import {
 	Select,
 	SelectContent,
@@ -92,3 +92,4 @@ const MobileCards: React.FC<Props> = ({
 };
 
 export default MobileCards;
+

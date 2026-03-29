@@ -8,7 +8,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Appointment, AppointmentStatus } from '@/types/appointments.types';
+import { Appointment, AppointmentStatus } from '@/interfaces/appointments.interfaces';
 import DesktopTable from './DesktopTable';
 import MobileCards from './MobileCards';
 
@@ -107,3 +107,4 @@ const AppointmentsTable: React.FC<Props> = ({
 };
 
 export default AppointmentsTable;
+

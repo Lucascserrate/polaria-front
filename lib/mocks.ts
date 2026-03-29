@@ -1,10 +1,20 @@
 export const APPOINTMENT_STATUS = {
+	PENDING: 'pending',
+	BOOKED: 'booked',
 	CONFIRMED: 'confirmed',
 	COMPLETED: 'completed',
 	CANCELLED: 'cancelled',
 } as const;
 
 export const STATUS_COLORS = {
+	pending: {
+		badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200',
+		dot: 'bg-amber-500',
+	},
+	booked: {
+		badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200',
+		dot: 'bg-purple-500',
+	},
 	confirmed: {
 		badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200',
 		dot: 'bg-blue-500',

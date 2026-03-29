@@ -1,14 +1,5 @@
 import { AppointmentCard } from './AppointmentCard';
-
-interface Appointment {
-	id: string;
-	clientName: string;
-	time: Date;
-	service: string;
-	barber: string;
-	status: 'confirmed' | 'completed' | 'cancelled';
-	duration: number;
-}
+import type { Appointment } from '@/interfaces/appointments.interfaces';
 
 interface AppointmentTimelineProps {
 	appointments: Appointment[];
@@ -49,3 +40,4 @@ export function AppointmentTimeline({
 		</div>
 	);
 }
+
