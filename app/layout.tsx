@@ -19,8 +19,10 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="es">
-			<body className={`${geistSans.className} antialiased`}>
+		<html lang="es" className="h-full">
+			<body
+				className={`${geistSans.className} antialiased h-full flex flex-col`}
+			>
 				<QueryProvider>{children}</QueryProvider>
 			</body>
 		</html>
