@@ -1,6 +1,10 @@
 import { Clock, User, Scissors, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { STATUS_COLORS } from '@/modules/appointments/utils/constants';
+import {
+	getAppointmentStatusText,
+	STATUS_COLORS,
+} from '@/modules/appointments/utils/constants';
+import { AppointmentStatus } from '@/types/appointments.types';
 
 interface AppointmentCardProps {
 	id: string;
@@ -8,7 +12,7 @@ interface AppointmentCardProps {
 	clientName: string;
 	service: string;
 	barber: string;
-	status: 'confirmed' | 'completed' | 'cancelled';
+	status: AppointmentStatus;
 	duration: number;
 }
 
@@ -42,7 +46,7 @@ export function AppointmentCard({
 							</span>
 						</div>
 						<Badge className={colors.badge}>
-							{status.charAt(0).toUpperCase() + status.slice(1)}
+							{getAppointmentStatusText(status)}
 						</Badge>
 					</div>
 

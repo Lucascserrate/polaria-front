@@ -2,7 +2,7 @@ import SettingsForm from '@/modules/settings/SettingsForm';
 
 export default function SettingsPage() {
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 pb-5">
 			{/* Header */}
 			<div>
 				<h1 className="text-3xl font-bold tracking-tight">Configuración</h1>

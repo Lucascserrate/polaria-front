@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { MOCK_APPOINTMENTS } from '@/lib/mocks';
-import { AppointmentTimeline } from '@/modules/dashboard/AppointmentTimeline';
+import AppointmentTimeline from '@/modules/dashboard/AppointmentTimeline';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
 import { SummaryCard } from '@/modules/dashboard/SummaryCard';
 

@@ -1,3 +1,5 @@
+import { AppointmentStatus } from '@/types/appointments.types';
+
 export const MOCK_STAFF = [
 	{
 		id: '1',
@@ -28,7 +30,7 @@ export const MOCK_APPOINTMENTS = [
 		time: new Date(new Date().setHours(9, 0, 0, 0)),
 		service: 'Corte de Cabello',
 		barber: 'John Smith',
-		status: 'confirmed' as const,
+		status: 'confirmed' as AppointmentStatus,
 		duration: 30,
 	},
 	{
@@ -37,7 +39,7 @@ export const MOCK_APPOINTMENTS = [
 		time: new Date(new Date().setHours(9, 45, 0, 0)),
 		service: 'Recorte de Barba',
 		barber: 'Mike Johnson',
-		status: 'confirmed' as const,
+		status: 'confirmed' as AppointmentStatus,
 		duration: 15,
 	},
 	{
@@ -46,7 +48,7 @@ export const MOCK_APPOINTMENTS = [
 		time: new Date(new Date().setHours(10, 30, 0, 0)),
 		service: 'Estilo',
 		barber: 'John Smith',
-		status: 'confirmed' as const,
+		status: 'booked' as AppointmentStatus,
 		duration: 45,
 	},
 	{
@@ -55,7 +57,7 @@ export const MOCK_APPOINTMENTS = [
 		time: new Date(new Date().setHours(14, 0, 0, 0)),
 		service: 'Servicio Completo',
 		barber: 'Mike Johnson',
-		status: 'completed' as const,
+		status: 'completed' as AppointmentStatus,
 		duration: 60,
 	},
 	{
@@ -64,7 +66,7 @@ export const MOCK_APPOINTMENTS = [
 		time: new Date(new Date().setHours(15, 15, 0, 0)),
 		service: 'Corte de Cabello',
 		barber: 'John Smith',
-		status: 'cancelled' as const,
+		status: 'cancelled' as AppointmentStatus,
 		duration: 30,
 	},
 ];

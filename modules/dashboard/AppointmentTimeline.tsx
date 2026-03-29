@@ -1,3 +1,4 @@
+import { AppointmentStatus } from '@/types/appointments.types';
 import { AppointmentCard } from './AppointmentCard';
 
 interface Appointment {
@@ -6,17 +7,15 @@ interface Appointment {
 	time: Date;
 	service: string;
 	barber: string;
-	status: 'confirmed' | 'completed' | 'cancelled';
+	status: AppointmentStatus;
 	duration: number;
 }
 
-interface AppointmentTimelineProps {
+interface Props {
 	appointments: Appointment[];
 }
 
-export function AppointmentTimeline({
-	appointments,
-}: AppointmentTimelineProps) {
+const AppointmentTimeline = ({ appointments }: Props) => {
 	if (appointments.length === 0) {
 		return (
 			<div className="text-center py-12">
@@ -48,4 +47,6 @@ export function AppointmentTimeline({
 			))}
 		</div>
 	);
-}
+};
+
+export default AppointmentTimeline;

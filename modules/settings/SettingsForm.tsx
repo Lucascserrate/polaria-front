@@ -35,6 +35,7 @@ interface Settings {
 const SettingsForm: React.FC = () => {
 	const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 	const [saved, setSaved] = useState(false);
+	const [timeFormat, setTimeFormat] = useState<'24h' | '12h'>('24h');
 
 	const toggleWorkingDay = (index: number) => {
 		const newDays = [...settings.workingDays];
@@ -179,6 +180,35 @@ const SettingsForm: React.FC = () => {
 						</Select>
 						<p className="text-sm text-muted-foreground mt-2">
 							Esta duración se utiliza por defecto para nuevas citas
+						</p>
+					</div>
+				</CardContent>
+			</Card>
+			{/* Time Format Preference */}
+			<Card>
+				<CardHeader>
+					<CardTitle>Formato de Hora</CardTitle>
+					<CardDescription>
+						Elige cómo se mostrarán las horas en toda la aplicación
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div>
+						<Label htmlFor="time-format">Formato de Hora</Label>
+						<Select
+							value={timeFormat}
+							onValueChange={(value) => setTimeFormat(value as '24h' | '12h')}
+						>
+							<SelectTrigger id="time-format">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="24h">24 horas </SelectItem>
+								<SelectItem value="12h">12 horas (3:00 PM)</SelectItem>
+							</SelectContent>
+						</Select>
+						<p className="text-sm text-muted-foreground mt-2">
+							Este formato se aplicará en citas, horarios y toda la aplicación
 						</p>
 					</div>
 				</CardContent>
