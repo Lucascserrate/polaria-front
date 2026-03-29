@@ -42,6 +42,21 @@ export default function DashboardPage() {
 	}, []);
 
 	const todayAppointments = appointments;
+const DashboardPage = () => {
+	const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
+
+	// Get today's appointments
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+
+	const tomorrow = new Date(today);
+	tomorrow.setDate(tomorrow.getDate() + 1);
+
+	const todayAppointments = appointments.filter((a) => {
+		const apptDate = new Date(a.time);
+		apptDate.setHours(0, 0, 0, 0);
+		return apptDate.getTime() === today.getTime();
+	});
 
 	const confirmedCount = todayAppointments.filter(
 		(a) => a.status === 'confirmed',
@@ -110,3 +125,6 @@ export default function DashboardPage() {
 	);
 }
 
+};
+
+export default DashboardPage;

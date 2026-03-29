@@ -119,3 +119,22 @@ export const MOCK_APPOINTMENTS = [
 		duration: 30,
 	},
 ];
+
+export const mockAIResponses = [
+	'Hola, soy tu asistente de barbería. ¿En qué puedo ayudarte?',
+	'Claro, podemos ayudarte a agendar una cita. ¿Qué día prefieres?',
+	'Tenemos cortes disponibles a las 10:00, 14:00 y 16:00 horas.',
+	'Perfecto, anotaré tu cita para el día indicado. ¿A nombre de quién?',
+	'Los servicios disponibles son: Corte ($15), Afeitado ($10), Peinado ($20) y Servicio Completo ($35).',
+	'Nuestro horario es de lunes a sábado de 9:00 a 18:00 horas.',
+	'¿Hay algo más en lo que pueda asistirte?',
+	'Nos encantaría verte pronto en nuestra barbería.',
+	'Puedo ayudarte con información sobre servicios, horarios o reservas.',
+	'El tiempo estimado para un corte es aproximadamente 30 minutos.',
+	'Aceptamos pagos en efectivo y tarjeta.',
+	'Nuestro equipo de barberos expertos te dará un excelente servicio.',
+];
+
+export function getRandomAIResponse(): string {
+	return mockAIResponses[Math.floor(Math.random() * mockAIResponses.length)];
+}
