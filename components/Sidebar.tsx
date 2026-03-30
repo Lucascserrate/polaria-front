@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { LuLogOut } from 'react-icons/lu';
+import { useLogout } from '@/modules/auth/hooks/useLogout';
 
 const navItems = [
 	{ href: '/dashboard', label: 'Panel', icon: Home },
@@ -27,6 +29,8 @@ const navItems = [
 export function Sidebar() {
 	const pathname = usePathname();
 	const [isOpen, setIsOpen] = useState(false);
+
+	const { mutate } = useLogout();
 
 	return (
 		<>
@@ -86,11 +90,14 @@ export function Sidebar() {
 					</nav>
 
 					{/* Footer */}
-					<div className="p-4 border-t border-neutral-200">
-						<div className="text-xs text-neutral-500">
-							<p className="font-medium">Barbershop Manager</p>
-							<p>v1.0.0</p>
-						</div>
+					<div className="px-4 py-6 border-t border-neutral-200">
+						<button
+							className="flex items-center gap-2 cursor-pointer"
+							onClick={() => mutate()}
+						>
+							<LuLogOut size={16} className="" />
+							<p className="text-sm font-medium">Cerrar sesión</p>
+						</button>
 					</div>
 				</div>
 			</aside>

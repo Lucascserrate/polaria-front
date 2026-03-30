@@ -10,7 +10,7 @@ const AuthPage = () => {
 					<p className="text-neutral-600">AI booking assistant</p>
 				</div>
 
-				<GoogleButton href="/auth/google" />
+				<GoogleButton />
 
 				{/* Footer */}
 				<div className="text-xs mt-8">

@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
 
-interface SummaryCardProps {
+interface Props {
 	count: number;
 	confirmed: number;
 	completed: number;
 }
 
-export function SummaryCard({ count, confirmed, completed }: SummaryCardProps) {
+export const SummaryCard = ({ count, confirmed, completed }: Props) => {
 	return (
 		<Card>
 			<CardHeader className="pb-2">
@@ -37,4 +37,4 @@ export function SummaryCard({ count, confirmed, completed }: SummaryCardProps) {
 			</CardContent>
 		</Card>
 	);
-}
+};
