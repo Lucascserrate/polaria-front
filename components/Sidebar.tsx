@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LuLogOut } from 'react-icons/lu';
 import { useLogout } from '@/modules/auth/hooks/useLogout';
+import { cn } from '@/lib/utils';
 
 const navItems = [
 	{ href: '/dashboard', label: 'Panel', icon: Home },
@@ -38,7 +39,7 @@ export function Sidebar() {
 			<Button
 				variant="ghost"
 				size="icon"
-				className="fixed top-4 left-4 z-50 md:hidden"
+				className="fixed top-4 right-4 z-50 md:hidden"
 				onClick={() => setIsOpen(!isOpen)}
 			>
 				{isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -54,9 +55,10 @@ export function Sidebar() {
 
 			{/* Sidebar */}
 			<aside
-				className={`fixed top-0 left-0 h-screen w-64 bg-white border-neutral-200 transition-all duration-300 z-40 ${
-					isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-				}`}
+				className={cn(
+					'fixed top-0 left-0 h-screen w-64 bg-white border-r border-neutral-200 transition-all duration-300 z-40',
+					isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+				)}
 			>
 				<div className="flex flex-col h-full">
 					{/* Header */}
@@ -76,11 +78,12 @@ export function Sidebar() {
 									key={item.href}
 									href={item.href}
 									onClick={() => setIsOpen(false)}
-									className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
+									className={cn(
+										'flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
 										isActive
 											? 'bg-neutral-100 text-neutral-900 border border-neutral-300'
-											: 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-									}`}
+											: 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50',
+									)}
 								>
 									<Icon className="w-4 h-4 shrink-0" />
 									<span className="text-sm font-medium">{item.label}</span>
@@ -95,7 +98,7 @@ export function Sidebar() {
 							className="flex items-center gap-2 cursor-pointer"
 							onClick={() => mutate()}
 						>
-							<LuLogOut size={16} className="" />
+							<LuLogOut size={16} />
 							<p className="text-sm font-medium">Cerrar sesión</p>
 						</button>
 					</div>
