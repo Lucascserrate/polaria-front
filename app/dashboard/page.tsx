@@ -41,16 +41,9 @@ export default function DashboardPage() {
 		};
 	}, []);
 
-	const todayAppointments = appointments;
-const DashboardPage = () => {
-	const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
-
 	// Get today's appointments
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
-
-	const tomorrow = new Date(today);
-	tomorrow.setDate(tomorrow.getDate() + 1);
 
 	const todayAppointments = appointments.filter((a) => {
 		const apptDate = new Date(a.time);
@@ -124,7 +117,3 @@ const DashboardPage = () => {
 		</div>
 	);
 }
-
-};
-
-export default DashboardPage;
