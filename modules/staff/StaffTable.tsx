@@ -9,15 +9,8 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-
-interface StaffMember {
-	id: string;
-	name: string;
-	active: boolean;
-	services: string[];
-}
+import type { StaffMember } from '@/types/staff.types';
 
 interface Props {
 	staff: StaffMember[];
@@ -47,7 +40,7 @@ const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
 					<TableHeader>
 						<TableRow>
 							<TableHead>Nombre</TableHead>
-							<TableHead>Servicios</TableHead>
+							<TableHead>Email</TableHead>
 							<TableHead>Estado</TableHead>
 							<TableHead className="text-right">Acciones</TableHead>
 						</TableRow>
@@ -57,22 +50,18 @@ const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
 							<TableRow key={member.id}>
 								<TableCell className="font-medium">{member.name}</TableCell>
 								<TableCell>
-									<div className="flex flex-wrap gap-1">
-										{member.services.map((service) => (
-											<Badge key={service} variant="secondary">
-												{service}
-											</Badge>
-										))}
-									</div>
+									{member.email || (
+										<span className="text-muted-foreground">Sin email</span>
+									)}
 								</TableCell>
 								<TableCell>
 									<div className="flex items-center gap-2">
 										<Switch
-											checked={member.active}
+											checked={member.isActive}
 											onCheckedChange={() => onToggleActive(member.id)}
 										/>
 										<span className="text-sm">
-											{member.active ? 'Activo' : 'Inactivo'}
+											{member.isActive ? 'Activo' : 'Inactivo'}
 										</span>
 									</div>
 								</TableCell>
@@ -101,25 +90,20 @@ const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
 						<div className="flex items-start justify-between">
 							<div>
 								<p className="font-medium">{member.name}</p>
-								<p className="text-sm text-muted-foreground mt-1">Services</p>
+								<p className="text-sm text-muted-foreground mt-1">
+									{member.email}
+								</p>
 							</div>
 							<div className="flex items-center gap-2">
 								<Switch
-									checked={member.active}
+									checked={member.isActive}
 									onCheckedChange={() => onToggleActive(member.id)}
 								/>
 							</div>
 						</div>
-						<div className="flex flex-wrap gap-1">
-							{member.services.map((service) => (
-								<Badge key={service} variant="secondary">
-									{service}
-								</Badge>
-							))}
-						</div>
 						<div className="flex gap-2 pt-2 border-t border-border">
 							<Button variant="ghost" size="sm" className="flex-1">
-								{member.active ? 'Active' : 'Inactive'}
+								{member.isActive ? 'Active' : 'Inactive'}
 							</Button>
 							<Button
 								variant="ghost"

@@ -11,41 +11,27 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
-import { MOCK_SERVICES } from '@/lib/mocks';
+import type { CreateStaffDto } from '@/types/staff.types';
 
 interface StaffFormProps {
-	onAddStaff: (staff: { name: string; services: string[] }) => void;
+	onAddStaff: (staff: CreateStaffDto) => void;
 }
 
 export function StaffForm({ onAddStaff }: StaffFormProps) {
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState('');
-	const [selectedServices, setSelectedServices] = useState<string[]>([]);
+	const [email, setEmail] = useState('');
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!name || selectedServices.length === 0) return;
+		if (!name) return;
 
-		onAddStaff({
-			name,
-			services: selectedServices.map(
-				(id) => MOCK_SERVICES.find((s) => s.id === id)?.name || '',
-			),
-		});
+		onAddStaff({ name, email });
 
 		setName('');
-		setSelectedServices([]);
+		setEmail('');
 		setOpen(false);
-	};
-
-	const toggleService = (serviceId: string) => {
-		setSelectedServices((prev) =>
-			prev.includes(serviceId)
-				? prev.filter((id) => id !== serviceId)
-				: [...prev, serviceId],
-		);
 	};
 
 	return (
@@ -74,28 +60,16 @@ export function StaffForm({ onAddStaff }: StaffFormProps) {
 								onChange={(e) => setName(e.target.value)}
 							/>
 						</div>
-
 						<div>
-							<Label className="mb-3 block">Servicios</Label>
-							<div className="space-y-2">
-								{MOCK_SERVICES.map((service) => (
-									<div key={service.id} className="flex items-center gap-2">
-										<Checkbox
-											id={`service-${service.id}`}
-											checked={selectedServices.includes(service.id)}
-											onCheckedChange={() => toggleService(service.id)}
-										/>
-										<Label
-											htmlFor={`service-${service.id}`}
-											className="cursor-pointer font-normal"
-										>
-											{service.name}
-										</Label>
-									</div>
-								))}
-							</div>
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								placeholder="Ingresa el email del barbero"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+							/>
 						</div>
-
 						<div className="flex justify-end gap-2 pt-4">
 							<Button
 								type="button"
@@ -104,10 +78,7 @@ export function StaffForm({ onAddStaff }: StaffFormProps) {
 							>
 								Cancelar
 							</Button>
-							<Button
-								type="submit"
-								disabled={!name || selectedServices.length === 0}
-							>
+							<Button type="submit" disabled={!name}>
 								Agregar
 							</Button>
 						</div>

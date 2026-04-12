@@ -1,39 +1,75 @@
 'use client';
 
-import { useState } from 'react';
-import { MOCK_STAFF } from '@/lib/mocks';
+import { useState, useEffect } from 'react';
 import { StaffForm } from '@/modules/staff/StaffForm';
 import StaffTable from '@/modules/staff/StaffTable';
-
-interface StaffMember {
-	id: string;
-	name: string;
-	active: boolean;
-	services: string[];
-}
+import { staffService } from '@/services/staff.service';
+import type { StaffMember } from '@/types/staff.types';
 
 export default function StaffPage() {
-	const [staff, setStaff] = useState<StaffMember[]>(MOCK_STAFF);
+	const [staff, setStaff] = useState<StaffMember[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const handleToggleActive = (id: string) => {
-		setStaff(staff.map((s) => (s.id === id ? { ...s, active: !s.active } : s)));
+	useEffect(() => {
+		loadStaff();
+	}, []);
+
+	const loadStaff = async () => {
+		try {
+			setLoading(true);
+			const data = await staffService.getAll();
+			setStaff(data);
+		} catch (error) {
+			console.error('Error loading staff:', error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
-	const handleDelete = (id: string) => {
-		setStaff(staff.filter((s) => s.id !== id));
+	const handleToggleActive = async (id: string) => {
+		try {
+			const currentStaff = staff.find(s => s.id === id);
+			if (currentStaff) {
+				const updatedStaff = await staffService.update(id, { isActive: !currentStaff.isActive });
+				setStaff(staff.map((s) => (s.id === id ? updatedStaff : s)));
+			}
+		} catch (error) {
+			console.error('Error toggling staff active status:', error);
+		}
 	};
 
-	const handleAddStaff = (newMember: { name: string; services: string[] }) => {
-		const member: StaffMember = {
-			id: String(Math.max(...staff.map((s) => parseInt(s.id)), 0) + 1),
-			name: newMember.name,
-			active: true,
-			services: newMember.services,
-		};
-		setStaff([...staff, member]);
+	const handleDelete = async (id: string) => {
+		try {
+			await staffService.delete(id);
+			setStaff(staff.filter((s) => s.id !== id));
+		} catch (error) {
+			console.error('Error deleting staff:', error);
+		}
 	};
 
-	const activeCount = staff.filter((s) => s.active).length;
+	const handleAddStaff = async (name: string, email: string) => {
+		try {
+			const createdStaff = await staffService.create({
+				name,
+				email,
+				isActive: true
+			});
+			const normalizedStaff = { ...createdStaff, isActive: createdStaff?.isActive ?? createdStaff?.isActive };
+			setStaff([...staff, normalizedStaff]);
+		} catch (error) {
+			console.error('Error adding staff:', error);
+		}
+	};
+
+	const activeCount = staff.filter((s) => s.isActive).length;
+
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center h-64">
+				<div className="text-lg">Cargando personal...</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -47,7 +83,7 @@ export default function StaffPage() {
 						Administra el personal y los servicios de tu barbería
 					</p>
 				</div>
-				<StaffForm onAddStaff={handleAddStaff} />
+				<StaffForm onAddStaff={(staffData) => handleAddStaff(staffData.name, staffData.email)} />
 			</div>
 
 			{/* Stats */}
