@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	Select,
 	SelectContent,
@@ -11,22 +11,38 @@ import {
 import { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import DesktopTable from './DesktopTable';
 import MobileCards from './MobileCards';
-import DeleteConfirmationDialog from './DeleteConfirmationDialog';
+import { useInView } from 'react-intersection-observer';
 
 interface Props {
 	appointments: Appointment[];
-	onDelete: (id: string) => void;
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
+	hasMore: boolean;
+	isFetchingNextPage: boolean;
+	onLoadMore: () => void;
 }
 
 const AppointmentsTable: React.FC<Props> = ({
 	appointments,
-	// onDelete,
 	onStatusChange,
+	hasMore,
+	isFetchingNextPage,
+	onLoadMore,
 }) => {
 	const [filterStatus, setFilterStatus] = useState<string>('all');
 	const [sortBy, setSortBy] = useState<'date-asc' | 'date-desc'>('date-asc');
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+	const { ref, inView } = useInView({ threshold: 0.2 });
+
+	useEffect(() => {
+		let timeout: NodeJS.Timeout;
+
+		if (inView && hasMore && !isFetchingNextPage) {
+			timeout = setTimeout(() => {
+				onLoadMore();
+			}, 60);
+		}
+
+		return () => clearTimeout(timeout);
+	}, [inView, hasMore, isFetchingNextPage, onLoadMore]);
 
 	const filtered = useMemo(() => {
 		let result = appointments;
@@ -34,7 +50,6 @@ const AppointmentsTable: React.FC<Props> = ({
 			result = result.filter((a) => a.status === filterStatus);
 		}
 
-		// Sort
 		result.sort((a, b) => {
 			if (sortBy === 'date-asc') {
 				return a.time.getTime() - b.time.getTime();
@@ -93,22 +108,17 @@ const AppointmentsTable: React.FC<Props> = ({
 				</div>
 			</div>
 
-			<DesktopTable
-				filtered={filtered}
-				setDeleteDialogOpen={setDeleteDialogOpen}
-				onStatusChange={onStatusChange}
-			/>
+			<div className="max-h-[60vh] overflow-y-auto">
+				<DesktopTable
+					filtered={filtered}
+					onStatusChange={onStatusChange}
+					hasMore={hasMore}
+					isFetchingNextPage={isFetchingNextPage}
+					loadMoreRef={ref}
+				/>
 
-			<MobileCards
-				filtered={filtered}
-				setDeleteDialogOpen={setDeleteDialogOpen}
-				onStatusChange={onStatusChange}
-			/>
-
-			<DeleteConfirmationDialog
-				open={deleteDialogOpen}
-				setOpen={setDeleteDialogOpen}
-			/>
+				<MobileCards filtered={filtered} onStatusChange={onStatusChange} />
+			</div>
 		</div>
 	);
 };
