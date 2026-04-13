@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useMemo, useState } from 'react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import type { VariantProps } from 'class-variance-authority';
 import {
 	Dialog,
 	DialogContent,
@@ -9,107 +10,87 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
+import type { Service } from '@/types/services.types';
+import ServiceFormFields from '@/modules/services/ServiceFormFields';
 
 interface Props {
-	onAddService: (service: {
+	onSubmit: (service: {
 		name: string;
 		durationMinutes: number;
 		price: number;
+		description?: string;
 	}) => void;
+	initialValues?: Partial<Service>;
+	title?: string;
+	description?: string;
+	submitLabel?: string;
+	showTrigger?: boolean;
+	triggerLabel?: string;
+	triggerVariant?: VariantProps<typeof buttonVariants>['variant'];
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
-const ServiceForm: React.FC<Props> = ({ onAddService }) => {
-	const [open, setOpen] = useState(false);
-	const [name, setName] = useState('');
-	const [duration, setDuration] = useState('30');
-	const [price, setPrice] = useState('0');
+const ServiceForm: React.FC<Props> = ({
+	onSubmit,
+	initialValues,
+	title = 'Agregar Nuevo Servicio',
+	description = 'Añade un nuevo servicio al menu de tu barbería',
+	submitLabel = 'Agregar Servicio',
+	showTrigger = true,
+	triggerLabel = 'Agregar Servicio',
+	triggerVariant = 'default',
+	open: controlledOpen,
+	onOpenChange,
+}) => {
+	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+	const isControlled = typeof controlledOpen === 'boolean' && !!onOpenChange;
+	const open = isControlled ? controlledOpen : uncontrolledOpen;
+	const setOpen = isControlled ? onOpenChange : setUncontrolledOpen;
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!name || !duration || !price) return;
+	const defaults = useMemo(() => {
+		return {
+			name: initialValues?.name ?? '',
+			duration: String(initialValues?.durationMinutes ?? 30),
+			price: String(initialValues?.price ?? 0),
+			description: initialValues?.description ?? '',
+		};
+	}, [initialValues]);
 
-		onAddService({
-			name,
-			durationMinutes: parseInt(duration),
-			price: parseFloat(price),
-		});
+	const formKey = `${open ? 'open' : 'closed'}-${initialValues?.id ?? 'new'}`;
 
-		setName('');
-		setDuration('30');
-		setPrice('0');
-		setOpen(false);
+	const handleOpenChange = (nextOpen: boolean) => {
+		setOpen(nextOpen);
 	};
 
 	return (
 		<>
-			<Button onClick={() => setOpen(true)} className="gap-2">
-				<Plus className="w-4 h-4" />
-				Agregar Servicio
-			</Button>
+			{showTrigger && (
+				<Button
+					onClick={() => setOpen(true)}
+					className="gap-2"
+					variant={triggerVariant}
+				>
+					<Plus className="w-4 h-4" />
+					{triggerLabel}
+				</Button>
+			)}
 
-			<Dialog open={open} onOpenChange={setOpen}>
+			<Dialog open={open} onOpenChange={handleOpenChange}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Agregar Nuevo Servicio</DialogTitle>
-						<DialogDescription>
-							Añade un nuevo servicio al menú de tu barbería
-						</DialogDescription>
+						<DialogTitle>{title}</DialogTitle>
+						<DialogDescription>{description}</DialogDescription>
 					</DialogHeader>
 
-					<form onSubmit={handleSubmit} className="space-y-4">
-						<div>
-							<Label htmlFor="service-name">Nombre del Servicio</Label>
-							<Input
-								id="service-name"
-								placeholder="p.ej., Corte, Afeitado"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-							/>
-						</div>
-
-						<div>
-							<Label htmlFor="duration">Duración (minutos)</Label>
-							<Input
-								id="duration"
-								type="number"
-								min="5"
-								max="180"
-								step="5"
-								placeholder="30"
-								value={duration}
-								onChange={(e) => setDuration(e.target.value)}
-							/>
-						</div>
-
-						<div>
-							<Label htmlFor="price">Precio</Label>
-							<Input
-								id="price"
-								type="number"
-								min="0"
-								step="0.01"
-								placeholder="0"
-								value={price}
-								onChange={(e) => setPrice(e.target.value)}
-							/>
-						</div>
-
-						<div className="flex justify-end gap-2 pt-4">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => setOpen(false)}
-							>
-								Cancelar
-							</Button>
-							<Button type="submit" disabled={!name || !duration || !price}>
-								Agregar Servicio
-							</Button>
-						</div>
-					</form>
+					<ServiceFormFields
+						key={formKey}
+						defaults={defaults}
+						submitLabel={submitLabel}
+						onSubmit={onSubmit}
+						onClose={() => setOpen(false)}
+					/>
 				</DialogContent>
 			</Dialog>
 		</>

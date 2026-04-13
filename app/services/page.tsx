@@ -1,37 +1,136 @@
 'use client';
 
-import { useState } from 'react';
-import { MOCK_SERVICES } from '@/lib/mocks';
+import { useEffect, useMemo, useState } from 'react';
 import ServiceForm from '@/modules/services/ServiceForm';
 import ServicesTable from '@/modules/services/ServiceTable';
-
-interface Service {
-	id: string;
-	name: string;
-	durationMinutes: number;
-	price: number;
-}
+import { servicesService } from '@/services/services.service';
+import type { Service } from '@/types/services.types';
 
 const ServicesPage = () => {
-	const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
+	const [services, setServices] = useState<Service[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [addOpen, setAddOpen] = useState(false);
+	const [editingService, setEditingService] = useState<Service | null>(null);
+	const [editOpen, setEditOpen] = useState(false);
 
-	const handleDelete = (id: string) => {
-		setServices(services.filter((s) => s.id !== id));
+	const stats = useMemo(() => {
+		const totals = services.reduce(
+			(acc, service) => {
+				const duration = Number(service.durationMinutes);
+				const price = Number(service.price);
+
+				if (Number.isFinite(duration)) {
+					acc.totalDuration += duration;
+					acc.durationCount += 1;
+				}
+
+				if (Number.isFinite(price)) {
+					acc.totalPrice += price;
+					acc.priceCount += 1;
+				}
+
+				return acc;
+			},
+			{
+				totalDuration: 0,
+				durationCount: 0,
+				totalPrice: 0,
+				priceCount: 0,
+			},
+		);
+
+		return {
+			averageDuration:
+				totals.durationCount > 0
+					? Math.round(totals.totalDuration / totals.durationCount)
+					: 0,
+			averagePrice:
+				totals.priceCount > 0 ? totals.totalPrice / totals.priceCount : 0,
+		};
+	}, [services]);
+
+	useEffect(() => {
+		loadServices();
+	}, []);
+
+	const loadServices = async () => {
+		try {
+			setLoading(true);
+			const data = await servicesService.getAll();
+			setServices(data);
+		} catch (error) {
+			console.error('Error loading services:', error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
-	const handleAddService = (newService: {
+	const handleDelete = async (id: string) => {
+		try {
+			await servicesService.delete(id);
+			setServices(services.filter((s) => s.id !== id));
+		} catch (error) {
+			console.error('Error deleting service:', error);
+		}
+	};
+
+	const handleAddService = async (newService: {
 		name: string;
 		durationMinutes: number;
 		price: number;
+		description?: string;
 	}) => {
-		const service: Service = {
-			id: String(Math.max(...services.map((s) => parseInt(s.id)), 0) + 1),
-			name: newService.name,
-			durationMinutes: newService.durationMinutes,
-			price: newService.price,
-		};
-		setServices([...services, service]);
+		try {
+			const createdService = await servicesService.create({
+				name: newService.name,
+				description: newService.description,
+				durationMinutes: newService.durationMinutes,
+				price: newService.price,
+				timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+				isActive: true,
+			});
+			setServices([...services, createdService]);
+		} catch (error) {
+			console.error('Error adding service:', error);
+		}
 	};
+
+	const handleEdit = (service: Service) => {
+		setEditingService(service);
+		setEditOpen(true);
+	};
+
+	const handleUpdateService = async (updated: {
+		name: string;
+		durationMinutes: number;
+		price: number;
+		description?: string;
+	}) => {
+		if (!editingService) return;
+		try {
+			const saved = await servicesService.update(editingService.id, {
+				name: updated.name,
+				description: updated.description,
+				durationMinutes: updated.durationMinutes,
+				price: updated.price,
+			});
+			setServices(
+				services.map((s) => (s.id === editingService.id ? saved : s)),
+			);
+			setEditOpen(false);
+			setEditingService(null);
+		} catch (error) {
+			console.error('Error updating service:', error);
+		}
+	};
+
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center h-64">
+				<div className="text-lg">Cargando servicios...</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -45,7 +144,11 @@ const ServicesPage = () => {
 						Gestiona los servicios y precios de tu barbería
 					</p>
 				</div>
-				<ServiceForm onAddService={handleAddService} />
+				<ServiceForm
+					onSubmit={handleAddService}
+					open={addOpen}
+					onOpenChange={setAddOpen}
+				/>
 			</div>
 
 			{/* Stats */}
@@ -55,27 +158,13 @@ const ServicesPage = () => {
 					<p className="text-2xl font-bold mt-1">{services.length}</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Duración Promedio</p>
-					<p className="text-2xl font-bold mt-1">
-						{services.length > 0
-							? Math.round(
-									services.reduce((sum, s) => sum + s.durationMinutes, 0) /
-										services.length,
-								)
-							: 0}{' '}
-						min
-					</p>
+					<p className="text-sm text-muted-foreground">Duracion Promedio</p>
+					<p className="text-2xl font-bold mt-1">{stats.averageDuration} min</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Precio Promedio</p>
 					<p className="text-2xl font-bold mt-1">
-						BOB{' '}
-						{services.length > 0
-							? (
-									services.reduce((sum, s) => sum + s.price, 0) /
-									services.length
-								).toFixed(2)
-							: '0.00'}
+						BOB {stats.averagePrice.toFixed(2)}
 					</p>
 				</div>
 			</div>
@@ -85,9 +174,24 @@ const ServicesPage = () => {
 				<ServicesTable
 					services={services}
 					onDelete={handleDelete}
-					onAddClick={() => {}}
+					onEdit={handleEdit}
+					onAddClick={() => setAddOpen(true)}
 				/>
 			</div>
+
+			<ServiceForm
+				showTrigger={false}
+				onSubmit={handleUpdateService}
+				initialValues={editingService ?? undefined}
+				title="Editar Servicio"
+				description="Actualiza los datos del servicio"
+				submitLabel="Guardar cambios"
+				open={editOpen}
+				onOpenChange={(open) => {
+					setEditOpen(open);
+					if (!open) setEditingService(null);
+				}}
+			/>
 		</div>
 	);
 };
