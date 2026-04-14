@@ -49,7 +49,7 @@ const DesktopTable: React.FC<Props> = ({
 				</TableHeader>
 				<TableBody>
 					{filtered.map((apt) => {
-						const colors = STATUS_COLORS[apt.status];
+						const colors = STATUS_COLORS[apt.status] ?? STATUS_COLORS.booked;
 						return (
 							<TableRow key={apt.id}>
 								<TableCell className="font-medium">{apt.clientName}</TableCell>

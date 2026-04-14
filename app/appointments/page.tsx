@@ -10,7 +10,7 @@ import type {
 import {
 	getAppointments,
 	updateAppointmentStatus,
-} from '@/services/appointments.service';
+} from '@/services/appointments';
 
 const mapAppointment = (apt: AppointmentApi): Appointment => {
 	const startTime = new Date(apt.startTime);
@@ -106,7 +106,9 @@ const AppointmentsPage = () => {
 							? updated.serviceNames.join(', ') || current.service
 							: current.service,
 						barber: updated.staffName ?? current.barber,
-						time: updated.startTime ? new Date(updated.startTime) : current.time,
+						time: updated.startTime
+							? new Date(updated.startTime)
+							: current.time,
 						duration: Number.isFinite(updated.totalDuration)
 							? Number(updated.totalDuration)
 							: current.duration,

@@ -1,6 +1,7 @@
 import { AppointmentStatus } from '@/types/appointments.types';
 
 export const APPOINTMENT_STATUS = {
+	PENDING: 'pending',
 	BOOKED: 'booked',
 	CONFIRMED: 'confirmed',
 	COMPLETED: 'completed',
@@ -8,6 +9,10 @@ export const APPOINTMENT_STATUS = {
 } as const;
 
 export const STATUS_COLORS = {
+	pending: {
+		badge: 'bg-yellow-100 text-yellow-700',
+		dot: 'bg-yellow-500',
+	},
 	booked: {
 		badge: 'bg-blue-100 text-blue-700',
 		dot: 'bg-blue-500',
@@ -27,6 +32,7 @@ export const STATUS_COLORS = {
 } as const;
 
 const appointmentMap: Record<AppointmentStatus, string> = {
+	pending: 'Pendiente',
 	booked: 'Agendado',
 	confirmed: 'Confirmado',
 	completed: 'Completado',

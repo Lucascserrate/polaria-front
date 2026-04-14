@@ -3,6 +3,7 @@ import type {
 	AppointmentApi,
 	AppointmentApiPage,
 	AppointmentStatus,
+	AppointmentApiToday,
 } from '@/types/appointments.types';
 
 export const getAppointments = async (
@@ -23,6 +24,23 @@ export const updateAppointmentStatus = async (
 	return data;
 };
 
-export const deleteAppointment = async (id: string)=> {
+export const createAppointment = async (input: {
+	clientId: string;
+	staffId: string;
+	serviceIds: string[];
+	startTime: string;
+	endTime: string;
+	tenantId?: string;
+}): Promise<AppointmentApi> => {
+	const { data } = await axiosInstance.post('/appointments', input);
+	return data;
+};
+
+export const getTodayAppointments = async (): Promise<AppointmentApiToday> => {
+	const { data } = await axiosInstance.get('/appointments/today');
+	return data;
+};
+
+export const deleteAppointment = async (id: string) => {
 	await axiosInstance.delete(`/appointments/${id}`);
 };
