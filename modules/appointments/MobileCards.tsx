@@ -1,5 +1,3 @@
-import { Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { STATUS_COLORS } from '@/modules/appointments/utils/constants';
 import { formatDateTime } from '@/lib/date-utils';
@@ -14,19 +12,14 @@ import {
 
 interface Props {
 	filtered: Appointment[];
-	setDeleteDialogOpen: (open: boolean) => void;
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
 }
 
-const MobileCards: React.FC<Props> = ({
-	filtered,
-	setDeleteDialogOpen,
-	onStatusChange,
-}) => {
+const MobileCards: React.FC<Props> = ({ filtered, onStatusChange }) => {
 	return (
 		<div className="md:hidden space-y-3">
 			{filtered.map((apt) => {
-				const colors = STATUS_COLORS[apt.status];
+				const colors = STATUS_COLORS[apt.status] ?? STATUS_COLORS.booked;
 				return (
 					<div
 						key={apt.id}
@@ -74,15 +67,18 @@ const MobileCards: React.FC<Props> = ({
 									</SelectContent>
 								</Select>
 							</div>
-							<Button
+							{/* <Button
 								variant="ghost"
 								size="sm"
-								className="w-full"
-								onClick={() => setDeleteDialogOpen(true)}
+								className="hidden w-full"
+								onClick={() => {
+									onDeleteRequest(apt.id);
+									setDeleteDialogOpen(true);
+								}}
 							>
 								<Trash2 className="w-4 h-4 mr-1 text-destructive" />
 								Eliminar
-							</Button>
+							</Button> */}
 						</div>
 					</div>
 				);

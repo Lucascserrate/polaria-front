@@ -24,7 +24,7 @@ export function AppointmentCard({
 	status,
 	duration,
 }: AppointmentCardProps) {
-	const colors = STATUS_COLORS[status];
+	const colors = STATUS_COLORS[status] ?? STATUS_COLORS.booked;
 	const timeStr = time.toLocaleTimeString('en-US', {
 		hour: '2-digit',
 		minute: '2-digit',

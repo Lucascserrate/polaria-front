@@ -26,9 +26,9 @@ const AppointmentTimeline = ({ appointments }: Props) => {
 		);
 	}
 
-	// Sort by time
+	// Sort by time (latest first)
 	const sorted = [...appointments].sort(
-		(a, b) => a.time.getTime() - b.time.getTime(),
+		(a, b) => b.time.getTime() - a.time.getTime(),
 	);
 
 	return (

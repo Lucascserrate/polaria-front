@@ -20,14 +20,18 @@ import {
 
 interface Props {
 	filtered: Appointment[];
-	setDeleteDialogOpen: (open: boolean) => void;
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
+	hasMore: boolean;
+	isFetchingNextPage: boolean;
+	loadMoreRef: (node?: Element | null | undefined) => void;
 }
 
 const DesktopTable: React.FC<Props> = ({
 	filtered,
 	onStatusChange,
-	setDeleteDialogOpen,
+	hasMore,
+	isFetchingNextPage,
+	loadMoreRef,
 }) => {
 	return (
 		<div className="hidden md:block border border-border rounded-lg overflow-hidden">
@@ -45,7 +49,7 @@ const DesktopTable: React.FC<Props> = ({
 				</TableHeader>
 				<TableBody>
 					{filtered.map((apt) => {
-						const colors = STATUS_COLORS[apt.status];
+						const colors = STATUS_COLORS[apt.status] ?? STATUS_COLORS.booked;
 						return (
 							<TableRow key={apt.id}>
 								<TableCell className="font-medium">{apt.clientName}</TableCell>
@@ -98,20 +102,20 @@ const DesktopTable: React.FC<Props> = ({
 												</div>
 											</PopoverContent>
 										</Popover>
-										<Button
-											variant="ghost"
-											size="sm"
-											onClick={() => setDeleteDialogOpen(true)}
-											title="Eliminar"
-											className="p-0 h-auto w-auto hover:opacity-60"
-										>
-											<Trash2 className="w-4 h-4 text-destructive" />
-										</Button>
 									</div>
 								</TableCell>
 							</TableRow>
 						);
 					})}
+					{hasMore && (
+						<TableRow ref={loadMoreRef}>
+							<TableCell colSpan={7} className="text-center py-4">
+								{isFetchingNextPage
+									? 'Cargando más...'
+									: 'Desliza para cargar más'}
+							</TableCell>
+						</TableRow>
+					)}
 				</TableBody>
 			</Table>
 		</div>

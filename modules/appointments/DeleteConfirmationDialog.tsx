@@ -11,10 +11,14 @@ import {
 interface Props {
 	open: boolean;
 	setOpen: (open: boolean) => void;
-	// onDelete: (id: string) => void;
+	onConfirm: () => void;
 }
 
-const DeleteConfirmationDialog: React.FC<Props> = ({ open, setOpen }) => {
+const DeleteConfirmationDialog: React.FC<Props> = ({
+	open,
+	setOpen,
+	onConfirm,
+}) => {
 	return (
 		<AlertDialog open={open} onOpenChange={(open) => setOpen(open)}>
 			<AlertDialogContent>
@@ -28,7 +32,7 @@ const DeleteConfirmationDialog: React.FC<Props> = ({ open, setOpen }) => {
 				<div className="flex gap-2 justify-end">
 					<AlertDialogCancel>Cancelar</AlertDialogCancel>
 					<AlertDialogAction
-						onClick={() => {}}
+						onClick={() => onConfirm()}
 						className="bg-destructive hover:bg-destructive/90"
 					>
 						Eliminar
