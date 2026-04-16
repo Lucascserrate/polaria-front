@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,9 +24,14 @@ import {
 	DEFAULT_SETTINGS,
 } from '@/modules/settings/utils/constants';
 import { Check } from 'lucide-react';
+import {
+	getSettings,
+	updateSettings,
+	type SettingsResponse,
+} from '@/services/settings';
 
 interface Settings {
-	barbershopName: string;
+	polariaName: string;
 	workingDays: boolean[];
 	openingHours: { from: string; to: string };
 	appointmentSlotDuration: number;
@@ -36,6 +41,78 @@ const SettingsForm: React.FC = () => {
 	const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 	const [saved, setSaved] = useState(false);
 	const [timeFormat, setTimeFormat] = useState<'24h' | '12h'>('24h');
+	const [loading, setLoading] = useState(true);
+	const [saving, setSaving] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	const fromApiWorkingDays = useCallback((apiDays: boolean[]) => {
+		if (apiDays.length !== 7) return DEFAULT_SETTINGS.workingDays;
+		return [
+			apiDays[1],
+			apiDays[2],
+			apiDays[3],
+			apiDays[4],
+			apiDays[5],
+			apiDays[6],
+			apiDays[0],
+		];
+	}, []);
+
+	const toApiWorkingDays = useCallback((uiDays: boolean[]) => {
+		if (uiDays.length !== 7) return DEFAULT_SETTINGS.workingDays;
+		return [
+			uiDays[6],
+			uiDays[0],
+			uiDays[1],
+			uiDays[2],
+			uiDays[3],
+			uiDays[4],
+			uiDays[5],
+		];
+	}, []);
+
+	const applyApiSettings = useCallback(
+		(data: SettingsResponse) => {
+			const workingDays = data.workingDays?.length
+				? fromApiWorkingDays(data.workingDays)
+				: DEFAULT_SETTINGS.workingDays;
+			const openingHours = data.openingHours ?? DEFAULT_SETTINGS.openingHours;
+
+			setSettings((prev) => ({
+				...prev,
+				polariaName: data.polariaName ?? prev.polariaName,
+				workingDays,
+				openingHours,
+			}));
+		},
+		[fromApiWorkingDays],
+	);
+
+	useEffect(() => {
+		let active = true;
+
+		const load = async () => {
+			try {
+				const data = await getSettings();
+				if (active) {
+					applyApiSettings(data);
+					setError(null);
+				}
+			} catch {
+				if (active) {
+					setError('No se pudo cargar la configuracion.');
+				}
+			} finally {
+				if (active) setLoading(false);
+			}
+		};
+
+		load();
+
+		return () => {
+			active = false;
+		};
+	}, [applyApiSettings]);
 
 	const toggleWorkingDay = (index: number) => {
 		const newDays = [...settings.workingDays];
@@ -43,8 +120,28 @@ const SettingsForm: React.FC = () => {
 		setSettings({ ...settings, workingDays: newDays });
 	};
 
+	const handleSave = async () => {
+		setSaving(true);
+		setSaved(false);
+		try {
+			const data = await updateSettings({
+				polariaName: settings.polariaName,
+				workingDays: toApiWorkingDays(settings.workingDays),
+				openingHours: settings.openingHours,
+			});
+			applyApiSettings(data);
+			setSaved(true);
+			setError(null);
+		} catch {
+			setError('No se pudo guardar la configuracion.');
+		} finally {
+			setSaving(false);
+		}
+	};
+
 	return (
 		<div className="space-y-6 max-w-2xl">
+			{error ? <p className="text-sm text-red-500">{error}</p> : null}
 			{/* Barbershop Name */}
 			<Card>
 				<CardHeader>
@@ -58,9 +155,10 @@ const SettingsForm: React.FC = () => {
 						<Label htmlFor="barbershop-name">Nombre de la Barbería</Label>
 						<Input
 							id="barbershop-name"
-							value={settings.barbershopName}
+							value={settings.polariaName}
+							disabled={loading}
 							onChange={(e) =>
-								setSettings({ ...settings, barbershopName: e.target.value })
+								setSettings({ ...settings, polariaName: e.target.value })
 							}
 							placeholder="Ingresa el nombre de tu barbería"
 						/>
@@ -84,6 +182,7 @@ const SettingsForm: React.FC = () => {
 								id="opening-time"
 								type="time"
 								value={settings.openingHours.from}
+								disabled={loading}
 								onChange={(e) =>
 									setSettings({
 										...settings,
@@ -101,6 +200,7 @@ const SettingsForm: React.FC = () => {
 								id="closing-time"
 								type="time"
 								value={settings.openingHours.to}
+								disabled={loading}
 								onChange={(e) =>
 									setSettings({
 										...settings,
@@ -131,6 +231,7 @@ const SettingsForm: React.FC = () => {
 								<Checkbox
 									id={`day-${index}`}
 									checked={settings.workingDays[index]}
+									disabled={loading}
 									onCheckedChange={() => toggleWorkingDay(index)}
 								/>
 								<Label
@@ -160,6 +261,7 @@ const SettingsForm: React.FC = () => {
 						</Label>
 						<Select
 							value={String(settings.appointmentSlotDuration)}
+							disabled={loading}
 							onValueChange={(value) =>
 								setSettings({
 									...settings,
@@ -197,6 +299,7 @@ const SettingsForm: React.FC = () => {
 						<Label htmlFor="time-format">Formato de Hora</Label>
 						<Select
 							value={timeFormat}
+							disabled={loading}
 							onValueChange={(value) => setTimeFormat(value as '24h' | '12h')}
 						>
 							<SelectTrigger id="time-format">
@@ -216,11 +319,14 @@ const SettingsForm: React.FC = () => {
 
 			{/* Save Button */}
 			<Button
-				onClick={() => setSaved(true)}
+				onClick={handleSave}
 				className="w-full md:w-auto"
 				size="lg"
+				disabled={loading || saving}
 			>
-				{saved ? (
+				{saving ? (
+					'Guardando...'
+				) : saved ? (
 					<>
 						<Check className="w-4 h-4 mr-2" />
 						Guardado
