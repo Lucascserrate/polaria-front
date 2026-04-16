@@ -19,8 +19,7 @@ class StaffService {
 
 	async update(id: string, staffData: UpdateStaffDto): Promise<StaffMember> {
 		const response = await axiosInstance.patch(`/staff/${id}`, staffData);
-		const staff = response.data;
-		return { ...staff, active: staff.isActive };
+		return response.data;
 	}
 
 	async delete(id: string): Promise<void> {

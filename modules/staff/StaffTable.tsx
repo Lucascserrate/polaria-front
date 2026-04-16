@@ -1,5 +1,5 @@
 'use client';
-import { Trash2, Plus } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	Table,
@@ -15,11 +15,16 @@ import type { StaffMember } from '@/types/staff.types';
 interface Props {
 	staff: StaffMember[];
 	onToggleActive: (id: string) => void;
-	onDelete: (id: string) => void;
+	onEdit: (staff: StaffMember) => void;
 	onAddClick: () => void;
 }
 
-const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
+const StaffTable = ({
+	staff,
+	onToggleActive,
+	onEdit,
+	onAddClick,
+}: Props) => {
 	if (staff.length === 0) {
 		return (
 			<div className="text-center py-12">
@@ -40,7 +45,7 @@ const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
 					<TableHeader>
 						<TableRow>
 							<TableHead>Nombre</TableHead>
-							<TableHead>Email</TableHead>
+							<TableHead>Servicios</TableHead>
 							<TableHead>Estado</TableHead>
 							<TableHead className="text-right">Acciones</TableHead>
 						</TableRow>
@@ -50,8 +55,10 @@ const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
 							<TableRow key={member.id}>
 								<TableCell className="font-medium">{member.name}</TableCell>
 								<TableCell>
-									{member.email || (
-										<span className="text-muted-foreground">Sin email</span>
+									{member.services && member.services.length > 0 ? (
+										<span>{member.services.map((s) => s.name).join(', ')}</span>
+									) : (
+										<span className="text-muted-foreground">Sin servicios</span>
 									)}
 								</TableCell>
 								<TableCell>
@@ -69,9 +76,9 @@ const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
 									<Button
 										variant="ghost"
 										size="sm"
-										onClick={() => onDelete(member.id)}
+										onClick={() => onEdit(member)}
 									>
-										<Trash2 className="w-4 h-4 text-destructive" />
+										<Pencil className="w-4 h-4" />
 									</Button>
 								</TableCell>
 							</TableRow>
@@ -91,7 +98,9 @@ const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
 							<div>
 								<p className="font-medium">{member.name}</p>
 								<p className="text-sm text-muted-foreground mt-1">
-									{member.email}
+									{member.services && member.services.length > 0
+										? member.services.map((s) => s.name).join(', ')
+										: 'Sin servicios'}
 								</p>
 							</div>
 							<div className="flex items-center gap-2">
@@ -109,10 +118,10 @@ const StaffTable = ({ staff, onToggleActive, onDelete, onAddClick }: Props) => {
 								variant="ghost"
 								size="sm"
 								className="flex-1"
-								onClick={() => onDelete(member.id)}
+								onClick={() => onEdit(member)}
 							>
-								<Trash2 className="w-4 h-4 mr-1 text-destructive" />
-								Delete
+								<Pencil className="w-4 h-4 mr-1" />
+								Edit
 							</Button>
 						</div>
 					</div>
