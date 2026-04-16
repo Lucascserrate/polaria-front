@@ -31,7 +31,11 @@ export default function StaffPage() {
 			]);
 			setStaff(staffData);
 			setServices(
-				servicesData.map((s) => ({ id: s.id, name: s.name, isActive: s.isActive })),
+				servicesData.map((s) => ({
+					id: s.id,
+					name: s.name,
+					isActive: s.isActive ?? true,
+				})),
 			);
 		} catch (error) {
 			console.error('Error loading staff/services:', error);

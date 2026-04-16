@@ -14,13 +14,13 @@ export type UpdateSettingsPayload = {
 
 export const getSettings = async (): Promise<SettingsResponse> => {
   const { data } = await axiosInstance.get<{
-    barbershopName: string;
+    polariaName: string;
     workingDays: boolean[];
     openingHours: { from: string; to: string } | null;
   }>('/settings');
 
   return {
-    polariaName: data.barbershopName,
+    polariaName: data.polariaName,
     workingDays: data.workingDays,
     openingHours: data.openingHours,
   };
@@ -30,17 +30,17 @@ export const updateSettings = async (
   payload: UpdateSettingsPayload,
 ): Promise<SettingsResponse> => {
   const { data } = await axiosInstance.patch<{
-    barbershopName: string;
+    polariaName: string;
     workingDays: boolean[];
     openingHours: { from: string; to: string } | null;
   }>('/settings', {
-    barbershopName: payload.polariaName,
+    polariaName: payload.polariaName,
     workingDays: payload.workingDays,
     openingHours: payload.openingHours,
   });
 
   return {
-    polariaName: data.barbershopName,
+    polariaName: data.polariaName,
     workingDays: data.workingDays,
     openingHours: data.openingHours,
   };

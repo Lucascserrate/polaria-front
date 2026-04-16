@@ -10,7 +10,7 @@ import { STATUS_COLORS } from './utils/constants';
 import { formatDateTime } from '@/lib/date-utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SquarePen, Trash2 } from 'lucide-react';
+import { SquarePen } from 'lucide-react';
 import { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import {
 	Popover,

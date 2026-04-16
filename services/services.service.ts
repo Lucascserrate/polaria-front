@@ -7,7 +7,7 @@ import type {
 
 class ServicesService {
 	async getAll(): Promise<Service[]> {
-		const response = await axiosInstance.get('/services');
+		const response = await axiosInstance.get<Service[]>('/services');
 		return response.data;
 	}
 
