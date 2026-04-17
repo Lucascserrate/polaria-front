@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import AppointmentsTable from '@/modules/appointments/AppointmentTable';
 import type {
 	Appointment,
@@ -35,10 +35,11 @@ const mapAppointment = (apt: AppointmentApi): Appointment => {
 
 const AppointmentsPage = () => {
 	const [appointments, setAppointments] = useState<Appointment[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(false);
 	const [loadingMore, setLoadingMore] = useState(false);
-	const [page, setPage] = useState(1);
+	const [isRefetching, setIsRefetching] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
+	const [page, setPage] = useState(1);
 	const [totalAppointments, setTotalAppointments] = useState(0);
 	const [statusCounts, setStatusCounts] = useState({
 		pending: 0,
@@ -47,15 +48,25 @@ const AppointmentsPage = () => {
 		completed: 0,
 		cancelled: 0,
 	});
+	const [filters, setFilters] = useState<{
+		search?: string;
+		status?: string;
+		sortBy?: 'date-asc' | 'date-desc';
+	}>({ search: '' });
 
-	const loadAppointments = async (pageNumber = 1, append = false) => {
+	const hasLoaded = useRef(false);
+
+	const loadAppointments = useCallback(async (pageNumber = 1, append = false, currentFilters = filters) => {
 		try {
 			if (append) {
 				setLoadingMore(true);
 			} else {
 				setLoading(true);
+				if (appointments.length > 0) {
+					setIsRefetching(true);
+				}
 			}
-			const data = await getAppointments(pageNumber, 20);
+			const data = await getAppointments(pageNumber, 20, currentFilters);
 			const mapped = data.items.map(mapAppointment);
 			setAppointments((prev) => (append ? [...prev, ...mapped] : mapped));
 			setHasMore(data.hasMore);
@@ -69,12 +80,22 @@ const AppointmentsPage = () => {
 		} finally {
 			setLoading(false);
 			setLoadingMore(false);
+			setIsRefetching(false);
 		}
-	};
+	}, [appointments.length, filters]);
 
 	useEffect(() => {
-		loadAppointments(1, false);
-	}, []);
+		if (!hasLoaded.current) {
+			hasLoaded.current = true;
+			loadAppointments(1, false);
+		}
+	}, [loadAppointments]);
+
+	const handleFiltersChange = useCallback((newFilters: typeof filters) => {
+		setFilters(newFilters);
+		setPage(1);
+		loadAppointments(1, false, newFilters);
+	}, [loadAppointments]);
 
 	// const handleDelete = async (id: string) => {
 	// 	try {
@@ -176,8 +197,14 @@ const AppointmentsPage = () => {
 			</div>
 
 			{/* Table */}
-			<div className="bg-card border border-border rounded-lg p-6 max-h-screen overflow-y-auto">
-				{loading ? (
+			<div className="bg-card border border-border rounded-lg p-6 max-h-screen overflow-y-auto relative">
+				{isRefetching && (
+					<div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-md z-10">
+						Actualizando...
+					</div>
+				)}
+				
+				{loading && appointments.length === 0 ? (
 					<div className="text-center text-muted-foreground">
 						Cargando citas...
 					</div>
@@ -192,6 +219,8 @@ const AppointmentsPage = () => {
 								loadAppointments(page + 1, true);
 							}
 						}}
+						onFiltersChange={handleFiltersChange}
+						filters={filters}
 					/>
 				)}
 			</div>

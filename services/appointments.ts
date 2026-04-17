@@ -9,9 +9,20 @@ import type {
 export const getAppointments = async (
 	page = 1,
 	limit = 20,
+	filters?: {
+		search?: string;
+		status?: string;
+		sortBy?: 'date-asc' | 'date-desc';
+	},
 ): Promise<AppointmentApiPage> => {
 	const { data } = await axiosInstance.get('/appointments', {
-		params: { page, limit },
+		params: { 
+			page, 
+			limit,
+			...(filters?.search && { search: filters.search }),
+			...(filters?.status && { status: filters.status }),
+			...(filters?.sortBy && { sortBy: filters.sortBy }),
+		},
 	});
 	return data;
 };
