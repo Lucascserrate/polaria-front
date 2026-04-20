@@ -19,14 +19,14 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
-import { getServices } from '@/services/services';
 import { getStaff } from '@/services/staff';
 import { createAppointment } from '@/services/appointments';
 import { findOrCreateClient } from '@/services/clients';
-import type { ServiceApi, StaffApi } from '@/types/appointments.types';
+import type { StaffApi } from '@/types/appointments.types';
 import useAuth from '@/modules/auth/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
+import useGetServices from '@/services/services/useGetServices';
 
 interface Props {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,9 +35,6 @@ interface Props {
 
 const AppointmentModal = ({ onAddAppointment }: Props) => {
 	const [open, setOpen] = useState(false);
-	const [services, setServices] = useState<ServiceApi[]>([]);
-	const [loadingServices, setLoadingServices] = useState(false);
-	const [serviceError, setServiceError] = useState<string | null>(null);
 	const [staff, setStaff] = useState<StaffApi[]>([]);
 	const [loadingStaff, setLoadingStaff] = useState(false);
 	const [staffError, setStaffError] = useState<string | null>(null);
@@ -53,31 +50,14 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 	});
 
 	const activeStaff = useMemo(() => staff.filter((s) => s.isActive), [staff]);
-	const selectedServices = useMemo(
-		() => services.filter((s) => formData.serviceIds.includes(s.id)),
-		[services, formData.serviceIds],
-	);
 
-	useEffect(() => {
-		if (!open) {
-			return;
-		}
-		const loadServices = async () => {
-			try {
-				setLoadingServices(true);
-				setServiceError(null);
-				const data = await getServices();
-				setServices(data.filter((s) => s.isActive));
-			} catch (error) {
-				console.error('Error loading services:', error);
-				setServiceError('No se pudieron cargar los servicios');
-			} finally {
-				setLoadingServices(false);
-			}
-		};
+	const {
+		data: servicesData,
+		isLoading: isServiceLoading,
+		error: serviceError,
+	} = useGetServices();
 
-		loadServices();
-	}, [open]);
+	const services = servicesData || [];
 
 	useEffect(() => {
 		if (!open) {
@@ -120,7 +100,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 		const [hours, minutes] = formData.time.split(':').map(Number);
 		const appointmentTime = new Date();
 		appointmentTime.setHours(hours, minutes, 0, 0);
-		const totalMinutes = selectedServices.reduce(
+		const totalMinutes = services.reduce(
 			(sum, s) => sum + s.durationMinutes,
 			0,
 		);
@@ -149,7 +129,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 				});
 
 				const staffMember = staff.find((s) => s.name === created.staffName);
-				const serviceNames = selectedServices.map((s) => s.name).join(', ');
+				const serviceNames = services.map((s) => s.name).join(', ');
 
 				onAddAppointment({
 					id: created.id,
@@ -276,14 +256,16 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 								})}
 								{services.length === 0 && (
 									<p className="text-xs text-muted-foreground">
-										{loadingServices
+										{isServiceLoading
 											? 'Cargando servicios...'
 											: 'No hay servicios disponibles'}
 									</p>
 								)}
 							</div>
 							{serviceError && (
-								<p className="text-xs text-destructive mt-2">{serviceError}</p>
+								<p className="text-xs text-destructive mt-2">
+									{serviceError.message}
+								</p>
 							)}
 						</div>
 

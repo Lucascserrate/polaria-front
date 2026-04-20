@@ -1,48 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { StaffForm } from '@/modules/staff/StaffForm';
 import StaffTable from '@/modules/staff/StaffTable';
-import { servicesService } from '@/services/services.service';
 import { staffService } from '@/services/staff.service';
 import type { StaffMember } from '@/types/staff.types';
-import type { ServiceSummary } from '@/types/service.types';
 
 export default function StaffPage() {
 	const [staff, setStaff] = useState<StaffMember[]>([]);
-	const [services, setServices] = useState<ServiceSummary[]>([]);
-	const [loading, setLoading] = useState(true);
 
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-
-	useEffect(() => {
-		void loadAll();
-	}, []);
-
-	const loadAll = async () => {
-		try {
-			setLoading(true);
-			const [staffData, servicesData] = await Promise.all([
-				staffService.getAll(),
-				servicesService.getAll(),
-			]);
-			setStaff(staffData);
-			setServices(
-				servicesData.map((s) => ({
-					id: s.id,
-					name: s.name,
-					isActive: s.isActive ?? true,
-				})),
-			);
-		} catch (error) {
-			console.error('Error loading staff/services:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	const handleToggleActive = async (id: string) => {
 		try {
@@ -88,19 +58,21 @@ export default function StaffPage() {
 
 	const activeCount = staff.filter((s) => s.isActive).length;
 
-	if (loading) {
+	/* 	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-64">
 				<div className="text-lg">Cargando personal...</div>
 			</div>
 		);
-	}
+	} */
 
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Gestión del personal</h1>
+					<h1 className="text-3xl font-bold tracking-tight">
+						Gestión del personal
+					</h1>
 					<p className="text-muted-foreground mt-1">
 						Administra el personal y los servicios que puede realizar
 					</p>
@@ -118,7 +90,9 @@ export default function StaffPage() {
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Activo</p>
-					<p className="text-2xl font-bold mt-1 text-green-600">{activeCount}</p>
+					<p className="text-2xl font-bold mt-1 text-green-600">
+						{activeCount}
+					</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Inactivo</p>
@@ -144,7 +118,6 @@ export default function StaffPage() {
 					setFormOpen(next);
 					if (!next) setEditingStaff(null);
 				}}
-				services={services}
 				initialStaff={editingStaff}
 				onSubmit={(payload) =>
 					handleUpsert({

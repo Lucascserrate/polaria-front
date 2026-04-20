@@ -1,5 +1,5 @@
 'use client';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, SquarePen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	Table,
@@ -19,12 +19,7 @@ interface Props {
 	onAddClick: () => void;
 }
 
-const StaffTable = ({
-	staff,
-	onToggleActive,
-	onEdit,
-	onAddClick,
-}: Props) => {
+const StaffTable = ({ staff, onToggleActive, onEdit, onAddClick }: Props) => {
 	if (staff.length === 0) {
 		return (
 			<div className="text-center py-12">
@@ -120,7 +115,7 @@ const StaffTable = ({
 								className="flex-1"
 								onClick={() => onEdit(member)}
 							>
-								<Pencil className="w-4 h-4 mr-1" />
+								<SquarePen className="w-4 h-4 mr-1" />
 								Edit
 							</Button>
 						</div>
