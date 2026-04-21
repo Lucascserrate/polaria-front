@@ -39,7 +39,6 @@ export default function StaffPage() {
 
 	const handleUpsert = async (data: {
 		name: string;
-		email: string;
 		serviceIds?: string[];
 	}) => {
 		try {
@@ -122,7 +121,6 @@ export default function StaffPage() {
 				onSubmit={(payload) =>
 					handleUpsert({
 						name: payload.name ?? '',
-						email: payload.email ?? '',
 						serviceIds: payload.serviceIds,
 					})
 				}
