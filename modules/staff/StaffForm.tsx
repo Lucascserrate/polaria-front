@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
 	Dialog,
 	DialogContent,
@@ -18,12 +18,11 @@ import type {
 	StaffMember,
 	UpdateStaffDto,
 } from '@/types/staff.types';
-import type { ServiceSummary } from '@/types/service.types';
+import useGetServices from '@/services/services/useGetServices';
 
 interface StaffFormProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	services: ServiceSummary[];
 	initialStaff?: StaffMember | null;
 	onSubmit: (staff: CreateStaffDto | UpdateStaffDto) => void;
 }
@@ -31,27 +30,24 @@ interface StaffFormProps {
 export function StaffForm({
 	open,
 	onOpenChange,
-	services,
 	initialStaff,
 	onSubmit,
 }: StaffFormProps) {
 	const [name, setName] = useState(() => initialStaff?.name ?? '');
-	const [email, setEmail] = useState(() => initialStaff?.email ?? '');
 	const [serviceIds, setServiceIds] = useState<string[]>(
 		() => initialStaff?.services?.map((s) => s.id) ?? [],
 	);
 
-	const mode: 'create' | 'edit' = initialStaff ? 'edit' : 'create';
+	const { data: servicesData } = useGetServices();
 
-	const activeServices = useMemo(
-		() => services.filter((s) => s.isActive),
-		[services],
-	);
+	const services = servicesData || [];
+
+	const mode: 'create' | 'edit' = initialStaff ? 'edit' : 'create';
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!name || !email) return;
-		onSubmit({ name, email, serviceIds });
+		if (!name) return;
+		onSubmit({ name, serviceIds });
 		onOpenChange(false);
 	};
 
@@ -80,34 +76,25 @@ export function StaffForm({
 						/>
 					</div>
 
-					<div>
-						<Label htmlFor="email">Email</Label>
-						<Input
-							id="email"
-							type="email"
-							placeholder="Ingresa el email"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-						/>
-					</div>
-
 					<div className="space-y-2">
 						<div className="flex items-center justify-between gap-2">
 							<Label>Servicios</Label>
 							{serviceIds.length > 0 ? (
-								<Badge variant="secondary">{serviceIds.length} seleccionados</Badge>
+								<Badge variant="secondary">
+									{serviceIds.length} seleccionados
+								</Badge>
 							) : (
 								<Badge variant="outline">Sin servicios</Badge>
 							)}
 						</div>
 
 						<div className="border border-border rounded-lg p-3 space-y-2 max-h-56 overflow-auto">
-							{activeServices.length === 0 ? (
+							{services.length === 0 ? (
 								<p className="text-sm text-muted-foreground">
 									No hay servicios activos para asignar.
 								</p>
 							) : (
-								activeServices.map((service) => {
+								services.map((service) => {
 									const checked = serviceIds.includes(service.id);
 									return (
 										<label
@@ -142,7 +129,7 @@ export function StaffForm({
 						>
 							Cancelar
 						</Button>
-						<Button type="submit" disabled={!name || !email}>
+						<Button type="submit" disabled={!name}>
 							{mode === 'create' ? 'Crear' : 'Guardar'}
 						</Button>
 					</div>
@@ -151,4 +138,3 @@ export function StaffForm({
 		</Dialog>
 	);
 }
-

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import ServiceForm from '@/modules/services/ServiceForm';
 import ServicesTable from '@/modules/services/ServiceTable';
-import { servicesService } from '@/services/services.service';
+import { servicesService } from '@/services/services/services.service';
 import type { Service } from '@/types/services.types';
 
 const ServicesPage = () => {

@@ -1,25 +1,29 @@
 import { axiosInstance } from '@/lib/axios';
-import type { StaffMember, CreateStaffDto, UpdateStaffDto } from '@/types/staff.types';
+import type {
+	StaffMember,
+	CreateStaffDto,
+	UpdateStaffDto,
+} from '@/types/staff.types';
 
 class StaffService {
 	async getAll(): Promise<StaffMember[]> {
-		const response = await axiosInstance.get('/staff');
-		return response.data;
+		const { data } = await axiosInstance.get('/staff');
+		return data;
 	}
 
 	async getById(id: string): Promise<StaffMember> {
-		const response = await axiosInstance.get(`/staff/${id}`);
-		return response.data;
+		const { data } = await axiosInstance.get(`/staff/${id}`);
+		return data;
 	}
 
 	async create(staffData: CreateStaffDto): Promise<StaffMember> {
-		const response = await axiosInstance.post('/staff', staffData);
-		return response.data;
+		const { data } = await axiosInstance.post('/staff', staffData);
+		return data;
 	}
 
 	async update(id: string, staffData: UpdateStaffDto): Promise<StaffMember> {
-		const response = await axiosInstance.patch(`/staff/${id}`, staffData);
-		return response.data;
+		const { data } = await axiosInstance.patch(`/staff/${id}`, staffData);
+		return data;
 	}
 
 	async delete(id: string): Promise<void> {
