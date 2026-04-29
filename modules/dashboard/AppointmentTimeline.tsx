@@ -4,7 +4,8 @@ import { AppointmentCard } from './AppointmentCard';
 interface Appointment {
 	id: string;
 	clientName: string;
-	time: Date;
+	timeLabel: string;
+	sortKey: number;
 	service: string;
 	barber: string;
 	status: AppointmentStatus;
@@ -26,9 +27,9 @@ const AppointmentTimeline = ({ appointments }: Props) => {
 		);
 	}
 
-	// Sort by time
+	// Sort by time (latest first)
 	const sorted = [...appointments].sort(
-		(a, b) => a.time.getTime() - b.time.getTime(),
+		(a, b) => (b.sortKey ?? 0) - (a.sortKey ?? 0),
 	);
 
 	return (
@@ -37,7 +38,7 @@ const AppointmentTimeline = ({ appointments }: Props) => {
 				<AppointmentCard
 					key={appointment.id}
 					id={appointment.id}
-					time={appointment.time}
+					timeLabel={appointment.timeLabel}
 					clientName={appointment.clientName}
 					service={appointment.service}
 					barber={appointment.barber}

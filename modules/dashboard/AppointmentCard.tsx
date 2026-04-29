@@ -8,7 +8,7 @@ import { AppointmentStatus } from '@/types/appointments.types';
 
 interface AppointmentCardProps {
 	id: string;
-	time: Date;
+	timeLabel: string;
 	clientName: string;
 	service: string;
 	barber: string;
@@ -16,19 +16,29 @@ interface AppointmentCardProps {
 	duration: number;
 }
 
+const toAmPm = (timeLabel: string): string => {
+	const parts = timeLabel.split(',').map((p) => p.trim());
+	const time24h = parts.length >= 2 ? parts[1] : timeLabel.trim();
+	const match = time24h.match(/^(\d{1,2}):(\d{2})$/);
+	if (!match) return time24h;
+	const hours24 = Number(match[1]);
+	const minutes = match[2];
+	if (!Number.isFinite(hours24)) return time24h;
+	const suffix = hours24 >= 12 ? 'PM' : 'AM';
+	const hours12 = ((hours24 + 11) % 12) + 1;
+	return `${String(hours12).padStart(2, '0')}:${minutes} ${suffix}`;
+};
+
 export function AppointmentCard({
-	time,
+	timeLabel,
 	clientName,
 	service,
 	barber,
 	status,
 	duration,
 }: AppointmentCardProps) {
-	const colors = STATUS_COLORS[status];
-	const timeStr = time.toLocaleTimeString('en-US', {
-		hour: '2-digit',
-		minute: '2-digit',
-	});
+	const colors = STATUS_COLORS[status] ?? STATUS_COLORS.booked;
+	const timeStr = toAmPm(timeLabel);
 
 	return (
 		<div className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">

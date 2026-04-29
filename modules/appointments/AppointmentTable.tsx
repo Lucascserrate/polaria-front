@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	Select,
 	SelectContent,
@@ -8,51 +8,71 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import DesktopTable from './DesktopTable';
 import MobileCards from './MobileCards';
-import DeleteConfirmationDialog from './DeleteConfirmationDialog';
+import { useInView } from 'react-intersection-observer';
 
 interface Props {
 	appointments: Appointment[];
-	onDelete: (id: string) => void;
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
+	hasMore: boolean;
+	isFetchingNextPage: boolean;
+	onLoadMore: () => void;
+	onFiltersChange: (filters: {
+		search?: string;
+		status?: string;
+		sortBy?: 'date-asc' | 'date-desc';
+	}) => void;
+	filters: {
+		search?: string;
+		status?: string;
+		sortBy?: 'date-asc' | 'date-desc';
+	};
 }
 
 const AppointmentsTable: React.FC<Props> = ({
 	appointments,
-	// onDelete,
 	onStatusChange,
+	hasMore,
+	isFetchingNextPage,
+	onLoadMore,
+	onFiltersChange,
+	filters,
 }) => {
-	const [filterStatus, setFilterStatus] = useState<string>('all');
-	const [sortBy, setSortBy] = useState<'date-asc' | 'date-desc'>('date-asc');
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+	const [localSearch, setLocalSearch] = useState(filters.search || '');
+	const { ref, inView } = useInView({ threshold: 0.2 });
 
-	const filtered = useMemo(() => {
-		let result = appointments;
-		if (filterStatus !== 'all') {
-			result = result.filter((a) => a.status === filterStatus);
-		}
+	const isRequestingRef = useRef(false);
 
-		// Sort
-		result.sort((a, b) => {
-			if (sortBy === 'date-asc') {
-				return a.time.getTime() - b.time.getTime();
-			} else {
-				return b.time.getTime() - a.time.getTime();
+useEffect(() => {
+	if (!inView || !hasMore || isFetchingNextPage) return;
+	if (isRequestingRef.current) return;
+
+	isRequestingRef.current = true;
+
+	onLoadMore();
+
+}, [inView, hasMore, isFetchingNextPage, onLoadMore]);
+
+	useEffect(() => {
+		const timeout = setTimeout(() => {
+			if (localSearch !== filters.search) {
+				onFiltersChange({ ...filters, search: localSearch });
 			}
 		});
 
-		return result;
-	}, [appointments, filterStatus, sortBy]);
+		return () => clearTimeout(timeout);
+	}, [localSearch, filters.search]);
 
-	if (filtered.length === 0) {
-		return (
-			<div className="text-center py-12">
-				<p className="text-muted-foreground">No se encontraron citas</p>
-			</div>
-		);
-	}
+	const handleStatusChange = (status: string) => {
+		onFiltersChange({ ...filters, status });
+	};
+
+	const handleSortChange = (sortBy: 'date-asc' | 'date-desc') => {
+		onFiltersChange({ ...filters, sortBy });
+	};
 
 	return (
 		<div className="space-y-4">
@@ -60,9 +80,19 @@ const AppointmentsTable: React.FC<Props> = ({
 			<div className="flex flex-col md:flex-row gap-4">
 				<div className="flex-1">
 					<label className="text-sm font-medium text-muted-foreground">
+						Buscar por nombre, barbero o servicio
+					</label>
+					<Input
+						placeholder="Buscar..."
+						value={localSearch}
+						onChange={(e) => setLocalSearch(e.target.value)}
+					/>
+				</div>
+				<div className="flex-1">
+					<label className="text-sm font-medium text-muted-foreground">
 						Filtrar por Estado
 					</label>
-					<Select value={filterStatus} onValueChange={setFilterStatus}>
+					<Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
 						<SelectTrigger>
 							<SelectValue />
 						</SelectTrigger>
@@ -71,6 +101,7 @@ const AppointmentsTable: React.FC<Props> = ({
 							<SelectItem value="confirmed">Confirmada</SelectItem>
 							<SelectItem value="completed">Completada</SelectItem>
 							<SelectItem value="cancelled">Cancelada</SelectItem>
+							<SelectItem value="pending">Pendiente</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>
@@ -79,8 +110,8 @@ const AppointmentsTable: React.FC<Props> = ({
 						Ordenar por Fecha
 					</label>
 					<Select
-						value={sortBy}
-						onValueChange={(v: 'date-asc' | 'date-desc') => setSortBy(v)}
+						value={filters.sortBy || 'date-asc'}
+						onValueChange={(v: 'date-asc' | 'date-desc') => handleSortChange(v)}
 					>
 						<SelectTrigger>
 							<SelectValue />
@@ -93,22 +124,24 @@ const AppointmentsTable: React.FC<Props> = ({
 				</div>
 			</div>
 
-			<DesktopTable
-				filtered={filtered}
-				setDeleteDialogOpen={setDeleteDialogOpen}
-				onStatusChange={onStatusChange}
-			/>
-
-			<MobileCards
-				filtered={filtered}
-				setDeleteDialogOpen={setDeleteDialogOpen}
-				onStatusChange={onStatusChange}
-			/>
-
-			<DeleteConfirmationDialog
-				open={deleteDialogOpen}
-				setOpen={setDeleteDialogOpen}
-			/>
+			<div className="max-h-[60vh] overflow-y-auto">
+				{appointments.length === 0 ? (
+					<div className="text-center py-12">
+						<p className="text-muted-foreground">No se encontraron citas</p>
+					</div>
+				) : (
+					<>
+						<DesktopTable
+							filtered={appointments}
+							onStatusChange={onStatusChange}
+							hasMore={hasMore}
+							isFetchingNextPage={isFetchingNextPage}
+							loadMoreRef={ref}
+						/>
+						<MobileCards filtered={appointments} onStatusChange={onStatusChange} />
+					</>
+				)}
+			</div>
 		</div>
 	);
 };

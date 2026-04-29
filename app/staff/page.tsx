@@ -1,56 +1,87 @@
 'use client';
 
 import { useState } from 'react';
-import { MOCK_STAFF } from '@/lib/mocks';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { StaffForm } from '@/modules/staff/StaffForm';
 import StaffTable from '@/modules/staff/StaffTable';
-
-interface StaffMember {
-	id: string;
-	name: string;
-	active: boolean;
-	services: string[];
-}
+import { staffService } from '@/services/staff.service';
+import type { StaffMember } from '@/types/staff.types';
 
 export default function StaffPage() {
-	const [staff, setStaff] = useState<StaffMember[]>(MOCK_STAFF);
+	const [staff, setStaff] = useState<StaffMember[]>([]);
 
-	const handleToggleActive = (id: string) => {
-		setStaff(staff.map((s) => (s.id === id ? { ...s, active: !s.active } : s)));
+	const [formOpen, setFormOpen] = useState(false);
+	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+
+	const handleToggleActive = async (id: string) => {
+		try {
+			const currentStaff = staff.find((s) => s.id === id);
+			if (!currentStaff) return;
+			const updatedStaff = await staffService.update(id, {
+				isActive: !currentStaff.isActive,
+			});
+			setStaff(staff.map((s) => (s.id === id ? updatedStaff : s)));
+		} catch (error) {
+			console.error('Error toggling staff active status:', error);
+		}
 	};
 
-	const handleDelete = (id: string) => {
-		setStaff(staff.filter((s) => s.id !== id));
+	const handleOpenCreate = () => {
+		setEditingStaff(null);
+		setFormOpen(true);
 	};
 
-	const handleAddStaff = (newMember: { name: string; services: string[] }) => {
-		const member: StaffMember = {
-			id: String(Math.max(...staff.map((s) => parseInt(s.id)), 0) + 1),
-			name: newMember.name,
-			active: true,
-			services: newMember.services,
-		};
-		setStaff([...staff, member]);
+	const handleOpenEdit = (member: StaffMember) => {
+		setEditingStaff(member);
+		setFormOpen(true);
 	};
 
-	const activeCount = staff.filter((s) => s.active).length;
+	const handleUpsert = async (data: {
+		name: string;
+		serviceIds?: string[];
+	}) => {
+		try {
+			if (editingStaff) {
+				const updated = await staffService.update(editingStaff.id, data);
+				setStaff(staff.map((s) => (s.id === editingStaff.id ? updated : s)));
+				return;
+			}
+
+			const created = await staffService.create({ ...data, isActive: true });
+			setStaff([...staff, created]);
+		} catch (error) {
+			console.error('Error saving staff:', error);
+		}
+	};
+
+	const activeCount = staff.filter((s) => s.isActive).length;
+
+	/* 	if (loading) {
+		return (
+			<div className="flex items-center justify-center h-64">
+				<div className="text-lg">Cargando personal...</div>
+			</div>
+		);
+	} */
 
 	return (
 		<div className="space-y-6">
-			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-3xl font-bold tracking-tight">
 						Gestión del personal
 					</h1>
 					<p className="text-muted-foreground mt-1">
-						Administra el personal y los servicios de tu barbería
+						Administra el personal y los servicios que puede realizar
 					</p>
 				</div>
-				<StaffForm onAddStaff={handleAddStaff} />
+				<Button onClick={handleOpenCreate} className="gap-2">
+					<Plus className="w-4 h-4" />
+					Agregar personal
+				</Button>
 			</div>
 
-			{/* Stats */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Personal total</p>
@@ -70,15 +101,30 @@ export default function StaffPage() {
 				</div>
 			</div>
 
-			{/* Table */}
 			<div className="bg-card border border-border rounded-lg p-6">
 				<StaffTable
 					staff={staff}
 					onToggleActive={handleToggleActive}
-					onDelete={handleDelete}
+					onEdit={handleOpenEdit}
 					onAddClick={() => {}}
 				/>
 			</div>
+
+			<StaffForm
+				key={editingStaff?.id ?? 'create'}
+				open={formOpen}
+				onOpenChange={(next) => {
+					setFormOpen(next);
+					if (!next) setEditingStaff(null);
+				}}
+				initialStaff={editingStaff}
+				onSubmit={(payload) =>
+					handleUpsert({
+						name: payload.name ?? '',
+						serviceIds: payload.serviceIds,
+					})
+				}
+			/>
 		</div>
 	);
 }
