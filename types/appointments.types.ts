@@ -7,10 +7,10 @@ export type AppointmentStatus =
 
 export interface AppointmentApi {
 	id: string;
-	startTime: string;
-	endTime: string;
-	startTimeFormatted?: string;
-	endTimeFormatted?: string;
+	startTime?: string;
+	endTime?: string;
+	startTimeFormatted: string;
+	endTimeFormatted: string;
 	status: AppointmentStatus;
 	clientName?: string;
 	staffName?: string;
@@ -51,7 +51,8 @@ export interface AppointmentApiToday {
 export interface Appointment {
 	id: string;
 	clientName: string;
-	time: Date;
+	timeLabel: string;
+	sortKey: number;
 	service: string;
 	barber: string;
 	status: AppointmentStatus;

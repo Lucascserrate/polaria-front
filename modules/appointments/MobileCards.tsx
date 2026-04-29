@@ -1,6 +1,5 @@
 import { Badge } from '@/components/ui/badge';
 import { STATUS_COLORS } from '@/modules/appointments/utils/constants';
-import { formatDateTime } from '@/lib/date-utils';
 import { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import {
 	Select,
@@ -29,7 +28,7 @@ const MobileCards: React.FC<Props> = ({ filtered, onStatusChange }) => {
 							<div>
 								<p className="font-medium">{apt.clientName}</p>
 								<p className="text-sm text-muted-foreground">
-									{formatDateTime(apt.time)}
+									{apt.timeLabel}
 								</p>
 							</div>
 							<Badge className={colors.badge}>{apt.status}</Badge>

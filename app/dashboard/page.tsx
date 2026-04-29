@@ -8,20 +8,27 @@ import type { Appointment, AppointmentApi } from '@/types/appointments.types';
 import { getTodayAppointments } from '@/services/appointments';
 import { getStaff } from '@/services/staff';
 
+const getSortKeyFromFormatted = (formatted: string): number => {
+	const parts = formatted.split(',').map((p) => p.trim());
+	const time = parts.length >= 2 ? parts[1] : formatted.trim();
+	const match = time.match(/^(\d{1,2}):(\d{2})$/);
+	if (!match) return 0;
+	const hours = Number(match[1]);
+	const minutes = Number(match[2]);
+	if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return 0;
+	return hours * 60 + minutes;
+};
+
 const mapAppointment = (apt: AppointmentApi): Appointment => {
-	const startTime = new Date(apt.startTime);
-	const endTime = new Date(apt.endTime);
 	const durationMinutes = Number.isFinite(apt.totalDuration)
 		? Number(apt.totalDuration)
-		: Math.max(
-				0,
-				Math.round((endTime.getTime() - startTime.getTime()) / 60000),
-			);
+		: 0;
 
 	return {
 		id: apt.id,
 		clientName: apt.clientName ?? 'Sin cliente',
-		time: startTime,
+		timeLabel: apt.startTimeFormatted,
+		sortKey: getSortKeyFromFormatted(apt.startTimeFormatted),
 		service: (apt.serviceNames ?? []).join(', ') || 'Sin servicio',
 		barber: apt.staffName ?? 'Sin barbero',
 		status: apt.status,

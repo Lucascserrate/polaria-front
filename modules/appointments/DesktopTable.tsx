@@ -7,7 +7,6 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { STATUS_COLORS } from './utils/constants';
-import { formatDateTime } from '@/lib/date-utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SquarePen } from 'lucide-react';
@@ -53,7 +52,7 @@ const DesktopTable: React.FC<Props> = ({
 						return (
 							<TableRow key={apt.id}>
 								<TableCell className="font-medium">{apt.clientName}</TableCell>
-								<TableCell>{formatDateTime(apt.time)}</TableCell>
+								<TableCell>{apt.timeLabel}</TableCell>
 								<TableCell>{apt.service}</TableCell>
 								<TableCell>{apt.barber}</TableCell>
 								<TableCell>{apt.duration}min</TableCell>
