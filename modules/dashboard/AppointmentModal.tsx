@@ -80,6 +80,33 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 		loadStaff();
 	}, [open]);
 
+	const parseTimeToHoursMinutes = (value: string): { hours: number; minutes: number } | null => {
+		const raw = value.trim();
+
+		const match12h = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+		if (match12h) {
+			let hours = Number(match12h[1]);
+			const minutes = Number(match12h[2]);
+			const ampm = match12h[3].toUpperCase();
+			if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+			if (hours < 1 || hours > 12 || minutes < 0 || minutes > 59) return null;
+			if (ampm === 'PM' && hours !== 12) hours += 12;
+			if (ampm === 'AM' && hours === 12) hours = 0;
+			return { hours, minutes };
+		}
+
+		const match24h = raw.match(/^(\d{1,2}):(\d{2})$/);
+		if (match24h) {
+			const hours = Number(match24h[1]);
+			const minutes = Number(match24h[2]);
+			if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+			if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+			return { hours, minutes };
+		}
+
+		return null;
+	};
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		setSubmitError(null);
@@ -97,10 +124,20 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 			return;
 		}
 
-		const [hours, minutes] = formData.time.split(':').map(Number);
+		const parsed = parseTimeToHoursMinutes(formData.time);
+		if (!parsed) {
+			setSubmitError('Hora inválida. Usa formato 16:00 o 04:00 PM');
+			return;
+		}
+		const { hours, minutes } = parsed;
 		const appointmentTime = new Date();
 		appointmentTime.setHours(hours, minutes, 0, 0);
-		const totalMinutes = services.reduce(
+		const timeLabel = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+		const sortKey = hours * 60 + minutes;
+		const selectedServices = services.filter((s) =>
+			formData.serviceIds.includes(s.id),
+		);
+		const totalMinutes = selectedServices.reduce(
 			(sum, s) => sum + s.durationMinutes,
 			0,
 		);
@@ -129,12 +166,13 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 				});
 
 				const staffMember = staff.find((s) => s.name === created.staffName);
-				const serviceNames = services.map((s) => s.name).join(', ');
+				const serviceNames = selectedServices.map((s) => s.name).join(', ');
 
 				onAddAppointment({
 					id: created.id,
 					clientName: formData.clientName,
-					time: appointmentTime,
+					timeLabel,
+					sortKey,
 					service: serviceNames || 'Sin servicio',
 					barber: staffMember?.name ?? 'Sin barbero',
 					status: created.status,

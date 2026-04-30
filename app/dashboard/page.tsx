@@ -7,17 +7,7 @@ import { SummaryCard } from '@/modules/dashboard/SummaryCard';
 import type { Appointment, AppointmentApi } from '@/types/appointments.types';
 import { getTodayAppointments } from '@/services/appointments';
 import { getStaff } from '@/services/staff';
-
-const getSortKeyFromFormatted = (formatted: string): number => {
-	const parts = formatted.split(',').map((p) => p.trim());
-	const time = parts.length >= 2 ? parts[1] : formatted.trim();
-	const match = time.match(/^(\d{1,2}):(\d{2})$/);
-	if (!match) return 0;
-	const hours = Number(match[1]);
-	const minutes = Number(match[2]);
-	if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return 0;
-	return hours * 60 + minutes;
-};
+import { getSortKeyFromFormatted } from '@/modules/appointments/utils/time';
 
 const mapAppointment = (apt: AppointmentApi): Appointment => {
 	const durationMinutes = Number.isFinite(apt.totalDuration)
