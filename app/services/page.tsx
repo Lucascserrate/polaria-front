@@ -1,37 +1,32 @@
 'use client';
 
-import { useState } from 'react';
-import { MOCK_SERVICES } from '@/lib/mocks';
-import ServiceForm from '@/modules/services/ServiceForm';
-import ServicesTable from '@/modules/services/ServiceTable';
-
-interface Service {
-	id: string;
-	name: string;
-	durationMinutes: number;
-	price: number;
-}
+import ServiceForm from '@/modules/services/components/ServiceForm';
+import ServicesTable from '@/modules/services/components/ServiceTable';
+import { useServices } from '@/modules/services/hooks/useServices';
 
 const ServicesPage = () => {
-	const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
+	const {
+		services,
+		loading,
+		stats,
+		addOpen,
+		setAddOpen,
+		editOpen,
+		editingService,
+		openEdit,
+		closeEdit,
+		createService,
+		updateService,
+		toggleActive,
+	} = useServices();
 
-	const handleDelete = (id: string) => {
-		setServices(services.filter((s) => s.id !== id));
-	};
-
-	const handleAddService = (newService: {
-		name: string;
-		durationMinutes: number;
-		price: number;
-	}) => {
-		const service: Service = {
-			id: String(Math.max(...services.map((s) => parseInt(s.id)), 0) + 1),
-			name: newService.name,
-			durationMinutes: newService.durationMinutes,
-			price: newService.price,
-		};
-		setServices([...services, service]);
-	};
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center h-64">
+				<div className="text-lg">Cargando servicios...</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -45,7 +40,11 @@ const ServicesPage = () => {
 						Gestiona los servicios y precios de tu barbería
 					</p>
 				</div>
-				<ServiceForm onAddService={handleAddService} />
+				<ServiceForm
+					onSubmit={createService}
+					open={addOpen}
+					onOpenChange={setAddOpen}
+				/>
 			</div>
 
 			{/* Stats */}
@@ -55,27 +54,13 @@ const ServicesPage = () => {
 					<p className="text-2xl font-bold mt-1">{services.length}</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Duración Promedio</p>
-					<p className="text-2xl font-bold mt-1">
-						{services.length > 0
-							? Math.round(
-									services.reduce((sum, s) => sum + s.durationMinutes, 0) /
-										services.length,
-								)
-							: 0}{' '}
-						min
-					</p>
+					<p className="text-sm text-muted-foreground">Duracion Promedio</p>
+					<p className="text-2xl font-bold mt-1">{stats.averageDuration} min</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Precio Promedio</p>
 					<p className="text-2xl font-bold mt-1">
-						BOB{' '}
-						{services.length > 0
-							? (
-									services.reduce((sum, s) => sum + s.price, 0) /
-									services.length
-								).toFixed(2)
-							: '0.00'}
+						BOB {stats.averagePrice.toFixed(2)}
 					</p>
 				</div>
 			</div>
@@ -84,10 +69,24 @@ const ServicesPage = () => {
 			<div className="bg-card border border-border rounded-lg p-6">
 				<ServicesTable
 					services={services}
-					onDelete={handleDelete}
-					onAddClick={() => {}}
+					onToggleActive={toggleActive}
+					onEdit={openEdit}
+					onAddClick={() => setAddOpen(true)}
 				/>
 			</div>
+
+			<ServiceForm
+				showTrigger={false}
+				onSubmit={updateService}
+				initialValues={editingService ?? undefined}
+				title="Editar Servicio"
+				description="Actualiza los datos del servicio"
+				submitLabel="Guardar cambios"
+				open={editOpen}
+				onOpenChange={(open) => {
+					if (!open) closeEdit();
+				}}
+			/>
 		</div>
 	);
 };

@@ -4,11 +4,12 @@ import {
 	getAppointmentStatusText,
 	STATUS_COLORS,
 } from '@/modules/appointments/utils/constants';
+import { toAmPm } from '@/modules/appointments/utils/time';
 import { AppointmentStatus } from '@/types/appointments.types';
 
 interface AppointmentCardProps {
 	id: string;
-	time: Date;
+	timeLabel: string;
 	clientName: string;
 	service: string;
 	barber: string;
@@ -17,18 +18,15 @@ interface AppointmentCardProps {
 }
 
 export function AppointmentCard({
-	time,
+	timeLabel,
 	clientName,
 	service,
 	barber,
 	status,
 	duration,
 }: AppointmentCardProps) {
-	const colors = STATUS_COLORS[status];
-	const timeStr = time.toLocaleTimeString('en-US', {
-		hour: '2-digit',
-		minute: '2-digit',
-	});
+	const colors = STATUS_COLORS[status] ?? STATUS_COLORS.booked;
+	const timeStr = toAmPm(timeLabel);
 
 	return (
 		<div className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">

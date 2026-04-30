@@ -1,33 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { MOCK_APPOINTMENTS } from '@/lib/mocks';
 import AppointmentTimeline from '@/modules/dashboard/AppointmentTimeline';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
 import { SummaryCard } from '@/modules/dashboard/SummaryCard';
+import { useDashboard } from '@/modules/dashboard/hooks/useDashboard';
 
 const DashboardPage = () => {
-	const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
-
-	// Get today's appointments
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
-
-	const tomorrow = new Date(today);
-	tomorrow.setDate(tomorrow.getDate() + 1);
-
-	const todayAppointments = appointments.filter((a) => {
-		const apptDate = new Date(a.time);
-		apptDate.setHours(0, 0, 0, 0);
-		return apptDate.getTime() === today.getTime();
-	});
-
-	const confirmedCount = todayAppointments.filter(
-		(a) => a.status === 'confirmed',
-	).length;
-	const completedCount = todayAppointments.filter(
-		(a) => a.status === 'completed',
-	).length;
+	const {
+		todayAppointments,
+		totalToday,
+		revenueToday,
+		activeStaffCount,
+		confirmedCount,
+		completedCount,
+		addAppointment,
+	} = useDashboard();
 
 	return (
 		<div className="space-y-6">
@@ -44,7 +31,7 @@ const DashboardPage = () => {
 			{/* Summary Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<SummaryCard
-					count={todayAppointments.length}
+					count={totalToday}
 					confirmed={confirmedCount}
 					completed={completedCount}
 				/>
@@ -52,7 +39,7 @@ const DashboardPage = () => {
 					<div className="text-sm font-medium text-muted-foreground">
 						Staff activo
 					</div>
-					<div className="text-3xl font-bold mt-2">2</div>
+					<div className="text-3xl font-bold mt-2">{activeStaffCount}</div>
 					<p className="text-xs text-muted-foreground mt-2">
 						Miembros del staff trabajando hoy
 					</p>
@@ -61,7 +48,9 @@ const DashboardPage = () => {
 					<div className="text-sm font-medium text-muted-foreground">
 						Ingresos de hoy
 					</div>
-					<div className="text-3xl font-bold mt-2">BOB 450</div>
+					<div className="text-3xl font-bold mt-2">
+						BOB {Math.round(revenueToday)}
+					</div>
 					<p className="text-xs text-muted-foreground mt-2">
 						Estimado según las citas
 					</p>
@@ -73,7 +62,7 @@ const DashboardPage = () => {
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="text-xl font-semibold">Agenda de hoy</h2>
 					<AppointmentModal
-						onAddAppointment={(apt) => setAppointments([...appointments, apt])}
+						onAddAppointment={addAppointment}
 					/>
 				</div>
 

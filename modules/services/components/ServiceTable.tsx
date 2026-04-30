@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2, Plus } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	Table,
@@ -10,21 +10,21 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-
-interface Service {
-	id: string;
-	name: string;
-	durationMinutes: number;
-	price: number;
-}
+import type { Service } from '@/types/services.types';
 
 interface Props {
 	services: Service[];
-	onDelete: (id: string) => void;
+	onToggleActive: (id: string) => void | Promise<void>;
+	onEdit: (service: Service) => void;
 	onAddClick: () => void;
 }
 
-const ServicesTable: React.FC<Props> = ({ services, onDelete, onAddClick }) => {
+const ServicesTable: React.FC<Props> = ({
+	services,
+	onToggleActive,
+	onEdit,
+	onAddClick,
+}) => {
 	if (services.length === 0) {
 		return (
 			<div className="text-center py-12">
@@ -47,7 +47,7 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onAddClick }) => {
 					<TableHeader>
 						<TableRow>
 							<TableHead>Nombre del Servicio</TableHead>
-							<TableHead>Duración</TableHead>
+							<TableHead>Duracion</TableHead>
 							<TableHead>Precio</TableHead>
 							<TableHead className="text-right">Acciones</TableHead>
 						</TableRow>
@@ -57,15 +57,27 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onAddClick }) => {
 							<TableRow key={service.id}>
 								<TableCell className="font-medium">{service.name}</TableCell>
 								<TableCell>{service.durationMinutes} minutos</TableCell>
-								<TableCell>${service.price.toFixed(2)}</TableCell>
+								<TableCell>${Number(service.price).toFixed(2)}</TableCell>
 								<TableCell className="text-right">
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={() => onDelete(service.id)}
-									>
-										<Trash2 className="w-4 h-4 text-destructive" />
-									</Button>
+									<div className="flex items-center justify-end gap-2">
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => onEdit(service)}
+											className="h-8 w-8 p-0"
+										>
+											<Pencil className="w-4 h-4" />
+										</Button>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => onToggleActive(service.id)}
+											title={(service.isActive ?? true) ? 'Deshabilitar' : 'Activar'}
+											className="h-8 w-[120px] justify-center whitespace-nowrap"
+										>
+											{service.isActive ?? true ? 'Deshabilitar' : 'Activar'}
+										</Button>
+									</div>
 								</TableCell>
 							</TableRow>
 						))}
@@ -87,16 +99,27 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onAddClick }) => {
 									{service.durationMinutes} minutos
 								</p>
 								<p className="text-sm font-semibold mt-1">
-									${service.price.toFixed(2)}
+									${Number(service.price).toFixed(2)}
 								</p>
 							</div>
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => onDelete(service.id)}
-							>
-								<Trash2 className="w-4 h-4 text-destructive" />
-							</Button>
+							<div className="flex items-center gap-2">
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => onEdit(service)}
+									className="h-8 w-8 p-0"
+								>
+									<Pencil className="w-4 h-4" />
+								</Button>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => onToggleActive(service.id)}
+									className="h-8 w-[120px] justify-center whitespace-nowrap"
+								>
+									{service.isActive ?? true ? 'Deshabilitar' : 'Activar'}
+								</Button>
+							</div>
 						</div>
 					</div>
 				))}

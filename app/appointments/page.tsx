@@ -1,23 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-import { MOCK_APPOINTMENTS } from '@/lib/mocks';
 import AppointmentsTable from '@/modules/appointments/AppointmentTable';
-import AppointmentModal from '@/modules/dashboard/AppointmentModal';
-import { AppointmentStatus } from '@/types/appointments.types';
+import { useAppointments } from '@/modules/appointments/hooks/useAppointments';
 
 const AppointmentsPage = () => {
-	const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
-
-	const handleDelete = (id: string) => {
-		setAppointments(appointments.filter((a) => a.id !== id));
-	};
-
-	const handleStatusChange = (id: string, status: AppointmentStatus) => {
-		setAppointments(
-			appointments?.map((a) => (a.id === id ? { ...a, status } : a)),
-		);
-	};
+	const {
+		appointments,
+		loading,
+		loadingMore,
+		isRefetching,
+		hasMore,
+		stats,
+		filters,
+		loadMore,
+		changeFilters,
+		changeStatus,
+	} = useAppointments();
 
 	return (
 		<div className="space-y-6">
@@ -29,44 +27,57 @@ const AppointmentsPage = () => {
 						Visualiza y gestiona todas tus citas programadas
 					</p>
 				</div>
-				<AppointmentModal
-					onAddAppointment={(apt) => setAppointments([...appointments, apt])}
-				/>
 			</div>
 
 			{/* Stats */}
 			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Total de Citas</p>
-					<p className="text-2xl font-bold mt-1">{appointments.length}</p>
+					<p className="text-2xl font-bold mt-1">{stats.total}</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Confirmadas</p>
 					<p className="text-2xl font-bold mt-1 text-blue-600">
-						{appointments.filter((a) => a.status === 'confirmed').length}
+						{stats.confirmed}
 					</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Completadas</p>
 					<p className="text-2xl font-bold mt-1 text-green-600">
-						{appointments.filter((a) => a.status === 'completed').length}
+						{stats.completed}
 					</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-4">
 					<p className="text-sm text-muted-foreground">Canceladas</p>
 					<p className="text-2xl font-bold mt-1 text-red-600">
-						{appointments.filter((a) => a.status === 'cancelled').length}
+						{stats.cancelled}
 					</p>
 				</div>
 			</div>
 
 			{/* Table */}
-			<div className="bg-card border border-border rounded-lg p-6">
-				<AppointmentsTable
-					appointments={appointments}
-					onDelete={handleDelete}
-					onStatusChange={handleStatusChange}
-				/>
+			<div className="bg-card border border-border rounded-lg p-6 max-h-screen overflow-y-auto relative">
+				{isRefetching && (
+					<div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-md z-10">
+						Actualizando...
+					</div>
+				)}
+				
+				{loading && appointments.length === 0 ? (
+					<div className="text-center text-muted-foreground">
+						Cargando citas...
+					</div>
+				) : (
+					<AppointmentsTable
+						appointments={appointments}
+						onStatusChange={changeStatus}
+						hasMore={hasMore}
+						isFetchingNextPage={loadingMore}
+						onLoadMore={loadMore}
+						onFiltersChange={changeFilters}
+						filters={filters}
+					/>
+				)}
 			</div>
 		</div>
 	);
