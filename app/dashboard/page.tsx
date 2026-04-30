@@ -1,84 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import AppointmentTimeline from '@/modules/dashboard/AppointmentTimeline';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
 import { SummaryCard } from '@/modules/dashboard/SummaryCard';
-import type { Appointment, AppointmentApi } from '@/types/appointments.types';
-import { getTodayAppointments } from '@/services/appointments';
-import { getStaff } from '@/services/staff';
-import { getSortKeyFromFormatted } from '@/modules/appointments/utils/time';
-
-const mapAppointment = (apt: AppointmentApi): Appointment => {
-	const durationMinutes = Number.isFinite(apt.totalDuration)
-		? Number(apt.totalDuration)
-		: 0;
-
-	return {
-		id: apt.id,
-		clientName: apt.clientName ?? 'Sin cliente',
-		timeLabel: apt.startTimeFormatted,
-		sortKey: getSortKeyFromFormatted(apt.startTimeFormatted),
-		service: (apt.serviceNames ?? []).join(', ') || 'Sin servicio',
-		barber: apt.staffName ?? 'Sin barbero',
-		status: apt.status,
-		duration: durationMinutes,
-	};
-};
+import { useDashboard } from '@/modules/dashboard/hooks/useDashboard';
 
 const DashboardPage = () => {
-	const [appointments, setAppointments] = useState<Appointment[]>([]);
-	const [totalToday, setTotalToday] = useState(0);
-	const [revenueToday, setRevenueToday] = useState(0);
-	const [activeStaffCount, setActiveStaffCount] = useState(0);
-	const [counts, setCounts] = useState({
-		pending: 0,
-		booked: 0,
-		confirmed: 0,
-		completed: 0,
-		cancelled: 0,
-	});
-
-	useEffect(() => {
-		const loadToday = async () => {
-			try {
-				const data = await getTodayAppointments();
-				setAppointments(data.items.map(mapAppointment));
-				setTotalToday(data.total ?? 0);
-				setRevenueToday(data.revenueTotal ?? 0);
-				setCounts(
-					data.counts ?? {
-						pending: 0,
-						booked: 0,
-						confirmed: 0,
-						completed: 0,
-						cancelled: 0,
-					},
-				);
-			} catch (error) {
-				console.error('Error loading today appointments:', error);
-			}
-		};
-
-		loadToday();
-	}, []);
-
-	useEffect(() => {
-		const loadStaff = async () => {
-			try {
-				const data = await getStaff();
-				setActiveStaffCount(data.filter((s) => s.isActive).length);
-			} catch (error) {
-				console.error('Error loading staff:', error);
-			}
-		};
-
-		loadStaff();
-	}, []);
-
-	const todayAppointments = useMemo(() => appointments, [appointments]);
-	const confirmedCount = counts.confirmed;
-	const completedCount = counts.completed;
+	const {
+		todayAppointments,
+		totalToday,
+		revenueToday,
+		activeStaffCount,
+		confirmedCount,
+		completedCount,
+		addAppointment,
+	} = useDashboard();
 
 	return (
 		<div className="space-y-6">
@@ -126,7 +62,7 @@ const DashboardPage = () => {
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="text-xl font-semibold">Agenda de hoy</h2>
 					<AppointmentModal
-						onAddAppointment={(apt) => setAppointments([...appointments, apt])}
+						onAddAppointment={addAppointment}
 					/>
 				</div>
 
