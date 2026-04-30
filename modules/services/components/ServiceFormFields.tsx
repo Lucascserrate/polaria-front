@@ -20,7 +20,7 @@ const ServiceFormFields: React.FC<{
 		description: string;
 	};
 	submitLabel: string;
-	onSubmit: (payload: SubmitPayload) => void;
+	onSubmit: (payload: SubmitPayload) => void | Promise<void>;
 	onClose: () => void;
 }> = ({ defaults, submitLabel, onSubmit, onClose }) => {
 	const [name, setName] = useState(defaults.name);
@@ -34,7 +34,7 @@ const ServiceFormFields: React.FC<{
 		e.preventDefault();
 		if (!name || !duration || !price) return;
 
-		onSubmit({
+		void onSubmit({
 			name,
 			durationMinutes: parseInt(duration),
 			price: parseFloat(price),

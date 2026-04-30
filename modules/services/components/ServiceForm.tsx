@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import type { Service } from '@/types/services.types';
-import ServiceFormFields from '@/modules/services/ServiceFormFields';
+import ServiceFormFields from '@/modules/services/components/ServiceFormFields';
 
 interface Props {
 	onSubmit: (service: {
@@ -20,7 +20,7 @@ interface Props {
 		durationMinutes: number;
 		price: number;
 		description?: string;
-	}) => void;
+	}) => void | Promise<void>;
 	initialValues?: Partial<Service>;
 	title?: string;
 	description?: string;
@@ -36,7 +36,7 @@ const ServiceForm: React.FC<Props> = ({
 	onSubmit,
 	initialValues,
 	title = 'Agregar Nuevo Servicio',
-	description = 'Añade un nuevo servicio al menu de tu barbería',
+	description = 'Añade un nuevo servicio al menú de tu barbería',
 	submitLabel = 'Agregar Servicio',
 	showTrigger = true,
 	triggerLabel = 'Agregar Servicio',
