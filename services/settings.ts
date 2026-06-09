@@ -4,12 +4,14 @@ export type SettingsResponse = {
   polariaName: string;
   workingDays: boolean[];
   openingHours: { from: string; to: string } | null;
+  aiEnabled: boolean;
 };
 
 export type UpdateSettingsPayload = {
   polariaName?: string;
   workingDays?: boolean[];
   openingHours?: { from: string; to: string };
+  aiEnabled?: boolean;
 };
 
 export const getSettings = async (): Promise<SettingsResponse> => {
@@ -17,12 +19,14 @@ export const getSettings = async (): Promise<SettingsResponse> => {
     polariaName: string;
     workingDays: boolean[];
     openingHours: { from: string; to: string } | null;
+    aiEnabled: boolean;
   }>('/settings');
 
   return {
     polariaName: data.polariaName,
     workingDays: data.workingDays,
     openingHours: data.openingHours,
+    aiEnabled: data.aiEnabled,
   };
 };
 
@@ -33,15 +37,18 @@ export const updateSettings = async (
     polariaName: string;
     workingDays: boolean[];
     openingHours: { from: string; to: string } | null;
+    aiEnabled: boolean;
   }>('/settings', {
     polariaName: payload.polariaName,
     workingDays: payload.workingDays,
     openingHours: payload.openingHours,
+    aiEnabled: payload.aiEnabled,
   });
 
   return {
     polariaName: data.polariaName,
     workingDays: data.workingDays,
     openingHours: data.openingHours,
+    aiEnabled: data.aiEnabled,
   };
 };

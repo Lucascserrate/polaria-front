@@ -19,6 +19,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import {
 	WORKING_DAYS,
 	DEFAULT_SETTINGS,
@@ -34,6 +35,7 @@ interface Settings {
 	polariaName: string;
 	workingDays: boolean[];
 	openingHours: { from: string; to: string };
+	aiEnabled: boolean;
 	appointmentSlotDuration: number;
 }
 
@@ -83,6 +85,7 @@ const SettingsForm: React.FC = () => {
 				polariaName: data.polariaName ?? prev.polariaName,
 				workingDays,
 				openingHours,
+				aiEnabled: data.aiEnabled,
 			}));
 		},
 		[fromApiWorkingDays],
@@ -128,6 +131,7 @@ const SettingsForm: React.FC = () => {
 				polariaName: settings.polariaName,
 				workingDays: toApiWorkingDays(settings.workingDays),
 				openingHours: settings.openingHours,
+				aiEnabled: settings.aiEnabled,
 			});
 			applyApiSettings(data);
 			setSaved(true);
@@ -161,6 +165,35 @@ const SettingsForm: React.FC = () => {
 								setSettings({ ...settings, polariaName: e.target.value })
 							}
 							placeholder="Ingresa el nombre de tu barbería"
+						/>
+					</div>
+				</CardContent>
+			</Card>
+
+			{/* AI Availability */}
+			<Card>
+				<CardHeader>
+					<CardTitle>Estado de la IA</CardTitle>
+					<CardDescription>
+						Activa o desactiva las respuestas automáticas del asistente
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="flex items-center justify-between gap-4">
+						<div className="space-y-1">
+							<Label htmlFor="ai-enabled">IA activa</Label>
+							<p className="text-sm text-muted-foreground">
+								Cuando está desactivada, se envía un mensaje automático de
+								ausencia al cliente.
+							</p>
+						</div>
+						<Switch
+							id="ai-enabled"
+							checked={settings.aiEnabled}
+							disabled={loading}
+							onCheckedChange={(checked) =>
+								setSettings({ ...settings, aiEnabled: checked })
+							}
 						/>
 					</div>
 				</CardContent>
