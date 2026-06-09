@@ -13,6 +13,7 @@ const AppointmentsPage = () => {
 		stats,
 		filters,
 		loadMore,
+		refreshAppointments,
 		changeFilters,
 		changeStatus,
 	} = useAppointments();
@@ -68,13 +69,14 @@ const AppointmentsPage = () => {
 						Cargando citas...
 					</div>
 				) : (
-					<AppointmentsTable
-						appointments={appointments}
-						onStatusChange={changeStatus}
-						hasMore={hasMore}
-						isFetchingNextPage={loadingMore}
-						onLoadMore={loadMore}
-						onFiltersChange={changeFilters}
+						<AppointmentsTable
+							appointments={appointments}
+							onStatusChange={changeStatus}
+							onUpdated={refreshAppointments}
+							hasMore={hasMore}
+							isFetchingNextPage={loadingMore}
+							onLoadMore={loadMore}
+							onFiltersChange={changeFilters}
 						filters={filters}
 					/>
 				)}

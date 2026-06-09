@@ -159,6 +159,10 @@ export function useAppointments() {
     }
   }, [hasMore, loadAppointments, loadingMore, page]);
 
+  const refreshAppointments = useCallback(() => {
+    void loadAppointments(1, false, filters);
+  }, [filters, loadAppointments]);
+
   return {
     appointments,
     loading,
@@ -174,6 +178,7 @@ export function useAppointments() {
 
     loadAppointments,
     loadMore,
+    refreshAppointments,
     changeFilters,
     changeStatus,
   };

@@ -6,6 +6,17 @@ import type {
 	AppointmentApiToday,
 } from '@/types/appointments.types';
 
+export type AppointmentDetailApi = AppointmentApi & {
+	startTime?: string;
+	endTime?: string;
+};
+
+export type UpdateAppointmentInput = {
+	startTime?: string;
+	endTime?: string;
+	status?: AppointmentStatus;
+};
+
 export const getAppointments = async (
 	page = 1,
 	limit = 20,
@@ -32,6 +43,21 @@ export const updateAppointmentStatus = async (
 	status: AppointmentStatus,
 ): Promise<AppointmentApi> => {
 	const { data } = await axiosInstance.patch(`/appointments/${id}`, { status });
+	return data;
+};
+
+export const getAppointment = async (
+	id: string,
+): Promise<AppointmentDetailApi> => {
+	const { data } = await axiosInstance.get(`/appointments/${id}`);
+	return data;
+};
+
+export const updateAppointment = async (
+	id: string,
+	input: UpdateAppointmentInput,
+): Promise<AppointmentDetailApi> => {
+	const { data } = await axiosInstance.patch(`/appointments/${id}`, input);
 	return data;
 };
 
