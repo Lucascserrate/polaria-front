@@ -1,10 +1,14 @@
 import { axiosInstance } from '@/lib/axios';
-import type { CreateTenantDto, Tenant, UpdateTenantDto } from '@/types/tenant.types';
+import type {
+	CreateTenantDto,
+	Tenant,
+	UpdateTenantDto,
+} from '@/types/tenant.types';
 
 const DEFAULT_TIMEZONE =
 	(typeof Intl !== 'undefined' &&
 		Intl.DateTimeFormat().resolvedOptions().timeZone) ||
-		'America/La_Paz';
+	'America/La_Paz';
 
 class TenantsService {
 	async getAll(): Promise<Tenant[]> {
@@ -13,7 +17,7 @@ class TenantsService {
 	}
 
 	async create(tenantData: CreateTenantDto): Promise<Tenant> {
-		const payload = {
+		const payload: CreateTenantDto = {
 			...tenantData,
 			timezone: tenantData.timezone || DEFAULT_TIMEZONE,
 		};

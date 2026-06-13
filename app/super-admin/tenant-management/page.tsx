@@ -146,11 +146,11 @@ export default function TenantManagementPage() {
 			</div>
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between">
-					<CardTitle>Tenants</CardTitle>
+					<CardTitle>Negocios</CardTitle>
 
 					<Button onClick={handleOpenCreate} className="gap-2">
 						<Plus className="h-4 w-4" />
-						Crear Tenant
+						Crear negocio
 					</Button>
 				</CardHeader>
 

@@ -36,11 +36,11 @@ export function TenantTable({
 		return (
 			<div className="text-center py-12">
 				<p className="text-muted-foreground mb-4">
-					No hay tenants registrados todavía
+					No hay negocios registrados todavía
 				</p>
 				<Button onClick={onAddClick}>
 					<Plus className="w-4 h-4 mr-2" />
-					Crear Tenant
+					Crear negocio
 				</Button>
 			</div>
 		);

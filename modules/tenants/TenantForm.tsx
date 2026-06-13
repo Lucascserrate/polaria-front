@@ -45,15 +45,15 @@ export function TenantForm({
 	initialTenant,
 	onSubmit,
 }: TenantFormProps) {
-	const [businessName, setBusinessName] = useState(
-		() => initialTenant?.name ?? '',
+	const mode = initialTenant ? 'edit' : 'create';
+
+	const [name, setName] = useState(() => initialTenant?.name ?? '');
+	const [email, setEmail] = useState(() => initialTenant?.email ?? '');
+	const [tenantNumber, setTenantNumber] = useState(
+		() => initialTenant?.whatsappPhoneNumber ?? '',
 	);
 	const [businessType, setBusinessType] = useState(
 		() => initialTenant?.businessType ?? '',
-	);
-	const [email, setEmail] = useState(() => initialTenant?.email ?? '');
-	const [phone, setPhone] = useState(
-		() => initialTenant?.whatsappPhoneNumber ?? '',
 	);
 	const [whatsappPhoneId, setWhatsappPhoneId] = useState(
 		() => initialTenant?.whatsappPhoneId ?? '',
@@ -75,18 +75,18 @@ export function TenantForm({
 	const validate = () => {
 		const nextErrors: Record<string, string> = {};
 
-		if (!businessName.trim()) {
-			nextErrors.businessName = 'El nombre del negocio es obligatorio.';
+		if (!name.trim()) {
+			nextErrors.name = 'El nombre del tenant es obligatorio.';
+		}
+
+		if (!tenantNumber.trim()) {
+			nextErrors.tenantNumber = 'El número del tenant es obligatorio.';
 		}
 
 		if (!email.trim()) {
-			nextErrors.email = 'El correo es obligatorio.';
+			nextErrors.email = 'El correo electrónico es obligatorio.';
 		} else if (!isValidEmail(email)) {
 			nextErrors.email = 'Ingresa un correo válido.';
-		}
-
-		if (!phone.trim()) {
-			nextErrors.phone = 'El número de WhatsApp es obligatorio.';
 		}
 
 		setErrors(nextErrors);
@@ -97,66 +97,72 @@ export function TenantForm({
 		event.preventDefault();
 		if (!validate()) return;
 
-		onSubmit({
-			name: businessName.trim(),
-			businessType: businessType.trim() || undefined,
-			email: email.trim(),
-			whatsappPhoneNumber: phone.trim(),
-			whatsappPhoneId: whatsappPhoneId.trim() || undefined,
-			whatsappAccessToken: whatsappAccessToken.trim() || undefined,
-			timezone: timezone.trim() || undefined,
-			status,
-			aiEnabled,
-		});
+		if (mode === 'create') {
+			onSubmit({
+				name: name.trim(),
+				email: email.trim(),
+				whatsappPhoneNumber: tenantNumber.trim(),
+			});
+		} else {
+			onSubmit({
+				name: name.trim(),
+				email: email.trim(),
+				whatsappPhoneNumber: tenantNumber.trim(),
+				businessType: businessType.trim() || undefined,
+				whatsappPhoneId: whatsappPhoneId.trim() || undefined,
+				whatsappAccessToken: whatsappAccessToken.trim() || undefined,
+				timezone: timezone.trim() || undefined,
+				status,
+				aiEnabled,
+			});
+		}
 
 		onOpenChange(false);
 	};
-
-	const mode = initialTenant ? 'edit' : 'create';
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						{mode === 'create' ? 'Crear Tenant' : 'Editar Tenant'}
+						{mode === 'create' ? 'Crear negocio' : 'Editar negocio'}
 					</DialogTitle>
 					<DialogDescription>
 						{mode === 'create'
-							? 'Completa los datos del tenant y sus credenciales de WhatsApp.'
-							: 'Actualiza la información base y las credenciales del tenant.'}
+							? 'Completa solo los datos base del negocio.'
+							: 'Actualiza la información base y las credenciales del negocio.'}
 					</DialogDescription>
 				</DialogHeader>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="businessName">Nombre del negocio</Label>
+						<Label htmlFor="name">Nombre del tenant</Label>
 						<Input
-							id="businessName"
-							value={businessName}
-							onChange={(event) => setBusinessName(event.target.value)}
+							id="name"
+							value={name}
+							onChange={(event) => setName(event.target.value)}
 							placeholder="Ej. Barbería Central"
 						/>
-						{errors.businessName && (
-							<p className="text-sm text-red-600">{errors.businessName}</p>
+						{errors.name && (
+							<p className="text-sm text-red-600">{errors.name}</p>
 						)}
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="businessType">Tipo de negocio</Label>
+						<Label htmlFor="tenantNumber">Número del tenant</Label>
 						<Input
-							id="businessType"
-							value={businessType}
-							onChange={(event) => setBusinessType(event.target.value)}
-							placeholder="Ej. barberia"
+							id="tenantNumber"
+							value={tenantNumber}
+							onChange={(event) => setTenantNumber(event.target.value)}
+							placeholder="Ej. 15556384943"
 						/>
-						{errors.businessType && (
-							<p className="text-sm text-red-600">{errors.businessType}</p>
+						{errors.tenantNumber && (
+							<p className="text-sm text-red-600">{errors.tenantNumber}</p>
 						)}
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="email">Correo principal</Label>
+						<Label htmlFor="email">Correo electrónico</Label>
 						<Input
 							id="email"
 							type="email"
@@ -169,85 +175,79 @@ export function TenantForm({
 						)}
 					</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="phone">WhatsApp Phone Number</Label>
-						<Input
-							id="phone"
-							value={phone}
-							onChange={(event) => setPhone(event.target.value)}
-							placeholder="15556384943"
-						/>
-						{errors.phone && (
-							<p className="text-sm text-red-600">{errors.phone}</p>
-						)}
-					</div>
+					{mode === 'edit' && (
+						<>
+							<div className="space-y-2">
+								<Label htmlFor="businessType">Tipo de negocio</Label>
+								<Input
+									id="businessType"
+									value={businessType}
+									onChange={(event) => setBusinessType(event.target.value)}
+									placeholder="Ej. barberia"
+								/>
+							</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="whatsappPhoneId">WhatsApp Phone ID</Label>
-						<Input
-							id="whatsappPhoneId"
-							value={whatsappPhoneId}
-							onChange={(event) => setWhatsappPhoneId(event.target.value)}
-							placeholder="1013549818517591"
-						/>
-						{errors.whatsappPhoneId && (
-							<p className="text-sm text-red-600">{errors.whatsappPhoneId}</p>
-						)}
-					</div>
+							<div className="space-y-2">
+								<Label htmlFor="whatsappPhoneId">WhatsApp Phone ID</Label>
+								<Input
+									id="whatsappPhoneId"
+									value={whatsappPhoneId}
+									onChange={(event) => setWhatsappPhoneId(event.target.value)}
+									placeholder="1013549818517591"
+								/>
+							</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="whatsappAccessToken">WhatsApp Access Token</Label>
-						<Input
-							id="whatsappAccessToken"
-							value={whatsappAccessToken}
-							onChange={(event) => setWhatsappAccessToken(event.target.value)}
-							placeholder="EAAL..."
-						/>
-						{errors.whatsappAccessToken && (
-							<p className="text-sm text-red-600">
-								{errors.whatsappAccessToken}
-							</p>
-						)}
-					</div>
+							<div className="space-y-2">
+								<Label htmlFor="whatsappAccessToken">
+									WhatsApp Access Token
+								</Label>
+								<Input
+									id="whatsappAccessToken"
+									value={whatsappAccessToken}
+									onChange={(event) =>
+										setWhatsappAccessToken(event.target.value)
+									}
+									placeholder="EAAL..."
+								/>
+							</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="timezone">Zona horaria</Label>
-						<Input
-							id="timezone"
-							value={timezone}
-							onChange={(event) => setTimezone(event.target.value)}
-							placeholder="America/La_Paz"
-						/>
-						{errors.timezone && (
-							<p className="text-sm text-red-600">{errors.timezone}</p>
-						)}
-					</div>
+							<div className="space-y-2">
+								<Label htmlFor="timezone">Zona horaria</Label>
+								<Input
+									id="timezone"
+									value={timezone}
+									onChange={(event) => setTimezone(event.target.value)}
+									placeholder="America/La_Paz"
+								/>
+							</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="status">Estado</Label>
-						<Select
-							value={status}
-							onValueChange={(value) => setStatus(value as TenantStatus)}
-						>
-							<SelectTrigger id="status">
-								<SelectValue placeholder="Selecciona un estado" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="active">Activo</SelectItem>
-								<SelectItem value="inactive">Inactivo</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
+							<div className="space-y-2">
+								<Label htmlFor="status">Estado</Label>
+								<Select
+									value={status}
+									onValueChange={(value) => setStatus(value as TenantStatus)}
+								>
+									<SelectTrigger id="status">
+										<SelectValue placeholder="Selecciona un estado" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="active">Activo</SelectItem>
+										<SelectItem value="inactive">Inactivo</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
 
-					<div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-						<div>
-							<p className="text-sm font-medium">AI habilitada</p>
-							<p className="text-xs text-muted-foreground">
-								Controla si el tenant puede usar funcionalidades de IA.
-							</p>
-						</div>
-						<Switch checked={aiEnabled} onCheckedChange={setAiEnabled} />
-					</div>
+							<div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+								<div>
+									<p className="text-sm font-medium">AI habilitada</p>
+									<p className="text-xs text-muted-foreground">
+										Controla si el tenant puede usar funcionalidades de IA.
+									</p>
+								</div>
+								<Switch checked={aiEnabled} onCheckedChange={setAiEnabled} />
+							</div>
+						</>
+					)}
 
 					<div className="flex justify-end gap-2 pt-2">
 						<Button
@@ -258,7 +258,7 @@ export function TenantForm({
 							Cancelar
 						</Button>
 						<Button type="submit">
-							{mode === 'create' ? 'Crear Tenant' : 'Guardar cambios'}
+							{mode === 'create' ? 'Crear negocio' : 'Guardar cambios'}
 						</Button>
 					</div>
 				</form>

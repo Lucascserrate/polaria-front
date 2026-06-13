@@ -21,14 +21,19 @@ export interface Tenant {
 
 export interface CreateTenantDto {
 	name: string;
-	businessType: string;
-	email?: string;
+	email: string;
 	whatsappPhoneNumber: string;
-	whatsappPhoneId: string;
-	whatsappAccessToken: string;
-	timezone: string;
+	timezone?: string;
+}
+
+export interface UpdateTenantDto {
+	name?: string;
+	businessType?: string;
+	email?: string;
+	whatsappPhoneNumber?: string;
+	whatsappPhoneId?: string;
+	whatsappAccessToken?: string;
+	timezone?: string;
 	status?: TenantStatus;
 	aiEnabled?: boolean;
 }
-
-export type UpdateTenantDto = Partial<CreateTenantDto>;
