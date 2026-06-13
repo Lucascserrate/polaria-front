@@ -12,7 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import type {
 	CreateTenantDto,
 	Tenant,
@@ -73,29 +79,14 @@ export function TenantForm({
 			nextErrors.businessName = 'El nombre del negocio es obligatorio.';
 		}
 
-		if (!businessType.trim()) {
-			nextErrors.businessType = 'El tipo de negocio es obligatorio.';
+		if (!email.trim()) {
+			nextErrors.email = 'El correo es obligatorio.';
+		} else if (!isValidEmail(email)) {
+			nextErrors.email = 'Ingresa un correo válido.';
 		}
 
 		if (!phone.trim()) {
 			nextErrors.phone = 'El número de WhatsApp es obligatorio.';
-		}
-
-		if (!whatsappPhoneId.trim()) {
-			nextErrors.whatsappPhoneId = 'El WhatsApp Phone ID es obligatorio.';
-		}
-
-		if (!whatsappAccessToken.trim()) {
-			nextErrors.whatsappAccessToken =
-				'El access token de WhatsApp es obligatorio.';
-		}
-
-		if (!timezone.trim()) {
-			nextErrors.timezone = 'La zona horaria es obligatoria.';
-		}
-
-		if (email.trim() && !isValidEmail(email)) {
-			nextErrors.email = 'Ingresa un correo válido.';
 		}
 
 		setErrors(nextErrors);
@@ -108,15 +99,16 @@ export function TenantForm({
 
 		onSubmit({
 			name: businessName.trim(),
-			businessType: businessType.trim(),
-			email: email.trim() || undefined,
+			businessType: businessType.trim() || undefined,
+			email: email.trim(),
 			whatsappPhoneNumber: phone.trim(),
-			whatsappPhoneId: whatsappPhoneId.trim(),
-			whatsappAccessToken: whatsappAccessToken.trim(),
-			timezone: timezone.trim(),
+			whatsappPhoneId: whatsappPhoneId.trim() || undefined,
+			whatsappAccessToken: whatsappAccessToken.trim() || undefined,
+			timezone: timezone.trim() || undefined,
 			status,
 			aiEnabled,
 		});
+
 		onOpenChange(false);
 	};
 
@@ -233,7 +225,10 @@ export function TenantForm({
 
 					<div className="space-y-2">
 						<Label htmlFor="status">Estado</Label>
-						<Select value={status} onValueChange={(value) => setStatus(value as TenantStatus)}>
+						<Select
+							value={status}
+							onValueChange={(value) => setStatus(value as TenantStatus)}
+						>
 							<SelectTrigger id="status">
 								<SelectValue placeholder="Selecciona un estado" />
 							</SelectTrigger>
