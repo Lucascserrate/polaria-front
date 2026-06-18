@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { STATUS_COLORS } from '@/modules/appointments/utils/constants';
 import { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import {
@@ -12,9 +13,10 @@ import {
 interface Props {
 	filtered: Appointment[];
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
+	onEdit: (id: string) => void;
 }
 
-const MobileCards: React.FC<Props> = ({ filtered, onStatusChange }) => {
+const MobileCards: React.FC<Props> = ({ filtered, onStatusChange, onEdit }) => {
 	return (
 		<div className="md:hidden space-y-3">
 			{filtered.map((apt) => {
@@ -48,6 +50,14 @@ const MobileCards: React.FC<Props> = ({ filtered, onStatusChange }) => {
 							</div>
 						</div>
 						<div className="flex flex-col gap-2 pt-2 border-t border-border space-y-2">
+							<Button
+								variant="outline"
+								size="sm"
+								className="w-full"
+								onClick={() => onEdit(apt.id)}
+							>
+								Editar cita
+							</Button>
 							<div className="text-sm">
 								<p className="text-muted-foreground mb-1">Cambiar Estado</p>
 								<Select

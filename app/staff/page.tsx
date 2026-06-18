@@ -1,69 +1,33 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { StaffForm } from '@/modules/staff/StaffForm';
-import StaffTable from '@/modules/staff/StaffTable';
-import { staffService } from '@/services/staff.service';
-import type { StaffMember } from '@/types/staff.types';
+import { StaffForm } from '@/modules/staff/components/StaffForm';
+import StaffTable from '@/modules/staff/components/StaffTable';
+import { useStaff } from '@/modules/staff/hooks/useStaff';
 
 export default function StaffPage() {
-	const [staff, setStaff] = useState<StaffMember[]>([]);
+	const {
+		staff,
+		loading,
+		formOpen,
+		setFormOpen,
+		editingStaff,
+		openCreate,
+		openEdit,
+		closeForm,
+		toggleActive,
+		upsert,
+		activeCount,
+	} = useStaff();
 
-	const [formOpen, setFormOpen] = useState(false);
-	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-
-	const handleToggleActive = async (id: string) => {
-		try {
-			const currentStaff = staff.find((s) => s.id === id);
-			if (!currentStaff) return;
-			const updatedStaff = await staffService.update(id, {
-				isActive: !currentStaff.isActive,
-			});
-			setStaff(staff.map((s) => (s.id === id ? updatedStaff : s)));
-		} catch (error) {
-			console.error('Error toggling staff active status:', error);
-		}
-	};
-
-	const handleOpenCreate = () => {
-		setEditingStaff(null);
-		setFormOpen(true);
-	};
-
-	const handleOpenEdit = (member: StaffMember) => {
-		setEditingStaff(member);
-		setFormOpen(true);
-	};
-
-	const handleUpsert = async (data: {
-		name: string;
-		serviceIds?: string[];
-	}) => {
-		try {
-			if (editingStaff) {
-				const updated = await staffService.update(editingStaff.id, data);
-				setStaff(staff.map((s) => (s.id === editingStaff.id ? updated : s)));
-				return;
-			}
-
-			const created = await staffService.create({ ...data, isActive: true });
-			setStaff([...staff, created]);
-		} catch (error) {
-			console.error('Error saving staff:', error);
-		}
-	};
-
-	const activeCount = staff.filter((s) => s.isActive).length;
-
-	/* 	if (loading) {
+	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-64">
 				<div className="text-lg">Cargando personal...</div>
 			</div>
 		);
-	} */
+	}
 
 	return (
 		<div className="space-y-6">
@@ -76,7 +40,7 @@ export default function StaffPage() {
 						Administra el personal y los servicios que puede realizar
 					</p>
 				</div>
-				<Button onClick={handleOpenCreate} className="gap-2">
+				<Button onClick={openCreate} className="gap-2">
 					<Plus className="w-4 h-4" />
 					Agregar personal
 				</Button>
@@ -104,22 +68,19 @@ export default function StaffPage() {
 			<div className="bg-card border border-border rounded-lg p-6">
 				<StaffTable
 					staff={staff}
-					onToggleActive={handleToggleActive}
-					onEdit={handleOpenEdit}
-					onAddClick={() => {}}
+					onToggleActive={toggleActive}
+					onEdit={openEdit}
+					onAddClick={openCreate}
 				/>
 			</div>
 
 			<StaffForm
 				key={editingStaff?.id ?? 'create'}
 				open={formOpen}
-				onOpenChange={(next) => {
-					setFormOpen(next);
-					if (!next) setEditingStaff(null);
-				}}
+				onOpenChange={(next) => (next ? setFormOpen(true) : closeForm())}
 				initialStaff={editingStaff}
 				onSubmit={(payload) =>
-					handleUpsert({
+					upsert({
 						name: payload.name ?? '',
 						serviceIds: payload.serviceIds,
 					})

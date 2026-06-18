@@ -13,10 +13,12 @@ import { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import DesktopTable from './DesktopTable';
 import MobileCards from './MobileCards';
 import { useInView } from 'react-intersection-observer';
+import EditAppointmentDialog from './EditAppointmentDialog';
 
 interface Props {
 	appointments: Appointment[];
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
+	onUpdated: () => void;
 	hasMore: boolean;
 	isFetchingNextPage: boolean;
 	onLoadMore: () => void;
@@ -35,6 +37,7 @@ interface Props {
 const AppointmentsTable: React.FC<Props> = ({
 	appointments,
 	onStatusChange,
+	onUpdated,
 	hasMore,
 	isFetchingNextPage,
 	onLoadMore,
@@ -45,16 +48,18 @@ const AppointmentsTable: React.FC<Props> = ({
 	const { ref, inView } = useInView({ threshold: 0.2 });
 
 	const isRequestingRef = useRef(false);
+	const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(
+		null,
+	);
 
-useEffect(() => {
-	if (!inView || !hasMore || isFetchingNextPage) return;
-	if (isRequestingRef.current) return;
+	useEffect(() => {
+		if (!inView || !hasMore || isFetchingNextPage) return;
+		if (isRequestingRef.current) return;
 
-	isRequestingRef.current = true;
+		isRequestingRef.current = true;
 
-	onLoadMore();
-
-}, [inView, hasMore, isFetchingNextPage, onLoadMore]);
+		onLoadMore();
+	}, [inView, hasMore, isFetchingNextPage, onLoadMore]);
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {
@@ -92,7 +97,10 @@ useEffect(() => {
 					<label className="text-sm font-medium text-muted-foreground">
 						Filtrar por Estado
 					</label>
-					<Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
+					<Select
+						value={filters.status || 'all'}
+						onValueChange={handleStatusChange}
+					>
 						<SelectTrigger>
 							<SelectValue />
 						</SelectTrigger>
@@ -131,18 +139,32 @@ useEffect(() => {
 					</div>
 				) : (
 					<>
-						<DesktopTable
-							filtered={appointments}
-							onStatusChange={onStatusChange}
-							hasMore={hasMore}
-							isFetchingNextPage={isFetchingNextPage}
-							loadMoreRef={ref}
-						/>
-						<MobileCards filtered={appointments} onStatusChange={onStatusChange} />
-					</>
-				)}
-			</div>
+					<DesktopTable
+						filtered={appointments}
+						onStatusChange={onStatusChange}
+						onEdit={setEditingAppointmentId}
+						hasMore={hasMore}
+						isFetchingNextPage={isFetchingNextPage}
+						loadMoreRef={ref}
+					/>
+					<MobileCards
+						filtered={appointments}
+						onStatusChange={onStatusChange}
+						onEdit={setEditingAppointmentId}
+					/>
+				</>
+			)}
 		</div>
+
+		<EditAppointmentDialog
+			appointmentId={editingAppointmentId}
+			open={editingAppointmentId !== null}
+			onOpenChange={(open) => {
+				if (!open) setEditingAppointmentId(null);
+			}}
+			onSaved={onUpdated}
+		/>
+	</div>
 	);
 };
 

@@ -24,7 +24,7 @@ interface StaffFormProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	initialStaff?: StaffMember | null;
-	onSubmit: (staff: CreateStaffDto | UpdateStaffDto) => void;
+	onSubmit: (staff: CreateStaffDto | UpdateStaffDto) => void | Promise<void>;
 }
 
 export function StaffForm({
@@ -47,7 +47,7 @@ export function StaffForm({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!name) return;
-		onSubmit({ name, serviceIds });
+		void onSubmit({ name, serviceIds });
 		onOpenChange(false);
 	};
 

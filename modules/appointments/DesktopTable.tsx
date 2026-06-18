@@ -20,6 +20,7 @@ import {
 interface Props {
 	filtered: Appointment[];
 	onStatusChange: (id: string, status: AppointmentStatus) => void;
+	onEdit: (id: string) => void;
 	hasMore: boolean;
 	isFetchingNextPage: boolean;
 	loadMoreRef: (node?: Element | null | undefined) => void;
@@ -28,6 +29,7 @@ interface Props {
 const DesktopTable: React.FC<Props> = ({
 	filtered,
 	onStatusChange,
+	onEdit,
 	hasMore,
 	isFetchingNextPage,
 	loadMoreRef,
@@ -74,6 +76,14 @@ const DesktopTable: React.FC<Props> = ({
 											</PopoverTrigger>
 											<PopoverContent className="w-40 p-2" align="end">
 												<div className="space-y-1">
+													<Button
+														variant="ghost"
+														size="sm"
+														className="w-full justify-start text-sm"
+														onClick={() => onEdit(apt.id)}
+													>
+														Editar cita
+													</Button>
 													<Button
 														variant="ghost"
 														size="sm"
