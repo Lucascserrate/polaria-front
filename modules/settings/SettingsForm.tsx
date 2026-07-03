@@ -19,6 +19,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
+import WhatsappEmbeddedSignupButton from '@/modules/settings/WhatsappEmbeddedSignupButton';
 import {
 	WORKING_DAYS,
 	DEFAULT_SETTINGS,
@@ -335,6 +336,7 @@ const SettingsForm: React.FC = () => {
 					'Guardar Configuración'
 				)}
 			</Button>
+			<WhatsappEmbeddedSignupButton />
 		</div>
 	);
 };

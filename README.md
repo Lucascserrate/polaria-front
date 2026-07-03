@@ -14,7 +14,15 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [https://localhost:3000](https://localhost:3000) with your browser to see the result.
+
+If you need a secure origin for Meta or similar integrations, start the app with:
+
+```bash
+npm run dev:https
+```
+
+Then open [https://localhost:3000](https://localhost:3000). If your terminal still prints `http://localhost:3000`, use the `https` URL in the browser manually.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

@@ -4,6 +4,15 @@ export type SettingsResponse = {
   polariaName: string;
   workingDays: boolean[];
   openingHours: { from: string; to: string } | null;
+  aiEnabled: boolean;
+  whatsappConnection: {
+    connected: boolean;
+    businessId: string | null;
+    wabaId: string | null;
+    phoneNumberId: string | null;
+    phoneNumber: string | null;
+    connectedAt: string | null;
+  };
 };
 
 export type UpdateSettingsPayload = {
@@ -17,12 +26,16 @@ export const getSettings = async (): Promise<SettingsResponse> => {
     polariaName: string;
     workingDays: boolean[];
     openingHours: { from: string; to: string } | null;
+    aiEnabled: boolean;
+    whatsappConnection: SettingsResponse['whatsappConnection'];
   }>('/settings');
 
   return {
     polariaName: data.polariaName,
     workingDays: data.workingDays,
     openingHours: data.openingHours,
+    aiEnabled: data.aiEnabled,
+    whatsappConnection: data.whatsappConnection,
   };
 };
 
@@ -33,6 +46,8 @@ export const updateSettings = async (
     polariaName: string;
     workingDays: boolean[];
     openingHours: { from: string; to: string } | null;
+    aiEnabled: boolean;
+    whatsappConnection: SettingsResponse['whatsappConnection'];
   }>('/settings', {
     polariaName: payload.polariaName,
     workingDays: payload.workingDays,
@@ -43,5 +58,42 @@ export const updateSettings = async (
     polariaName: data.polariaName,
     workingDays: data.workingDays,
     openingHours: data.openingHours,
+    aiEnabled: data.aiEnabled,
+    whatsappConnection: data.whatsappConnection,
+  };
+};
+
+export type CompleteWhatsappEmbeddedSignupPayload = {
+  code: string;
+  businessId?: string;
+  wabaId?: string;
+  phoneNumberId?: string;
+  phoneNumber?: string;
+  systemUserAccessToken?: string;
+};
+
+export const completeWhatsappEmbeddedSignup = async (
+  payload: CompleteWhatsappEmbeddedSignupPayload,
+): Promise<SettingsResponse> => {
+  console.log('[Settings API] completeWhatsappEmbeddedSignup request', payload);
+  const { data } = await axiosInstance.patch<{
+    polariaName: string;
+    workingDays: boolean[];
+    openingHours: { from: string; to: string } | null;
+    aiEnabled: boolean;
+    whatsappConnection: SettingsResponse['whatsappConnection'];
+  }>('/settings/whatsapp/embedded-signup', payload);
+
+  console.log(
+    '[Settings API] completeWhatsappEmbeddedSignup response',
+    data,
+  );
+
+  return {
+    polariaName: data.polariaName,
+    workingDays: data.workingDays,
+    openingHours: data.openingHours,
+    aiEnabled: data.aiEnabled,
+    whatsappConnection: data.whatsappConnection,
   };
 };
