@@ -9,3 +9,8 @@ export const logout = async () => {
 	const { data } = await axiosInstance.post('/auth/logout');
 	return data;
 };
+
+export const localLogin = async (email: string) => {
+	const { data } = await axiosInstance.post('/auth/local-login', { email });
+	return data;
+};
