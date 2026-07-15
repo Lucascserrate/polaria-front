@@ -75,7 +75,6 @@ export type CompleteWhatsappEmbeddedSignupPayload = {
 export const completeWhatsappEmbeddedSignup = async (
   payload: CompleteWhatsappEmbeddedSignupPayload,
 ): Promise<SettingsResponse> => {
-  console.log('[Settings API] completeWhatsappEmbeddedSignup request', payload);
   const { data } = await axiosInstance.patch<{
     polariaName: string;
     workingDays: boolean[];
@@ -83,11 +82,6 @@ export const completeWhatsappEmbeddedSignup = async (
     aiEnabled: boolean;
     whatsappConnection: SettingsResponse['whatsappConnection'];
   }>('/settings/whatsapp/embedded-signup', payload);
-
-  console.log(
-    '[Settings API] completeWhatsappEmbeddedSignup response',
-    data,
-  );
 
   return {
     polariaName: data.polariaName,
