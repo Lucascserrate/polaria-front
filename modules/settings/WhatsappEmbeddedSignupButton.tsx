@@ -146,7 +146,7 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 						console.log(
 							'[WhatsApp Embedded Signup] Authorization code received',
 						);
-						await completeWhatsappEmbeddedSignup({ code });
+						await completeWhatsappEmbeddedSignup({ code, redirectUri });
 						console.log('[WhatsApp Embedded Signup] OAuth completed');
 						setConnected(true);
 					} catch {
