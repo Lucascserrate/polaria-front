@@ -46,21 +46,21 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 			xfbml: true,
 			version: 'v21.0',
 		});
-		console.log('[WhatsApp Embedded Signup] SDK initialized', {
-			appId,
-			version: 'v21.0',
-		});
 	}, []);
 
 	const getRedirectUri = () => {
 		if (typeof window === 'undefined') return '';
 
-		const configuredOrigin =
-			process.env.NEXT_PUBLIC_META_REDIRECT_URI ||
-			process.env.NEXT_PUBLIC_FRONTEND_URL ||
-			process.env.NEXT_PUBLIC_APP_URL;
+		const configuredOrigin = process.env.NEXT_PUBLIC_META_REDIRECT_URI;
 
-		if (configuredOrigin) return configuredOrigin;
+		if (configuredOrigin) {
+			const value = configuredOrigin.trim();
+			const separatorIndex = value.indexOf('=');
+			if (separatorIndex > 0 && value.startsWith('NEXT_PUBLIC_')) {
+				return value.slice(separatorIndex + 1).trim();
+			}
+			return value;
+		}
 
 		return window.location.origin;
 	};
@@ -69,7 +69,6 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 		if (typeof window === 'undefined') return;
 
 		if (window.FB) {
-			console.log('[WhatsApp Embedded Signup] FB SDK already available');
 			initializeSdk();
 			return;
 		}
@@ -91,11 +90,9 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 		script.defer = true;
 		script.crossOrigin = 'anonymous';
 		script.onload = () => {
-			console.log('[WhatsApp Embedded Signup] FB SDK script loaded');
 			initializeSdk();
 		};
 		script.onerror = () => {
-			console.error('[WhatsApp Embedded Signup] Failed to load FB SDK script');
 			setError('No se pudo cargar el SDK de Meta.');
 			setLoading(false);
 		};
@@ -112,16 +109,11 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 
 		if (!appId || !configId) {
 			setError('Faltan variables de entorno de Meta.');
-			console.error('[WhatsApp Embedded Signup] Missing env vars', {
-				hasAppId: Boolean(appId),
-				hasConfigId: Boolean(configId),
-			});
 			return;
 		}
 
 		if (!window.FB) {
 			setError('Meta SDK no está listo todavía.');
-			console.error('[WhatsApp Embedded Signup] FB SDK not ready');
 			return;
 		}
 
@@ -130,23 +122,14 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 		setLoading(true);
 		setConnected(false);
 		setError(null);
-		console.log('[WhatsApp Embedded Signup] Starting FB.login', {
-			appId,
-			configId,
-			redirectUri,
-		});
+		console.log('[WhatsApp Embedded Signup] Starting Embedded Signup');
+		console.log('[WhatsApp Embedded Signup] redirect_uri', redirectUri);
 
 		window.FB.login(
 			(response) => {
 				void (async () => {
 					try {
-						console.log('[WhatsApp Embedded Signup] FB.login response', response);
-
 						if (response.error) {
-							console.error(
-								'[WhatsApp Embedded Signup] FB.login returned error',
-								response.error,
-							);
 							setError(
 								response.error.message ??
 									'Meta devolvió un error durante Embedded Signup.',
@@ -155,29 +138,18 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 						}
 
 						const code = response.authResponse?.code;
-						console.log('[WhatsApp Embedded Signup] Extracted authorization code', {
-							hasCode: Boolean(code),
-							codeLength: code?.length ?? 0,
-						});
 						if (!code) {
 							setError('Meta no devolvió un authorization code.');
 							return;
 						}
 
 						console.log(
-							'[WhatsApp Embedded Signup] Sending authorization code to backend',
-							{ redirectUri },
+							'[WhatsApp Embedded Signup] Authorization code received',
 						);
-						await completeWhatsappEmbeddedSignup({ code });
-						console.log(
-							'[WhatsApp Embedded Signup] Backend completed signup successfully',
-						);
+						await completeWhatsappEmbeddedSignup({ code, redirectUri });
+						console.log('[WhatsApp Embedded Signup] OAuth completed');
 						setConnected(true);
-					} catch (error) {
-						console.error(
-							'[WhatsApp Embedded Signup] Backend completion failed',
-							error,
-						);
+					} catch {
 						setError('No se pudo completar la conexión con WhatsApp.');
 					} finally {
 						setLoading(false);
