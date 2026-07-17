@@ -48,23 +48,6 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 		});
 	}, []);
 
-	const getRedirectUri = () => {
-		if (typeof window === 'undefined') return '';
-
-		const configuredOrigin = process.env.NEXT_PUBLIC_META_REDIRECT_URI;
-
-		if (configuredOrigin) {
-			const value = configuredOrigin.trim();
-			const separatorIndex = value.indexOf('=');
-			if (separatorIndex > 0 && value.startsWith('NEXT_PUBLIC_')) {
-				return value.slice(separatorIndex + 1).trim();
-			}
-			return value;
-		}
-
-		return window.location.origin;
-	};
-
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
 
@@ -117,13 +100,11 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 			return;
 		}
 
-		const redirectUri = getRedirectUri();
-
 		setLoading(true);
 		setConnected(false);
 		setError(null);
-		console.log('[WhatsApp Embedded Signup] Starting Embedded Signup');
-		console.log('[WhatsApp Embedded Signup] redirect_uri', redirectUri);
+		console.log('[Embedded Signup] Starting Embedded Signup');
+		console.log('[Embedded Signup] current URL', window.location.href);
 
 		window.FB.login(
 			(response) => {
@@ -143,13 +124,12 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 							return;
 						}
 
-						console.log(
-							'[WhatsApp Embedded Signup] Authorization code received',
-						);
-						await completeWhatsappEmbeddedSignup({ code, redirectUri });
-						console.log('[WhatsApp Embedded Signup] OAuth completed');
+						console.log('[Embedded Signup] code', code.substring(0, 20));
+						await completeWhatsappEmbeddedSignup({ code });
+						console.log('[Embedded Signup] OAuth completed');
 						setConnected(true);
-					} catch {
+					} catch (signupError) {
+						console.error('[Embedded Signup] complete failed', signupError);
 						setError('No se pudo completar la conexión con WhatsApp.');
 					} finally {
 						setLoading(false);
@@ -158,7 +138,6 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 			},
 			{
 				config_id: configId,
-				redirect_uri: redirectUri,
 				response_type: 'code',
 				override_default_response_type: true,
 				scope: 'whatsapp_business_management,whatsapp_business_messaging',

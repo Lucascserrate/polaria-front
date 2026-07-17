@@ -65,7 +65,6 @@ export const updateSettings = async (
 
 export type CompleteWhatsappEmbeddedSignupPayload = {
   code: string;
-  redirectUri?: string;
   businessId?: string;
   wabaId?: string;
   phoneNumberId?: string;
