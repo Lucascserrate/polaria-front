@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { completeWhatsappEmbeddedSignup } from '@/services/settings';
 
@@ -29,12 +29,19 @@ declare global {
 	}
 }
 
+type EmbeddedSignupMetaPayload = {
+	businessId?: string;
+	wabaId?: string;
+	phoneNumberId?: string;
+};
+
 const META_SDK_SRC = 'https://connect.facebook.net/en_US/sdk.js';
 
 const WhatsappEmbeddedSignupButton: React.FC = () => {
 	const [loading, setLoading] = useState(false);
 	const [connected, setConnected] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const embeddedSignupMetaRef = useRef<EmbeddedSignupMetaPayload>({});
 
 	const initializeSdk = useCallback(() => {
 		const appId = process.env.NEXT_PUBLIC_META_APP_ID;
@@ -47,6 +54,65 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 			version: 'v21.0',
 		});
 	}, []);
+
+	const extractEmbeddedSignupMetaPayload = useCallback(
+		(eventData: unknown): EmbeddedSignupMetaPayload | null => {
+			let payload: unknown = eventData;
+
+			if (typeof eventData === 'string') {
+				try {
+					payload = JSON.parse(eventData);
+				} catch {
+					return null;
+				}
+			}
+
+			if (!payload || typeof payload !== 'object') return null;
+
+			const candidate = payload as Record<string, unknown>;
+			const sources = [
+				candidate,
+				candidate.data,
+				candidate.payload,
+				candidate.meta,
+				candidate.response,
+				candidate.extras,
+			].filter((value): value is Record<string, unknown> => {
+				return Boolean(value) && typeof value === 'object';
+			});
+
+			const readField = (
+				sourcesToRead: Record<string, unknown>[],
+				keys: string[],
+			): string | undefined => {
+				for (const source of sourcesToRead) {
+					for (const key of keys) {
+						const value = source[key];
+						if (typeof value === 'string' && value.trim()) {
+							return value;
+						}
+					}
+				}
+				return undefined;
+			};
+
+			const businessId = readField(sources, ['business_id', 'businessId']);
+			const wabaId = readField(sources, ['waba_id', 'wabaId']);
+			const phoneNumberId = readField(sources, [
+				'phone_number_id',
+				'phoneNumberId',
+			]);
+
+			if (!businessId && !wabaId && !phoneNumberId) return null;
+
+			return {
+				businessId,
+				wabaId,
+				phoneNumberId,
+			};
+		},
+		[],
+	);
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
@@ -86,6 +152,38 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 		};
 	}, [initializeSdk]);
 
+	useEffect(() => {
+		if (!loading || typeof window === 'undefined') return;
+
+		const handleMessage = (event: MessageEvent) => {
+			console.log('[Embedded Signup] RAW EVENT origin', event.origin);
+			console.log('[Embedded Signup] RAW EVENT data', event.data);
+			if (
+				typeof event.origin !== 'string' ||
+				!event.origin.includes('facebook.com')
+			) {
+				return;
+			}
+
+			const payload = extractEmbeddedSignupMetaPayload(event.data);
+			if (!payload) return;
+
+			embeddedSignupMetaRef.current = {
+				...embeddedSignupMetaRef.current,
+				...payload,
+			};
+			console.log(
+				'[Embedded Signup] meta payload captured',
+				embeddedSignupMetaRef.current,
+			);
+		};
+
+		window.addEventListener('message', handleMessage);
+		return () => {
+			window.removeEventListener('message', handleMessage);
+		};
+	}, [extractEmbeddedSignupMetaPayload, loading]);
+
 	const handleActivate = () => {
 		const appId = process.env.NEXT_PUBLIC_META_APP_ID;
 		const configId = process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID;
@@ -103,6 +201,7 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 		setLoading(true);
 		setConnected(false);
 		setError(null);
+		embeddedSignupMetaRef.current = {};
 		console.log('[Embedded Signup] Starting Embedded Signup');
 		console.log('[Embedded Signup] current URL', window.location.href);
 
@@ -125,7 +224,16 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 						}
 
 						console.log('[Embedded Signup] code', code.substring(0, 20));
-						await completeWhatsappEmbeddedSignup({ code });
+						// Esperar a que llegue el postMessage de Meta
+						await new Promise((resolve) => setTimeout(resolve, 1500));
+						const finalPayload = {
+							code,
+							businessId: embeddedSignupMetaRef.current.businessId,
+							wabaId: embeddedSignupMetaRef.current.wabaId,
+							phoneNumberId: embeddedSignupMetaRef.current.phoneNumberId,
+						};
+						console.log('[Embedded Signup] final payload', finalPayload);
+						await completeWhatsappEmbeddedSignup(finalPayload);
 						console.log('[Embedded Signup] OAuth completed');
 						setConnected(true);
 					} catch (signupError) {
