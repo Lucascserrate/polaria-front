@@ -38,6 +38,12 @@ interface Settings {
 	appointmentSlotDuration: number;
 }
 
+interface WhatsAppConnection {
+	connected: boolean;
+	phoneNumber: string | null;
+	connectedAt: string | null;
+}
+
 const SettingsForm: React.FC = () => {
 	const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 	const [saved, setSaved] = useState(false);
@@ -45,6 +51,12 @@ const SettingsForm: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [whatsAppConnection, setWhatsAppConnection] =
+		useState<WhatsAppConnection>({
+			connected: false,
+			phoneNumber: null,
+			connectedAt: null,
+		});
 
 	const fromApiWorkingDays = useCallback((apiDays: boolean[]) => {
 		if (apiDays.length !== 7) return DEFAULT_SETTINGS.workingDays;
@@ -85,6 +97,11 @@ const SettingsForm: React.FC = () => {
 				workingDays,
 				openingHours,
 			}));
+			setWhatsAppConnection({
+				connected: data.whatsappConnection.connected,
+				phoneNumber: data.whatsappConnection.phoneNumber,
+				connectedAt: data.whatsappConnection.connectedAt,
+			});
 		},
 		[fromApiWorkingDays],
 	);
@@ -143,6 +160,11 @@ const SettingsForm: React.FC = () => {
 	return (
 		<div className="space-y-6 max-w-2xl">
 			{error ? <p className="text-sm text-red-500">{error}</p> : null}
+			<WhatsappEmbeddedSignupButton
+				connected={whatsAppConnection.connected}
+				connectedAt={whatsAppConnection.connectedAt}
+				phoneNumber={whatsAppConnection.phoneNumber}
+			/>
 			{/* Barbershop Name */}
 			<Card>
 				<CardHeader>
@@ -336,7 +358,6 @@ const SettingsForm: React.FC = () => {
 					'Guardar Configuración'
 				)}
 			</Button>
-			<WhatsappEmbeddedSignupButton />
 		</div>
 	);
 };

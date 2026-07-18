@@ -35,13 +35,22 @@ type EmbeddedSignupMetaPayload = {
 	phoneNumberId?: string;
 };
 
+type WhatsappEmbeddedSignupButtonProps = {
+	connected?: boolean;
+	connectedAt?: string | null;
+	phoneNumber?: string | null;
+};
+
 const META_SDK_SRC = 'https://connect.facebook.net/en_US/sdk.js';
 
-const WhatsappEmbeddedSignupButton: React.FC = () => {
+const WhatsappEmbeddedSignupButton: React.FC<
+	WhatsappEmbeddedSignupButtonProps
+> = ({ connected = false, connectedAt = null, phoneNumber = null }) => {
 	const [loading, setLoading] = useState(false);
-	const [connected, setConnected] = useState(false);
+	const [localConnected, setLocalConnected] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const embeddedSignupMetaRef = useRef<EmbeddedSignupMetaPayload>({});
+	const isConnected = connected || localConnected;
 
 	const initializeSdk = useCallback(() => {
 		const appId = process.env.NEXT_PUBLIC_META_APP_ID;
@@ -156,8 +165,6 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 		if (!loading || typeof window === 'undefined') return;
 
 		const handleMessage = (event: MessageEvent) => {
-			console.log('[Embedded Signup] RAW EVENT origin', event.origin);
-			console.log('[Embedded Signup] RAW EVENT data', event.data);
 			if (
 				typeof event.origin !== 'string' ||
 				!event.origin.includes('facebook.com')
@@ -172,10 +179,6 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 				...embeddedSignupMetaRef.current,
 				...payload,
 			};
-			console.log(
-				'[Embedded Signup] meta payload captured',
-				embeddedSignupMetaRef.current,
-			);
 		};
 
 		window.addEventListener('message', handleMessage);
@@ -199,11 +202,9 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 		}
 
 		setLoading(true);
-		setConnected(false);
+		setLocalConnected(false);
 		setError(null);
 		embeddedSignupMetaRef.current = {};
-		console.log('[Embedded Signup] Starting Embedded Signup');
-		console.log('[Embedded Signup] current URL', window.location.href);
 
 		window.FB.login(
 			(response) => {
@@ -223,8 +224,6 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 							return;
 						}
 
-						console.log('[Embedded Signup] code', code.substring(0, 20));
-						// Esperar a que llegue el postMessage de Meta
 						await new Promise((resolve) => setTimeout(resolve, 1500));
 						const finalPayload = {
 							code,
@@ -232,10 +231,8 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 							wabaId: embeddedSignupMetaRef.current.wabaId,
 							phoneNumberId: embeddedSignupMetaRef.current.phoneNumberId,
 						};
-						console.log('[Embedded Signup] final payload', finalPayload);
 						await completeWhatsappEmbeddedSignup(finalPayload);
-						console.log('[Embedded Signup] OAuth completed');
-						setConnected(true);
+						setLocalConnected(true);
 					} catch (signupError) {
 						console.error('[Embedded Signup] complete failed', signupError);
 						setError('No se pudo completar la conexión con WhatsApp.');
@@ -254,21 +251,46 @@ const WhatsappEmbeddedSignupButton: React.FC = () => {
 	};
 
 	return (
-		<div className="pt-2">
-			<Button
-				type="button"
-				onClick={handleActivate}
-				className="w-full md:w-auto"
-				size="lg"
-				disabled={loading}
-			>
-				{loading
-					? 'Conectando...'
-					: connected
-						? 'WhatsApp conectado'
-						: 'Activar WhatsApp'}
-			</Button>
-			{error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}
+		<div className="rounded-2xl border border-emerald-500/20 bg-linear-to-r from-emerald-500/10 via-cyan-500/10 to-sky-500/10 p-4 shadow-sm">
+			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+				<div className="space-y-1">
+					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+						WhatsApp Embedded Signup
+					</p>
+					<h3 className="text-lg font-semibold text-foreground">
+						{isConnected ? 'WhatsApp conectado' : 'Conecta WhatsApp desde Meta'}
+					</h3>
+					<p className="text-sm text-muted-foreground">
+						{isConnected
+							? 'La cuenta ya quedo vinculada desde Meta y esta lista para usar.'
+							: 'Activa la integracion oficial para empezar a recibir mensajes en tu cuenta.'}
+					</p>
+					{isConnected ? (
+						<p className="text-xs text-emerald-300">
+							{phoneNumber
+								? `Numero conectado: ${phoneNumber}`
+								: 'Conexion activa'}
+							{connectedAt
+								? ` - Desde ${new Date(connectedAt).toLocaleString()}`
+								: ''}
+						</p>
+					) : null}
+				</div>
+
+				{!isConnected ? (
+					<Button
+						type="button"
+						onClick={handleActivate}
+						className="w-full md:w-auto md:min-w-44"
+						size="lg"
+						disabled={loading}
+					>
+						{loading ? 'Conectando...' : 'Activar WhatsApp'}
+					</Button>
+				) : null}
+			</div>
+
+			{error ? <p className="mt-3 text-sm text-red-500">{error}</p> : null}
 		</div>
 	);
 };
