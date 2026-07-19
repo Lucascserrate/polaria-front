@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { StaffForm } from '@/modules/staff/StaffForm';
@@ -10,9 +10,36 @@ import type { StaffMember } from '@/types/staff.types';
 
 export default function StaffPage() {
 	const [staff, setStaff] = useState<StaffMember[]>([]);
+	const [loading, setLoading] = useState(true);
 
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+
+	useEffect(() => {
+		let active = true;
+
+		const loadStaff = async () => {
+			try {
+				setLoading(true);
+				const data = await staffService.getAll();
+				if (active) {
+					setStaff(data);
+				}
+			} catch (error) {
+				console.error('Error loading staff:', error);
+			} finally {
+				if (active) {
+					setLoading(false);
+				}
+			}
+		};
+
+		loadStaff();
+
+		return () => {
+			active = false;
+		};
+	}, []);
 
 	const handleToggleActive = async (id: string) => {
 		try {
@@ -57,13 +84,13 @@ export default function StaffPage() {
 
 	const activeCount = staff.filter((s) => s.isActive).length;
 
-	/* 	if (loading) {
+	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-64">
 				<div className="text-lg">Cargando personal...</div>
 			</div>
 		);
-	} */
+	}
 
 	return (
 		<div className="space-y-6">
