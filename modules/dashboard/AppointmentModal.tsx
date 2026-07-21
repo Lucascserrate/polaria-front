@@ -128,19 +128,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 			return;
 		}
 
-		const [hours, minutes] =
-			typeof formData.time === 'string' && formData.time.includes(':')
-				? formData.time.split(':').map(Number)
-				: [9, 0];
 		const appointmentTime = new Date(`${formData.date}T${formData.time}:00`);
-		appointmentTime.setHours(hours, minutes, 0, 0);
-		const totalMinutes = services.reduce(
-			(sum, s) => sum + s.durationMinutes,
-			0,
-		);
-		const endTime = new Date(
-			appointmentTime.getTime() + (totalMinutes || 30) * 60000,
-		);
 
 		const submit = async () => {
 			try {
@@ -158,7 +146,6 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 					staffId: formData.staffId,
 					serviceIds: formData.serviceIds,
 					startTime: appointmentTime.toISOString(),
-					endTime: endTime.toISOString(),
 				});
 
 				const staffMember = staff.find((s) => s.name === created.staffName);
@@ -171,7 +158,9 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 					service: serviceNames || 'Sin servicio',
 					barber: staffMember?.name ?? 'Sin barbero',
 					status: created.status,
-					duration: totalMinutes || 30,
+					duration:
+						created.totalDuration ??
+						services.reduce((sum, service) => sum + service.durationMinutes, 0),
 				});
 
 				setFormData({

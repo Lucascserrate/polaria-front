@@ -40,7 +40,6 @@ export const createAppointment = async (input: {
 	staffId: string;
 	serviceIds: string[];
 	startTime: string;
-	endTime: string;
 	tenantId?: string;
 }): Promise<AppointmentApi> => {
 	const { data } = await axiosInstance.post('/appointments', input);
