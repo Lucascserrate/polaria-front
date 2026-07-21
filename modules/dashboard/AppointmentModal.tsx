@@ -22,6 +22,7 @@ import { Plus } from 'lucide-react';
 import { getStaff } from '@/services/staff';
 import { createAppointment } from '@/services/appointments';
 import { findOrCreateClient } from '@/services/clients';
+import { getSettings } from '@/services/settings';
 import type { StaffApi } from '@/types/appointments.types';
 import useAuth from '@/modules/auth/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,6 +35,14 @@ interface Props {
 }
 
 const AppointmentModal = ({ onAddAppointment }: Props) => {
+	const getTodayDate = () => {
+		const now = new Date();
+		const year = now.getFullYear();
+		const month = String(now.getMonth() + 1).padStart(2, '0');
+		const day = String(now.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	};
+
 	const [open, setOpen] = useState(false);
 	const [staff, setStaff] = useState<StaffApi[]>([]);
 	const [loadingStaff, setLoadingStaff] = useState(false);
@@ -41,7 +50,9 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 	const [submitting, setSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 	const { data: user } = useAuth();
+	const [workingDays, setWorkingDays] = useState<boolean[]>([]);
 	const [formData, setFormData] = useState({
+		date: getTodayDate(),
 		time: '09:00',
 		serviceIds: [] as string[],
 		staffId: '',
@@ -63,8 +74,11 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 		if (!open) {
 			return;
 		}
-		const loadStaff = async () => {
+		const loadConfig = async () => {
 			try {
+				const settings = await getSettings();
+				setWorkingDays(settings.workingDays ?? []);
+
 				setLoadingStaff(true);
 				setStaffError(null);
 				const data = await getStaff();
@@ -77,7 +91,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 			}
 		};
 
-		loadStaff();
+		loadConfig();
 	}, [open]);
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -87,6 +101,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 		if (
 			!formData.clientName ||
 			!formData.clientPhone ||
+			!formData.date ||
 			!formData.time ||
 			formData.serviceIds.length === 0 ||
 			!formData.staffId
@@ -97,8 +112,27 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 			return;
 		}
 
-		const [hours, minutes] = formData.time.split(':').map(Number);
-		const appointmentTime = new Date();
+		const selectedDate = new Date(`${formData.date}T00:00:00`);
+		if (Number.isNaN(selectedDate.getTime())) {
+			setSubmitError('Fecha inválida.');
+			return;
+		}
+
+		const dayIndex = selectedDate.getDay();
+		if (workingDays.length === 7 && !workingDays[dayIndex]) {
+			setSubmitError(
+				dayIndex === new Date().getDay()
+					? 'Hoy no se atiende. Selecciona otro día.'
+					: 'Ese día no se atiende. Selecciona otro día.',
+			);
+			return;
+		}
+
+		const [hours, minutes] =
+			typeof formData.time === 'string' && formData.time.includes(':')
+				? formData.time.split(':').map(Number)
+				: [9, 0];
+		const appointmentTime = new Date(`${formData.date}T${formData.time}:00`);
 		appointmentTime.setHours(hours, minutes, 0, 0);
 		const totalMinutes = services.reduce(
 			(sum, s) => sum + s.durationMinutes,
@@ -125,7 +159,6 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 					serviceIds: formData.serviceIds,
 					startTime: appointmentTime.toISOString(),
 					endTime: endTime.toISOString(),
-					tenantId: user?.id,
 				});
 
 				const staffMember = staff.find((s) => s.name === created.staffName);
@@ -142,6 +175,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 				});
 
 				setFormData({
+					date: getTodayDate(),
 					time: '09:00',
 					serviceIds: [],
 					staffId: '',
@@ -210,6 +244,18 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 								value={formData.clientPhone}
 								onChange={(e) =>
 									setFormData({ ...formData, clientPhone: e.target.value })
+								}
+							/>
+						</div>
+
+						<div>
+							<Label htmlFor="date">Fecha</Label>
+							<Input
+								id="date"
+								type="date"
+								value={formData.date}
+								onChange={(e) =>
+									setFormData({ ...formData, date: e.target.value })
 								}
 							/>
 						</div>

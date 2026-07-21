@@ -16,7 +16,9 @@ interface AppointmentCardProps {
 	duration: number;
 }
 
-const toAmPm = (timeLabel: string): string => {
+const toAmPm = (timeLabel?: string | null): string => {
+	if (typeof timeLabel !== 'string' || !timeLabel.trim()) return 'Sin hora';
+
 	const parts = timeLabel.split(',').map((p) => p.trim());
 	const time24h = parts.length >= 2 ? parts[1] : timeLabel.trim();
 	const match = time24h.match(/^(\d{1,2}):(\d{2})$/);
