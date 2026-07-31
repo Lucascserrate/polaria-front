@@ -12,6 +12,9 @@ export type SettingsResponse = {
     phoneNumberId: string | null;
     phoneNumber: string | null;
     connectedAt: string | null;
+    /** El número sigue activo en la app de WhatsApp Business (Coexistence). */
+    isOnBusinessApp: boolean;
+    platformType: string | null;
   };
 };
 
@@ -70,6 +73,7 @@ export type CompleteWhatsappEmbeddedSignupPayload = {
   phoneNumberId?: string;
   phoneNumber?: string;
   systemUserAccessToken?: string;
+  coexistence?: boolean;
 };
 
 export const completeWhatsappEmbeddedSignup = async (

@@ -33,6 +33,9 @@ type EmbeddedSignupMetaPayload = {
 	businessId?: string;
 	wabaId?: string;
 	phoneNumberId?: string;
+	/** Evento final del flujo: FINISH, FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING, CANCEL, ERROR... */
+	event?: string;
+	errorMessage?: string;
 };
 
 type WhatsappEmbeddedSignupButtonProps = {
@@ -42,6 +45,55 @@ type WhatsappEmbeddedSignupButtonProps = {
 };
 
 const META_SDK_SRC = 'https://connect.facebook.net/en_US/sdk.js';
+
+/**
+ * Evento que Meta emite cuando el negocio conectó su cuenta de la app WhatsApp
+ * Business en lugar de crear una WABA nueva (Coexistence).
+ */
+const COEXISTENCE_FINISH_EVENT = 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING';
+
+const COEXISTENCE_FEATURE_TYPE = 'whatsapp_business_app_onboarding';
+
+/**
+ * `extras` del flujo de Embedded Signup.
+ *
+ * En v4 la selección de productos vive en la configuración de Facebook Login
+ * for Business, y para el flujo estándar `extras` va vacío. Coexistence es la
+ * excepción: Meta documenta que sigue pidiéndose con `featureType`, así que ese
+ * campo se manda igual en v4.
+ *
+ * - `NEXT_PUBLIC_META_EMBEDDED_SIGNUP_VERSION`: `v4` (default) o `v3`.
+ * - `NEXT_PUBLIC_META_EMBEDDED_SIGNUP_COEXISTENCE`: `false` para forzar el
+ *   flujo estándar (crear WABA nueva) sin tocar código.
+ *
+ * v2 queda deprecado por Meta el 15 de octubre de 2026.
+ */
+const buildSignupExtras = (): Record<string, unknown> => {
+	const version =
+		process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_VERSION?.trim() || 'v4';
+	const coexistenceEnabled =
+		process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_COEXISTENCE?.trim() !== 'false';
+
+	if (version === 'v3') {
+		return {
+			setup: {},
+			version: 'v3',
+			...(coexistenceEnabled ? { featureType: COEXISTENCE_FEATURE_TYPE } : {}),
+		};
+	}
+
+	return coexistenceEnabled ? { featureType: COEXISTENCE_FEATURE_TYPE } : {};
+};
+
+/** Solo se aceptan `postMessage` que vengan de un host de Meta. */
+const isMetaOrigin = (origin: string): boolean => {
+	try {
+		const { hostname } = new URL(origin);
+		return hostname === 'facebook.com' || hostname.endsWith('.facebook.com');
+	} catch {
+		return false;
+	}
+};
 
 const WhatsappEmbeddedSignupButton: React.FC<
 	WhatsappEmbeddedSignupButtonProps
@@ -79,6 +131,11 @@ const WhatsappEmbeddedSignupButton: React.FC<
 			if (!payload || typeof payload !== 'object') return null;
 
 			const candidate = payload as Record<string, unknown>;
+
+			// Meta emite varios `postMessage` desde el iframe; solo el de tipo
+			// WA_EMBEDDED_SIGNUP trae los ids del onboarding.
+			if (candidate.type !== 'WA_EMBEDDED_SIGNUP') return null;
+
 			const sources = [
 				candidate,
 				candidate.data,
@@ -111,13 +168,20 @@ const WhatsappEmbeddedSignupButton: React.FC<
 				'phone_number_id',
 				'phoneNumberId',
 			]);
+			const event = readField(sources, ['event']);
+			const errorMessage = readField(sources, [
+				'error_message',
+				'errorMessage',
+			]);
 
-			if (!businessId && !wabaId && !phoneNumberId) return null;
+			if (!businessId && !wabaId && !phoneNumberId && !event) return null;
 
 			return {
 				businessId,
 				wabaId,
 				phoneNumberId,
+				event,
+				errorMessage,
 			};
 		},
 		[],
@@ -162,15 +226,10 @@ const WhatsappEmbeddedSignupButton: React.FC<
 	}, [initializeSdk]);
 
 	useEffect(() => {
-		if (!loading || typeof window === 'undefined') return;
+		if (typeof window === 'undefined') return;
 
 		const handleMessage = (event: MessageEvent) => {
-			if (
-				typeof event.origin !== 'string' ||
-				!event.origin.includes('facebook.com')
-			) {
-				return;
-			}
+			if (!isMetaOrigin(event.origin)) return;
 
 			const payload = extractEmbeddedSignupMetaPayload(event.data);
 			if (!payload) return;
@@ -185,7 +244,7 @@ const WhatsappEmbeddedSignupButton: React.FC<
 		return () => {
 			window.removeEventListener('message', handleMessage);
 		};
-	}, [extractEmbeddedSignupMetaPayload, loading]);
+	}, [extractEmbeddedSignupMetaPayload]);
 
 	const handleActivate = () => {
 		const appId = process.env.NEXT_PUBLIC_META_APP_ID;
@@ -220,16 +279,28 @@ const WhatsappEmbeddedSignupButton: React.FC<
 
 						const code = response.authResponse?.code;
 						if (!code) {
-							setError('Meta no devolvió un authorization code.');
+							const { event, errorMessage } = embeddedSignupMetaRef.current;
+							if (event === 'CANCEL') {
+								setError('Cancelaste la conexión con WhatsApp.');
+								return;
+							}
+							setError(
+								errorMessage ?? 'Meta no devolvió un authorization code.',
+							);
 							return;
 						}
 
 						await new Promise((resolve) => setTimeout(resolve, 1500));
+						const meta = embeddedSignupMetaRef.current;
 						const finalPayload = {
 							code,
-							businessId: embeddedSignupMetaRef.current.businessId,
-							wabaId: embeddedSignupMetaRef.current.wabaId,
-							phoneNumberId: embeddedSignupMetaRef.current.phoneNumberId,
+							businessId: meta.businessId,
+							wabaId: meta.wabaId,
+							phoneNumberId: meta.phoneNumberId,
+							// Coexistence: el número sigue activo en la app de WhatsApp
+							// Business, así que el backend no debe registrarlo de nuevo y
+							// tiene que disparar la sincronización de contactos e historial.
+							coexistence: meta.event === COEXISTENCE_FINISH_EVENT,
 						};
 						await completeWhatsappEmbeddedSignup(finalPayload);
 						setLocalConnected(true);
@@ -245,7 +316,7 @@ const WhatsappEmbeddedSignupButton: React.FC<
 				config_id: configId,
 				response_type: 'code',
 				override_default_response_type: true,
-				scope: 'whatsapp_business_management,whatsapp_business_messaging',
+				extras: buildSignupExtras(),
 			},
 		);
 	};
