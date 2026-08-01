@@ -1,3 +1,6 @@
+'use client';
+
+import Link from 'next/link';
 import GoogleButton from '@/components/GoogleButton';
 
 const AuthPage = () => {
@@ -15,9 +18,19 @@ const AuthPage = () => {
 					<span className="text-gray-500">
 						Al registrarse, usted confirma que acepta nuestras
 					</span>{' '}
-					<span className="font-medium">Condiciones de uso</span>{' '}
+					<Link
+						href="/terms"
+						className="font-medium text-neutral-900 hover:underline"
+					>
+						Condiciones de uso
+					</Link>{' '}
 					<span className="text-gray-500">y la </span>{' '}
-					<span className="font-medium">Política de privacidad</span>
+					<Link
+						href="/privacy"
+						className="font-medium text-neutral-900 hover:underline"
+					>
+						Política de privacidad
+					</Link>
 				</div>
 			</div>
 		</div>
