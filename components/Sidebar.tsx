@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { LuLogOut } from 'react-icons/lu';
 import { useLogout } from '@/modules/auth/hooks/useLogout';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/app/logo';
 
 const navItems = [
 	{ href: '/dashboard', label: 'Panel', icon: Home },
@@ -63,7 +64,7 @@ export function Sidebar() {
 					{/* Header */}
 					<div className="p-6 border-b border-neutral-200">
 						<div className="flex items-center gap-3">
-							<div className="font-semibold text-neutral-900">Polaria</div>
+							<Logo className="" />
 						</div>
 					</div>
 
