@@ -133,7 +133,7 @@ export default function StaffPage() {
 					staff={staff}
 					onToggleActive={handleToggleActive}
 					onEdit={handleOpenEdit}
-					onAddClick={() => {}}
+					onAddClick={handleOpenCreate}
 				/>
 			</div>
 

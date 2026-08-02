@@ -26,7 +26,7 @@ const StaffTable = ({ staff, onToggleActive, onEdit, onAddClick }: Props) => {
 				<p className="text-muted-foreground mb-4">No staff members added yet</p>
 				<Button onClick={onAddClick}>
 					<Plus className="w-4 h-4 mr-2" />
-					Add Staff Member
+					Agregar personal
 				</Button>
 			</div>
 		);
