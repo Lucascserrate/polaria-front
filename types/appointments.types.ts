@@ -67,6 +67,7 @@ export interface ServiceApi {
 	timezone: string;
 	durationMinutes: number;
 	isActive: boolean;
+	deletedAt?: string | null;
 }
 
 export interface StaffApi {

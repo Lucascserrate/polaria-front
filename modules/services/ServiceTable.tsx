@@ -14,7 +14,7 @@ import type { Service } from '@/types/services.types';
 
 interface Props {
 	services: Service[];
-	onDelete: (id: string) => void;
+	onDelete: (service: Service) => void;
 	onEdit: (service: Service) => void;
 	onAddClick: () => void;
 }
@@ -65,7 +65,7 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onEdit, onAddClick
 										<Button
 											variant="ghost"
 											size="sm"
-											onClick={() => onDelete(service.id)}
+											onClick={() => onDelete(service)}
 										>
 											<Trash2 className="w-4 h-4 text-destructive" />
 										</Button>
@@ -105,7 +105,7 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onEdit, onAddClick
 								<Button
 									variant="ghost"
 									size="sm"
-									onClick={() => onDelete(service.id)}
+									onClick={() => onDelete(service)}
 								>
 									<Trash2 className="w-4 h-4 text-destructive" />
 								</Button>

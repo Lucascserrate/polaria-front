@@ -5,6 +5,15 @@ import ServiceForm from '@/modules/services/ServiceForm';
 import ServicesTable from '@/modules/services/ServiceTable';
 import { servicesService } from '@/services/services/services.service';
 import type { Service } from '@/types/services.types';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const ServicesPage = () => {
 	const [services, setServices] = useState<Service[]>([]);
@@ -12,6 +21,8 @@ const ServicesPage = () => {
 	const [addOpen, setAddOpen] = useState(false);
 	const [editingService, setEditingService] = useState<Service | null>(null);
 	const [editOpen, setEditOpen] = useState(false);
+	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [deletingService, setDeletingService] = useState<Service | null>(null);
 
 	const stats = useMemo(() => {
 		const totals = services.reduce(
@@ -65,12 +76,22 @@ const ServicesPage = () => {
 		}
 	};
 
-	const handleDelete = async (id: string) => {
+	const handleOpenDelete = (service: Service) => {
+		setDeletingService(service);
+		setDeleteOpen(true);
+	};
+
+	const handleConfirmDelete = async () => {
+		if (!deletingService) return;
+
 		try {
-			await servicesService.delete(id);
-			setServices(services.filter((s) => s.id !== id));
+			await servicesService.delete(deletingService.id);
+			setServices(services.filter((s) => s.id !== deletingService.id));
 		} catch (error) {
 			console.error('Error deleting service:', error);
+		} finally {
+			setDeleteOpen(false);
+			setDeletingService(null);
 		}
 	};
 
@@ -173,7 +194,7 @@ const ServicesPage = () => {
 			<div className="bg-card border border-border rounded-lg p-6">
 				<ServicesTable
 					services={services}
-					onDelete={handleDelete}
+					onDelete={handleOpenDelete}
 					onEdit={handleEdit}
 					onAddClick={() => setAddOpen(true)}
 				/>
@@ -192,6 +213,35 @@ const ServicesPage = () => {
 					if (!open) setEditingService(null);
 				}}
 			/>
+
+			<AlertDialog
+				open={deleteOpen}
+				onOpenChange={(open) => {
+					setDeleteOpen(open);
+					if (!open) setDeletingService(null);
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>¿Eliminar servicio?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Esta acción no se puede deshacer.{' '}
+							{deletingService?.name
+								? `Se eliminará ${deletingService.name}.`
+								: '¿Seguro que deseas eliminar este servicio?'}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<div className="flex gap-2 justify-end">
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleConfirmDelete}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							Eliminar
+						</AlertDialogAction>
+					</div>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 };
