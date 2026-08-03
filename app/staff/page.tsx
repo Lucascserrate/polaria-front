@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus } from 'lucide-react';
 import { StaffForm } from '@/modules/staff/StaffForm';
 import StaffTable from '@/modules/staff/StaffTable';
@@ -14,6 +23,8 @@ export default function StaffPage() {
 
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
 
 	useEffect(() => {
 		let active = true;
@@ -62,6 +73,25 @@ export default function StaffPage() {
 	const handleOpenEdit = (member: StaffMember) => {
 		setEditingStaff(member);
 		setFormOpen(true);
+	};
+
+	const handleOpenDelete = (member: StaffMember) => {
+		setDeletingStaff(member);
+		setDeleteOpen(true);
+	};
+
+	const handleConfirmDelete = async () => {
+		if (!deletingStaff) return;
+
+		try {
+			await staffService.delete(deletingStaff.id);
+			setStaff(staff.filter((s) => s.id !== deletingStaff.id));
+		} catch (error) {
+			console.error('Error deleting staff:', error);
+		} finally {
+			setDeleteOpen(false);
+			setDeletingStaff(null);
+		}
 	};
 
 	const handleUpsert = async (data: {
@@ -133,6 +163,7 @@ export default function StaffPage() {
 					staff={staff}
 					onToggleActive={handleToggleActive}
 					onEdit={handleOpenEdit}
+					onDelete={handleOpenDelete}
 					onAddClick={handleOpenCreate}
 				/>
 			</div>
@@ -152,6 +183,35 @@ export default function StaffPage() {
 					})
 				}
 			/>
+
+			<AlertDialog
+				open={deleteOpen}
+				onOpenChange={(open) => {
+					setDeleteOpen(open);
+					if (!open) setDeletingStaff(null);
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>¿Eliminar personal?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Esta acción no se puede deshacer.{' '}
+							{deletingStaff?.name
+								? `Se eliminará a ${deletingStaff.name}.`
+								: '¿Seguro que deseas eliminar este miembro del staff?'}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<div className="flex gap-2 justify-end">
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleConfirmDelete}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							Eliminar
+						</AlertDialogAction>
+					</div>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }
