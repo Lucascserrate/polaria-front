@@ -138,7 +138,9 @@ const DashboardPage = () => {
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="text-xl font-semibold">Agenda de hoy</h2>
 					<AppointmentModal
-						onAddAppointment={(apt) => setAppointments([...appointments, apt])}
+						onAddAppointment={(apt) =>
+							setAppointments((prev) => [...prev, apt])
+						}
 					/>
 				</div>
 

@@ -24,14 +24,21 @@ import { createAppointment } from '@/services/appointments';
 import { findOrCreateClient } from '@/services/clients';
 import { getSettings } from '@/services/settings';
 import type { StaffApi } from '@/types/appointments.types';
-import useAuth from '@/modules/auth/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import useGetServices from '@/services/services/useGetServices';
 
 interface Props {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	onAddAppointment: (appointment: any) => void;
+	onAddAppointment: (appointment: {
+		id: string;
+		clientName: string;
+		timeLabel: string;
+		sortKey: number;
+		service: string;
+		barber: string;
+		status: string;
+		duration: number;
+	}) => void;
 }
 
 const AppointmentModal = ({ onAddAppointment }: Props) => {
@@ -49,7 +56,6 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 	const [staffError, setStaffError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
-	const { data: user } = useAuth();
 	const [workingDays, setWorkingDays] = useState<boolean[]>([]);
 	const [formData, setFormData] = useState({
 		date: getTodayDate(),
@@ -61,6 +67,10 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 	});
 
 	const activeStaff = useMemo(() => staff.filter((s) => s.isActive), [staff]);
+	const selectedStaff = useMemo(
+		() => activeStaff.find((s) => s.id === formData.staffId),
+		[activeStaff, formData.staffId],
+	);
 
 	const {
 		data: servicesData,
@@ -161,15 +171,23 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 					endTime: endTime.toISOString(),
 				});
 
-				const staffMember = staff.find((s) => s.name === created.staffName);
-				const serviceNames = services.map((s) => s.name).join(', ');
+				const serviceNames = services
+					.filter((service) => formData.serviceIds.includes(service.id))
+					.map((s) => s.name)
+					.join(', ');
 
 				onAddAppointment({
 					id: created.id,
 					clientName: formData.clientName,
-					time: appointmentTime,
+					timeLabel: appointmentTime.toLocaleTimeString('es-BO', {
+						hour: '2-digit',
+						minute: '2-digit',
+						hour12: true,
+					}),
+					sortKey:
+						appointmentTime.getHours() * 60 + appointmentTime.getMinutes(),
 					service: serviceNames || 'Sin servicio',
-					barber: staffMember?.name ?? 'Sin barbero',
+					barber: selectedStaff?.name ?? 'Sin barbero',
 					status: created.status,
 					duration: totalMinutes || 30,
 				});
