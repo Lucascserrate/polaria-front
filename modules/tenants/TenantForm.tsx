@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isValidPhoneNumber } from 'libphonenumber-js';
 import {
 	Dialog,
 	DialogContent,
@@ -19,39 +20,39 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+
 import type {
 	CreateTenantDto,
 	Tenant,
 	TenantStatus,
 	UpdateTenantDto,
 } from '@/types/tenant.types';
+import isValidEmail from '@/lib/isValidEmail';
+import PhoneNumberInput from '@/components/PhoneNumberInput';
+import { getInitialTimezone } from './utils/timezoneUtils';
+import TimezoneInput from '@/components/TimezoneInput';
 
-interface TenantFormProps {
+interface Props {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	initialTenant?: Tenant | null;
 	onSubmit: (tenant: CreateTenantDto | UpdateTenantDto) => void;
 }
 
-const isValidEmail = (value: string) =>
-	/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-
-const getInitialTimezone = () =>
-	Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/La_Paz';
-
 export function TenantForm({
 	open,
 	onOpenChange,
 	initialTenant,
 	onSubmit,
-}: TenantFormProps) {
+}: Props) {
 	const mode = initialTenant ? 'edit' : 'create';
 
 	const [name, setName] = useState(() => initialTenant?.name ?? '');
 	const [email, setEmail] = useState(() => initialTenant?.email ?? '');
-	const [tenantNumber, setTenantNumber] = useState(
+	const [phoneValue, setPhoneValue] = useState(
 		() => initialTenant?.whatsappPhoneNumber ?? '',
 	);
+
 	const [businessType, setBusinessType] = useState(
 		() => initialTenant?.businessType ?? '',
 	);
@@ -76,11 +77,14 @@ export function TenantForm({
 		const nextErrors: Record<string, string> = {};
 
 		if (!name.trim()) {
-			nextErrors.name = 'El nombre del tenant es obligatorio.';
+			nextErrors.name = 'El nombre es obligatorio.';
 		}
 
-		if (!tenantNumber.trim()) {
-			nextErrors.tenantNumber = 'El número del tenant es obligatorio.';
+		if (!phoneValue.trim()) {
+			nextErrors.tenantNumber = 'El número es obligatorio.';
+		} else if (!isValidPhoneNumber(phoneValue)) {
+			nextErrors.tenantNumber =
+				'Ingresa un número válido para el país seleccionado.';
 		}
 
 		if (!email.trim()) {
@@ -97,17 +101,20 @@ export function TenantForm({
 		event.preventDefault();
 		if (!validate()) return;
 
+		const composedPhoneNumber = phoneValue.trim();
+
 		if (mode === 'create') {
 			onSubmit({
 				name: name.trim(),
 				email: email.trim(),
-				whatsappPhoneNumber: tenantNumber.trim(),
+				whatsappPhoneNumber: composedPhoneNumber,
+				timezone: timezone.trim() || getInitialTimezone(),
 			});
 		} else {
 			onSubmit({
 				name: name.trim(),
 				email: email.trim(),
-				whatsappPhoneNumber: tenantNumber.trim(),
+				whatsappPhoneNumber: composedPhoneNumber,
 				businessType: businessType.trim() || undefined,
 				whatsappPhoneId: whatsappPhoneId.trim() || undefined,
 				whatsappAccessToken: whatsappAccessToken.trim() || undefined,
@@ -149,12 +156,11 @@ export function TenantForm({
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="tenantNumber">Número de teléfono</Label>
-						<Input
-							id="tenantNumber"
-							value={tenantNumber}
-							onChange={(event) => setTenantNumber(event.target.value)}
-							placeholder="Ej. +15556384943"
+						<Label htmlFor="tenantNumber">Número</Label>
+						<PhoneNumberInput
+							phoneValue={phoneValue}
+							setPhoneValue={setPhoneValue}
+							whatsappPhoneNumber={initialTenant?.whatsappPhoneNumber ?? ''}
 						/>
 						{errors.tenantNumber && (
 							<p className="text-sm text-red-600">{errors.tenantNumber}</p>
@@ -174,6 +180,18 @@ export function TenantForm({
 							<p className="text-sm text-red-600">{errors.email}</p>
 						)}
 					</div>
+
+					{(mode === 'create' || mode === 'edit') && (
+						<div className="space-y-2">
+							<Label htmlFor="timezone">Zona horaria</Label>
+							<TimezoneInput timezone={timezone} setTimezone={setTimezone} />
+							<p className="text-xs text-muted-foreground">
+								{mode === 'create'
+									? 'Se completa automáticamente según el navegador, pero puedes cambiarla si lo prefieres.'
+									: 'Selecciona la zona horaria del negocio.'}
+							</p>
+						</div>
+					)}
 
 					{mode === 'edit' && (
 						<>
@@ -208,16 +226,6 @@ export function TenantForm({
 										setWhatsappAccessToken(event.target.value)
 									}
 									placeholder="EAAL..."
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<Label htmlFor="timezone">Zona horaria</Label>
-								<Input
-									id="timezone"
-									value={timezone}
-									onChange={(event) => setTimezone(event.target.value)}
-									placeholder="America/La_Paz"
 								/>
 							</div>
 
