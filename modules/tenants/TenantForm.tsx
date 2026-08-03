@@ -136,7 +136,7 @@ export function TenantForm({
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="name">Nombre del tenant</Label>
+						<Label htmlFor="name">Nombre</Label>
 						<Input
 							id="name"
 							value={name}
@@ -149,12 +149,12 @@ export function TenantForm({
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="tenantNumber">Número del tenant</Label>
+						<Label htmlFor="tenantNumber">Número de teléfono</Label>
 						<Input
 							id="tenantNumber"
 							value={tenantNumber}
 							onChange={(event) => setTenantNumber(event.target.value)}
-							placeholder="Ej. 15556384943"
+							placeholder="Ej. +15556384943"
 						/>
 						{errors.tenantNumber && (
 							<p className="text-sm text-red-600">{errors.tenantNumber}</p>
