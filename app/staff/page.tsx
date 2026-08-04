@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { AxiosError } from 'axios';
 import { Button } from '@/components/ui/button';
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -20,11 +20,11 @@ import type { StaffMember } from '@/types/staff.types';
 export default function StaffPage() {
 	const [staff, setStaff] = useState<StaffMember[]>([]);
 	const [loading, setLoading] = useState(true);
-
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
 
 	useEffect(() => {
 		let active = true;
@@ -77,6 +77,7 @@ export default function StaffPage() {
 
 	const handleOpenDelete = (member: StaffMember) => {
 		setDeletingStaff(member);
+		setDeleteError(null);
 		setDeleteOpen(true);
 	};
 
@@ -86,18 +87,27 @@ export default function StaffPage() {
 		try {
 			await staffService.delete(deletingStaff.id);
 			setStaff(staff.filter((s) => s.id !== deletingStaff.id));
-		} catch (error) {
-			console.error('Error deleting staff:', error);
-		} finally {
 			setDeleteOpen(false);
 			setDeletingStaff(null);
+			setDeleteError(null);
+		} catch (error) {
+			const axiosError = error as AxiosError<{ message?: string }>;
+			if (axiosError.response?.status === 409) {
+				setDeleteError(
+					typeof axiosError.response.data?.message === 'string'
+						? axiosError.response.data.message
+						: 'Este miembro del staff no puede eliminarse porque tiene citas futuras programadas.',
+				);
+				return;
+			}
+			console.error('Error deleting staff:', error);
+			setDeleteError(
+				'No se pudo eliminar el staff. Intenta de nuevo en unos momentos.',
+			);
 		}
 	};
 
-	const handleUpsert = async (data: {
-		name: string;
-		serviceIds?: string[];
-	}) => {
+	const handleUpsert = async (data: { name: string; serviceIds?: string[] }) => {
 		try {
 			if (editingStaff) {
 				const updated = await staffService.update(editingStaff.id, data);
@@ -127,7 +137,7 @@ export default function StaffPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-3xl font-bold tracking-tight">
-						Gestión del personal
+						Gestion del personal
 					</h1>
 					<p className="text-muted-foreground mt-1">
 						Administra el personal y los servicios que puede realizar
@@ -188,27 +198,41 @@ export default function StaffPage() {
 				open={deleteOpen}
 				onOpenChange={(open) => {
 					setDeleteOpen(open);
-					if (!open) setDeletingStaff(null);
+					if (!open) {
+						setDeletingStaff(null);
+						setDeleteError(null);
+					}
 				}}
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>¿Eliminar personal?</AlertDialogTitle>
+						<AlertDialogTitle>Eliminar personal?</AlertDialogTitle>
 						<AlertDialogDescription>
-							Esta acción no se puede deshacer.{' '}
-							{deletingStaff?.name
-								? `Se eliminará a ${deletingStaff.name}.`
-								: '¿Seguro que deseas eliminar este miembro del staff?'}
+							{deleteError ? (
+								deleteError
+							) : (
+								<>
+									Esta accion no se puede deshacer.{' '}
+									{deletingStaff?.name
+										? `Se eliminara a ${deletingStaff.name}.`
+										: 'Seguro que deseas eliminar este miembro del staff?'}
+								</>
+							)}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<div className="flex gap-2 justify-end">
 						<AlertDialogCancel>Cancelar</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={handleConfirmDelete}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-						>
-							Eliminar
-						</AlertDialogAction>
+						{!deleteError && (
+							<Button
+								variant="destructive"
+								onClick={(event) => {
+									event.preventDefault();
+									handleConfirmDelete();
+								}}
+							>
+								Eliminar
+							</Button>
+						)}
 					</div>
 				</AlertDialogContent>
 			</AlertDialog>
