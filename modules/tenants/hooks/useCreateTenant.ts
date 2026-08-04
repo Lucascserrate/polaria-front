@@ -1,17 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { tenantsService } from '@/services/tenants.service';
-import type { CreateTenantDto } from '@/types/tenant.types';
+import { createTenant } from '@/services/tenants';
+import type { CreateTenantDto, Tenant } from '@/types/tenant.types';
 
-const useCreateTenant = () => {
+export const useCreateTenant = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (body: CreateTenantDto) => tenantsService.create(body),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['tenants'] });
+		mutationFn: (tenantData: CreateTenantDto) => createTenant(tenantData),
+		onSuccess: (createdTenant: Tenant) => {
+			queryClient.setQueryData<Tenant[]>(['tenants'], (current = []) => [
+				createdTenant,
+				...current,
+			]);
 		},
 	});
 };
-
-export default useCreateTenant;

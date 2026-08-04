@@ -1,73 +1,37 @@
 'use client';
 
-import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TenantForm } from '@/modules/tenants/TenantForm';
 import { TenantTable } from '@/modules/tenants/TenantTable';
-import useCreateTenant from '@/modules/tenants/hooks/useCreateTenant';
-import useDeleteTenant from '@/modules/tenants/hooks/useDeleteTenant';
-import useTenants from '@/modules/tenants/hooks/useTenants';
-import useUpdateTenant from '@/modules/tenants/hooks/useUpdateTenant';
-import type { CreateTenantDto, Tenant, UpdateTenantDto } from '@/types/tenant.types';
+import { useTenantManagement } from '@/modules/tenants/hooks/useTenantManagement';
 
 export default function TenantManagementPage() {
-	const { data: tenants = [], isLoading, isError, error } = useTenants();
-	const createTenant = useCreateTenant();
-	const updateTenant = useUpdateTenant();
-	const deleteTenant = useDeleteTenant();
-	const [formOpen, setFormOpen] = useState(false);
-	const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
-	const [formSeed, setFormSeed] = useState(0);
-
-	const activeCount = useMemo(
-		() => tenants.filter((tenant) => tenant.status !== 'inactive').length,
-		[tenants],
-	);
-
-	const handleOpenCreate = () => {
-		setEditingTenant(null);
-		setFormSeed((current) => current + 1);
-		setFormOpen(true);
-	};
-
-	const handleOpenEdit = (tenant: Tenant) => {
-		setEditingTenant(tenant);
-		setFormSeed((current) => current + 1);
-		setFormOpen(true);
-	};
-
-	const handleDelete = async (tenant: Tenant) => {
-		const confirmed = window.confirm(
-			`¿Eliminar el tenant "${tenant.name}"? Esta acción no se puede deshacer.`,
-		);
-		if (!confirmed) return;
-
-		try {
-			await deleteTenant.mutateAsync(tenant.id);
-		} catch (error) {
-			console.error('Error deleting tenant:', error);
-		}
-	};
-
-	const handleSubmit = async (payload: CreateTenantDto | UpdateTenantDto) => {
-		try {
-			if (editingTenant) {
-				await updateTenant.mutateAsync({
-					id: editingTenant.id,
-					body: payload as UpdateTenantDto,
-				});
-				setEditingTenant(null);
-				return;
-			}
-
-			await createTenant.mutateAsync(payload as CreateTenantDto);
-		} catch (error) {
-			console.error('Error saving tenant:', error);
-		}
-	};
+	const { state, derived, actions } = useTenantManagement();
+	const { formOpen, editingTenant, tenantToDelete, submissionError } = state;
+	const { tenants, isLoading, isError, error, formSeed, activeCount, inactiveCount } =
+		derived;
+	const {
+		handleOpenCreate,
+		handleOpenEdit,
+		handleDeleteRequest,
+		handleDelete,
+		handleSubmit,
+		handleFormOpenChange,
+		handleDeleteDialogChange,
+	} = actions;
 
 	if (isLoading) {
 		return (
@@ -127,9 +91,7 @@ export default function TenantManagementPage() {
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<p className="text-2xl font-bold text-muted-foreground">
-							{tenants.length - activeCount}
-						</p>
+						<p className="text-2xl font-bold text-muted-foreground">{inactiveCount}</p>
 					</CardContent>
 				</Card>
 			</div>
@@ -149,18 +111,39 @@ export default function TenantManagementPage() {
 						tenants={tenants}
 						onAddClick={handleOpenCreate}
 						onEdit={handleOpenEdit}
-						onDelete={handleDelete}
+						onDelete={handleDeleteRequest}
 					/>
 				</CardContent>
 			</Card>
 
+			{submissionError && (
+				<div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+					{submissionError}
+				</div>
+			)}
+
+			<AlertDialog
+				open={Boolean(tenantToDelete)}
+				onOpenChange={handleDeleteDialogChange}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Eliminar tenant</AlertDialogTitle>
+						<AlertDialogDescription>
+							¿Eliminar el tenant{tenantToDelete ? ` "${tenantToDelete.name}"` : ''}? Esta acción no se puede deshacer.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction onClick={handleDelete}>Eliminar</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
 			<TenantForm
 				key={`${editingTenant?.id ?? 'create'}-${formSeed}`}
 				open={formOpen}
-				onOpenChange={(open) => {
-					setFormOpen(open);
-					if (!open) setEditingTenant(null);
-				}}
+				onOpenChange={handleFormOpenChange}
 				initialTenant={editingTenant}
 				onSubmit={handleSubmit}
 			/>

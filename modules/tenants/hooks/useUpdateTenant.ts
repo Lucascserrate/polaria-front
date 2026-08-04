@@ -1,23 +1,24 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { tenantsService } from '@/services/tenants.service';
-import type { UpdateTenantDto } from '@/types/tenant.types';
+import { updateTenant } from '@/services/tenants';
+import type { Tenant, UpdateTenantDto } from '@/types/tenant.types';
 
 type UpdateTenantParams = {
 	id: string;
 	body: UpdateTenantDto;
 };
 
-const useUpdateTenant = () => {
+export const useUpdateTenant = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ id, body }: UpdateTenantParams) =>
-			tenantsService.update(id, body),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['tenants'] });
+		mutationFn: ({ id, body }: UpdateTenantParams) => updateTenant({ id, body }),
+		onSuccess: (updatedTenant: Tenant) => {
+			queryClient.setQueryData<Tenant[]>(['tenants'], (current = []) =>
+				current.map((tenant) =>
+					tenant.id === updatedTenant.id ? updatedTenant : tenant,
+				),
+			);
 		},
 	});
 };
-
-export default useUpdateTenant;

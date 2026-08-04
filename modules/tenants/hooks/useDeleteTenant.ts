@@ -1,16 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { tenantsService } from '@/services/tenants.service';
+import { deleteTenant } from '@/services/tenants';
+import type { Tenant } from '@/types/tenant.types';
 
-const useDeleteTenant = () => {
+export const useDeleteTenant = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (id: string) => tenantsService.delete(id),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['tenants'] });
+		mutationFn: (id: string) => deleteTenant(id),
+		onSuccess: (deletedId: string) => {
+			queryClient.setQueryData<Tenant[]>(['tenants'], (current = []) =>
+				current.filter((tenant) => tenant.id !== deletedId),
+			);
 		},
 	});
 };
-
-export default useDeleteTenant;
