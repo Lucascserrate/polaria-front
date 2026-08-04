@@ -27,20 +27,13 @@ import type { Appointment, StaffApi } from '@/types/appointments.types';
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import useGetServices from '@/services/services/useGetServices';
+import { getTodayDate } from '@/lib/date-utils';
 
 interface Props {
 	onAddAppointment: (appointment: Appointment) => void;
 }
 
 const AppointmentModal = ({ onAddAppointment }: Props) => {
-	const getTodayDate = () => {
-		const now = new Date();
-		const year = now.getFullYear();
-		const month = String(now.getMonth() + 1).padStart(2, '0');
-		const day = String(now.getDate()).padStart(2, '0');
-		return `${year}-${month}-${day}`;
-	};
-
 	const [open, setOpen] = useState(false);
 	const [staff, setStaff] = useState<StaffApi[]>([]);
 	const [loadingStaff, setLoadingStaff] = useState(false);
