@@ -4,11 +4,8 @@ import type {
 	Tenant,
 	UpdateTenantDto,
 } from '@/types/tenant.types';
-
-const DEFAULT_TIMEZONE =
-	(typeof Intl !== 'undefined' &&
-		Intl.DateTimeFormat().resolvedOptions().timeZone) ||
-	'America/La_Paz';
+import { normalizeTenantPayload } from '@/modules/tenants/utils/tenantPayload';
+import { DEFAULT_TIMEZONE } from '@/modules/tenants/utils/timezoneUtils';
 
 class TenantsService {
 	async getAll(): Promise<Tenant[]> {
@@ -27,10 +24,7 @@ class TenantsService {
 	}
 
 	async update(id: string, tenantData: UpdateTenantDto): Promise<Tenant> {
-		const payload: UpdateTenantDto = {
-			...tenantData,
-			timezone: tenantData.timezone || DEFAULT_TIMEZONE,
-		};
+		const payload = normalizeTenantPayload(tenantData);
 
 		const { data } = await axiosInstance.patch(`/tenants/${id}`, payload);
 		return data;

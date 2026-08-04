@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { isValidPhoneNumber } from 'libphonenumber-js';
+
+import { Button } from '@/components/ui/button';
 import {
 	Dialog,
 	DialogContent,
@@ -9,10 +10,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
 	Select,
 	SelectContent,
@@ -20,17 +19,22 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-
+import { Switch } from '@/components/ui/switch';
+import isValidEmail from '@/lib/isValidEmail';
 import type {
 	CreateTenantDto,
 	Tenant,
 	TenantStatus,
 	UpdateTenantDto,
 } from '@/types/tenant.types';
-import isValidEmail from '@/lib/isValidEmail';
+
 import PhoneNumberInput from '@/components/PhoneNumberInput';
-import { getInitialTimezone } from './utils/timezoneUtils';
 import TimezoneInput from '@/components/TimezoneInput';
+import {
+	composeInternationalPhoneNumber,
+} from './utils/phoneUtils';
+import { getInitialTimezone } from './utils/timezoneUtils';
+import { getInitialFormState, type TenantFormState } from './utils/tenantFormState';
 
 interface Props {
 	open: boolean;
@@ -46,50 +50,19 @@ export function TenantForm({
 	onSubmit,
 }: Props) {
 	const mode = initialTenant ? 'edit' : 'create';
-
-	const [name, setName] = useState(() => initialTenant?.name ?? '');
-	const [email, setEmail] = useState(() => initialTenant?.email ?? '');
-	const [phoneValue, setPhoneValue] = useState(
-		() => initialTenant?.whatsappPhoneNumber ?? '',
-	);
-
-	const [businessType, setBusinessType] = useState(
-		() => initialTenant?.businessType ?? '',
-	);
-	const [whatsappPhoneId, setWhatsappPhoneId] = useState(
-		() => initialTenant?.whatsappPhoneId ?? '',
-	);
-	const [whatsappAccessToken, setWhatsappAccessToken] = useState(
-		() => initialTenant?.whatsappAccessToken ?? '',
-	);
-	const [timezone, setTimezone] = useState(
-		() => initialTenant?.timezone ?? getInitialTimezone(),
-	);
-	const [status, setStatus] = useState<TenantStatus>(
-		() => initialTenant?.status ?? 'active',
-	);
-	const [aiEnabled, setAiEnabled] = useState(
-		() => initialTenant?.aiEnabled ?? true,
-	);
+	const [form, setForm] = useState<TenantFormState>(() => getInitialFormState(initialTenant));
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
 	const validate = () => {
 		const nextErrors: Record<string, string> = {};
 
-		if (!name.trim()) {
+		if (!form.name.trim()) {
 			nextErrors.name = 'El nombre es obligatorio.';
 		}
 
-		if (!phoneValue.trim()) {
-			nextErrors.tenantNumber = 'El número es obligatorio.';
-		} else if (!isValidPhoneNumber(phoneValue)) {
-			nextErrors.tenantNumber =
-				'Ingresa un número válido para el país seleccionado.';
-		}
-
-		if (!email.trim()) {
+		if (!form.email.trim()) {
 			nextErrors.email = 'El correo electrónico es obligatorio.';
-		} else if (!isValidEmail(email)) {
+		} else if (!isValidEmail(form.email)) {
 			nextErrors.email = 'Ingresa un correo válido.';
 		}
 
@@ -101,26 +74,29 @@ export function TenantForm({
 		event.preventDefault();
 		if (!validate()) return;
 
-		const composedPhoneNumber = phoneValue.trim();
+		const whatsappPhoneNumber = composeInternationalPhoneNumber(
+			form.phoneCountry,
+			form.phoneValue,
+		);
 
 		if (mode === 'create') {
 			onSubmit({
-				name: name.trim(),
-				email: email.trim(),
-				whatsappPhoneNumber: composedPhoneNumber,
-				timezone: timezone.trim() || getInitialTimezone(),
+				name: form.name.trim(),
+				email: form.email.trim(),
+				whatsappPhoneNumber,
+				timezone: form.timezone.trim() || getInitialTimezone(),
 			});
 		} else {
 			onSubmit({
-				name: name.trim(),
-				email: email.trim(),
-				whatsappPhoneNumber: composedPhoneNumber,
-				businessType: businessType.trim() || undefined,
-				whatsappPhoneId: whatsappPhoneId.trim() || undefined,
-				whatsappAccessToken: whatsappAccessToken.trim() || undefined,
-				timezone: timezone.trim() || undefined,
-				status,
-				aiEnabled,
+				name: form.name.trim(),
+				email: form.email.trim(),
+				whatsappPhoneNumber,
+				businessType: form.businessType.trim() || undefined,
+				whatsappPhoneId: form.whatsappPhoneId.trim() || undefined,
+				whatsappAccessToken: form.whatsappAccessToken.trim() || undefined,
+				timezone: form.timezone.trim() || undefined,
+				status: form.status,
+				aiEnabled: form.aiEnabled,
 			});
 		}
 
@@ -146,21 +122,26 @@ export function TenantForm({
 						<Label htmlFor="name">Nombre</Label>
 						<Input
 							id="name"
-							value={name}
-							onChange={(event) => setName(event.target.value)}
-							placeholder="Ej. Barbería Central"
+							value={form.name}
+							onChange={(event) =>
+								setForm((current) => ({ ...current, name: event.target.value }))
+							}
+							placeholder="Ej. Barberia Central"
 						/>
-						{errors.name && (
-							<p className="text-sm text-red-600">{errors.name}</p>
-						)}
+						{errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
 					</div>
 
 					<div className="space-y-2">
 						<Label htmlFor="tenantNumber">Número</Label>
 						<PhoneNumberInput
-							phoneValue={phoneValue}
-							setPhoneValue={setPhoneValue}
-							whatsappPhoneNumber={initialTenant?.whatsappPhoneNumber ?? ''}
+							phoneCountry={form.phoneCountry}
+							phoneValue={form.phoneValue}
+							onPhoneCountryChange={(phoneCountry) =>
+								setForm((current) => ({ ...current, phoneCountry }))
+							}
+							onPhoneValueChange={(phoneValue) =>
+								setForm((current) => ({ ...current, phoneValue }))
+							}
 						/>
 						{errors.tenantNumber && (
 							<p className="text-sm text-red-600">{errors.tenantNumber}</p>
@@ -172,26 +153,29 @@ export function TenantForm({
 						<Input
 							id="email"
 							type="email"
-							value={email}
-							onChange={(event) => setEmail(event.target.value)}
+							value={form.email}
+							onChange={(event) =>
+								setForm((current) => ({ ...current, email: event.target.value }))
+							}
 							placeholder="admin@negocio.com"
 						/>
-						{errors.email && (
-							<p className="text-sm text-red-600">{errors.email}</p>
-						)}
+						{errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
 					</div>
 
-					{(mode === 'create' || mode === 'edit') && (
-						<div className="space-y-2">
-							<Label htmlFor="timezone">Zona horaria</Label>
-							<TimezoneInput timezone={timezone} setTimezone={setTimezone} />
-							<p className="text-xs text-muted-foreground">
-								{mode === 'create'
-									? 'Se completa automáticamente según el navegador, pero puedes cambiarla si lo prefieres.'
-									: 'Selecciona la zona horaria del negocio.'}
-							</p>
-						</div>
-					)}
+					<div className="space-y-2">
+						<Label htmlFor="timezone">Zona horaria</Label>
+						<TimezoneInput
+							timezone={form.timezone}
+							setTimezone={(timezone) =>
+								setForm((current) => ({ ...current, timezone }))
+							}
+						/>
+						<p className="text-xs text-muted-foreground">
+							{mode === 'create'
+								? 'Se completa automáticamente según el navegador, pero puedes cambiarla si lo prefieres.'
+								: 'Selecciona la zona horaria del negocio.'}
+						</p>
+					</div>
 
 					{mode === 'edit' && (
 						<>
@@ -199,8 +183,13 @@ export function TenantForm({
 								<Label htmlFor="businessType">Tipo de negocio</Label>
 								<Input
 									id="businessType"
-									value={businessType}
-									onChange={(event) => setBusinessType(event.target.value)}
+									value={form.businessType}
+									onChange={(event) =>
+										setForm((current) => ({
+											...current,
+											businessType: event.target.value,
+										}))
+									}
 									placeholder="Ej. barberia"
 								/>
 							</div>
@@ -209,8 +198,13 @@ export function TenantForm({
 								<Label htmlFor="whatsappPhoneId">WhatsApp Phone ID</Label>
 								<Input
 									id="whatsappPhoneId"
-									value={whatsappPhoneId}
-									onChange={(event) => setWhatsappPhoneId(event.target.value)}
+									value={form.whatsappPhoneId}
+									onChange={(event) =>
+										setForm((current) => ({
+											...current,
+											whatsappPhoneId: event.target.value,
+										}))
+									}
 									placeholder="1013549818517591"
 								/>
 							</div>
@@ -221,9 +215,12 @@ export function TenantForm({
 								</Label>
 								<Input
 									id="whatsappAccessToken"
-									value={whatsappAccessToken}
+									value={form.whatsappAccessToken}
 									onChange={(event) =>
-										setWhatsappAccessToken(event.target.value)
+										setForm((current) => ({
+											...current,
+											whatsappAccessToken: event.target.value,
+										}))
 									}
 									placeholder="EAAL..."
 								/>
@@ -232,8 +229,13 @@ export function TenantForm({
 							<div className="space-y-2">
 								<Label htmlFor="status">Estado</Label>
 								<Select
-									value={status}
-									onValueChange={(value) => setStatus(value as TenantStatus)}
+									value={form.status}
+									onValueChange={(value) =>
+										setForm((current) => ({
+											...current,
+											status: value as TenantStatus,
+										}))
+									}
 								>
 									<SelectTrigger id="status">
 										<SelectValue placeholder="Selecciona un estado" />
@@ -252,7 +254,12 @@ export function TenantForm({
 										Controla si el tenant puede usar funcionalidades de IA.
 									</p>
 								</div>
-								<Switch checked={aiEnabled} onCheckedChange={setAiEnabled} />
+								<Switch
+									checked={form.aiEnabled}
+									onCheckedChange={(aiEnabled) =>
+										setForm((current) => ({ ...current, aiEnabled }))
+									}
+								/>
 							</div>
 						</>
 					)}
