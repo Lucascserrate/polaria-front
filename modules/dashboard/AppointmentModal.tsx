@@ -23,22 +23,13 @@ import { getStaff } from '@/services/staff';
 import { createAppointment } from '@/services/appointments';
 import { findOrCreateClient } from '@/services/clients';
 import { getSettings } from '@/services/settings';
-import type { StaffApi } from '@/types/appointments.types';
+import type { Appointment, StaffApi } from '@/types/appointments.types';
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import useGetServices from '@/services/services/useGetServices';
 
 interface Props {
-	onAddAppointment: (appointment: {
-		id: string;
-		clientName: string;
-		timeLabel: string;
-		sortKey: number;
-		service: string;
-		barber: string;
-		status: string;
-		duration: number;
-	}) => void;
+	onAddAppointment: (appointment: Appointment) => void;
 }
 
 const AppointmentModal = ({ onAddAppointment }: Props) => {
