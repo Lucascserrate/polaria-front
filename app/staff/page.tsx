@@ -1,69 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import type { AxiosError } from 'axios';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-	AlertDialog,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Plus } from 'lucide-react';
+import { DeleteStaffDialog } from '@/modules/staff/DeleteStaffDialog';
 import { StaffForm } from '@/modules/staff/StaffForm';
+import { StaffStats } from '@/modules/staff/StaffStats';
 import StaffTable from '@/modules/staff/StaffTable';
-import { staffService } from '@/services/staff.service';
 import type { StaffMember } from '@/types/staff.types';
+import { useStaff } from '@/modules/staff/hooks/useStaff';
 
 export default function StaffPage() {
-	const [staff, setStaff] = useState<StaffMember[]>([]);
-	const [loading, setLoading] = useState(true);
+	const {
+		staff,
+		loading,
+		deleteError,
+		setDeleteError,
+		toggleActive,
+		createStaff,
+		updateStaff,
+		deleteStaff,
+	} = useStaff();
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
-	const [deleteError, setDeleteError] = useState<string | null>(null);
-
-	useEffect(() => {
-		let active = true;
-
-		const loadStaff = async () => {
-			try {
-				setLoading(true);
-				const data = await staffService.getAll();
-				if (active) {
-					setStaff(data);
-				}
-			} catch (error) {
-				console.error('Error loading staff:', error);
-			} finally {
-				if (active) {
-					setLoading(false);
-				}
-			}
-		};
-
-		loadStaff();
-
-		return () => {
-			active = false;
-		};
-	}, []);
-
-	const handleToggleActive = async (id: string) => {
-		try {
-			const currentStaff = staff.find((s) => s.id === id);
-			if (!currentStaff) return;
-			const updatedStaff = await staffService.update(id, {
-				isActive: !currentStaff.isActive,
-			});
-			setStaff(staff.map((s) => (s.id === id ? updatedStaff : s)));
-		} catch (error) {
-			console.error('Error toggling staff active status:', error);
-		}
-	};
 
 	const handleOpenCreate = () => {
 		setEditingStaff(null);
@@ -84,45 +45,22 @@ export default function StaffPage() {
 	const handleConfirmDelete = async () => {
 		if (!deletingStaff) return;
 
-		try {
-			await staffService.delete(deletingStaff.id);
-			setStaff(staff.filter((s) => s.id !== deletingStaff.id));
+		const deleted = await deleteStaff(deletingStaff.id);
+		if (deleted) {
 			setDeleteOpen(false);
 			setDeletingStaff(null);
 			setDeleteError(null);
-		} catch (error) {
-			const axiosError = error as AxiosError<{ message?: string }>;
-			if (axiosError.response?.status === 409) {
-				setDeleteError(
-					typeof axiosError.response.data?.message === 'string'
-						? axiosError.response.data.message
-						: 'Este miembro del staff no puede eliminarse porque tiene citas futuras programadas.',
-				);
-				return;
-			}
-			console.error('Error deleting staff:', error);
-			setDeleteError(
-				'No se pudo eliminar el staff. Intenta de nuevo en unos momentos.',
-			);
 		}
 	};
 
 	const handleUpsert = async (data: { name: string; serviceIds?: string[] }) => {
-		try {
-			if (editingStaff) {
-				const updated = await staffService.update(editingStaff.id, data);
-				setStaff(staff.map((s) => (s.id === editingStaff.id ? updated : s)));
-				return;
-			}
-
-			const created = await staffService.create({ ...data, isActive: true });
-			setStaff([...staff, created]);
-		} catch (error) {
-			console.error('Error saving staff:', error);
+		if (editingStaff) {
+			await updateStaff(editingStaff.id, data);
+			return;
 		}
-	};
 
-	const activeCount = staff.filter((s) => s.isActive).length;
+		await createStaff({ ...data, isActive: true });
+	};
 
 	if (loading) {
 		return (
@@ -150,28 +88,13 @@ export default function StaffPage() {
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Personal total</p>
-					<p className="text-2xl font-bold mt-1">{staff.length}</p>
-				</div>
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Activo</p>
-					<p className="text-2xl font-bold mt-1 text-green-600">
-						{activeCount}
-					</p>
-				</div>
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Inactivo</p>
-					<p className="text-2xl font-bold mt-1 text-muted-foreground">
-						{staff.length - activeCount}
-					</p>
-				</div>
+				<StaffStats staff={staff} />
 			</div>
 
 			<div className="bg-card border border-border rounded-lg p-6">
 				<StaffTable
 					staff={staff}
-					onToggleActive={handleToggleActive}
+					onToggleActive={toggleActive}
 					onEdit={handleOpenEdit}
 					onDelete={handleOpenDelete}
 					onAddClick={handleOpenCreate}
@@ -194,7 +117,7 @@ export default function StaffPage() {
 				}
 			/>
 
-			<AlertDialog
+			<DeleteStaffDialog
 				open={deleteOpen}
 				onOpenChange={(open) => {
 					setDeleteOpen(open);
@@ -203,39 +126,10 @@ export default function StaffPage() {
 						setDeleteError(null);
 					}
 				}}
-			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Eliminar personal?</AlertDialogTitle>
-						<AlertDialogDescription>
-							{deleteError ? (
-								deleteError
-							) : (
-								<>
-									Esta accion no se puede deshacer.{' '}
-									{deletingStaff?.name
-										? `Se eliminara a ${deletingStaff.name}.`
-										: 'Seguro que deseas eliminar este miembro del staff?'}
-								</>
-							)}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<div className="flex gap-2 justify-end">
-						<AlertDialogCancel>Cancelar</AlertDialogCancel>
-						{!deleteError && (
-							<Button
-								variant="destructive"
-								onClick={(event) => {
-									event.preventDefault();
-									handleConfirmDelete();
-								}}
-							>
-								Eliminar
-							</Button>
-						)}
-					</div>
-				</AlertDialogContent>
-			</AlertDialog>
+				staff={deletingStaff}
+				error={deleteError}
+				onConfirm={handleConfirmDelete}
+			/>
 		</div>
 	);
 }
