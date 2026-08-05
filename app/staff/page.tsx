@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react';
 import { StaffForm } from '@/modules/staff/StaffForm';
 import StaffTable from '@/modules/staff/StaffTable';
 import { staffService } from '@/services/staff.service';
-import type { StaffMember } from '@/types/staff.types';
+import type { StaffFormPayload, StaffMember } from '@/types/staff.types';
 
 export default function StaffPage() {
 	const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -64,10 +64,7 @@ export default function StaffPage() {
 		setFormOpen(true);
 	};
 
-	const handleUpsert = async (data: {
-		name: string;
-		serviceIds?: string[];
-	}) => {
+	const handleUpsert = async (data: StaffFormPayload) => {
 		try {
 			if (editingStaff) {
 				const updated = await staffService.update(editingStaff.id, data);
@@ -145,12 +142,7 @@ export default function StaffPage() {
 					if (!next) setEditingStaff(null);
 				}}
 				initialStaff={editingStaff}
-				onSubmit={(payload) =>
-					handleUpsert({
-						name: payload.name ?? '',
-						serviceIds: payload.serviceIds,
-					})
-				}
+				onSubmit={handleUpsert}
 			/>
 		</div>
 	);

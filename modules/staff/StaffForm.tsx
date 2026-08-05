@@ -13,18 +13,15 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import type {
-	CreateStaffDto,
-	StaffMember,
-	UpdateStaffDto,
-} from '@/types/staff.types';
+import type { StaffFormPayload, StaffMember } from '@/types/staff.types';
+import { toCommissionInput } from '@/modules/staff/utils/commission';
 import useGetServices from '@/services/services/useGetServices';
 
 interface StaffFormProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	initialStaff?: StaffMember | null;
-	onSubmit: (staff: CreateStaffDto | UpdateStaffDto) => void;
+	onSubmit: (staff: StaffFormPayload) => void;
 }
 
 export function StaffForm({
@@ -37,6 +34,9 @@ export function StaffForm({
 	const [serviceIds, setServiceIds] = useState<string[]>(
 		() => initialStaff?.services?.map((s) => s.id) ?? [],
 	);
+	const [commission, setCommission] = useState(() =>
+		toCommissionInput(initialStaff?.commissionRate),
+	);
 
 	const { data: servicesData } = useGetServices();
 
@@ -44,10 +44,20 @@ export function StaffForm({
 
 	const mode: 'create' | 'edit' = initialStaff ? 'edit' : 'create';
 
+	// Campo vacío significa "sin comisión configurada", que no es lo mismo que 0%.
+	const commissionRate = commission.trim() === '' ? null : Number(commission);
+	const commissionError =
+		commissionRate !== null &&
+		(!Number.isFinite(commissionRate) ||
+			commissionRate < 0 ||
+			commissionRate > 100)
+			? 'La comisión debe ser un porcentaje entre 0 y 100.'
+			: null;
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!name) return;
-		onSubmit({ name, serviceIds });
+		if (!name || commissionError) return;
+		onSubmit({ name, serviceIds, commissionRate });
 		onOpenChange(false);
 	};
 
@@ -74,6 +84,36 @@ export function StaffForm({
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 						/>
+					</div>
+
+					<div>
+						<Label htmlFor="commission">Comisión</Label>
+						<div className="relative">
+							<Input
+								id="commission"
+								type="number"
+								min="0"
+								max="100"
+								step="0.5"
+								inputMode="decimal"
+								placeholder="0"
+								className="pr-8"
+								value={commission}
+								onChange={(e) => setCommission(e.target.value)}
+								aria-invalid={Boolean(commissionError)}
+							/>
+							<span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+								%
+							</span>
+						</div>
+						{commissionError ? (
+							<p className="text-sm text-red-600 mt-1">{commissionError}</p>
+						) : (
+							<p className="text-xs text-muted-foreground mt-1">
+								Porcentaje de lo que factura. Déjalo vacío si no trabaja a
+								comisión.
+							</p>
+						)}
 					</div>
 
 					<div className="space-y-2">
@@ -129,7 +169,7 @@ export function StaffForm({
 						>
 							Cancelar
 						</Button>
-						<Button type="submit" disabled={!name}>
+						<Button type="submit" disabled={!name || Boolean(commissionError)}>
 							{mode === 'create' ? 'Crear' : 'Guardar'}
 						</Button>
 					</div>
