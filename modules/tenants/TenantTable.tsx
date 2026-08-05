@@ -26,6 +26,28 @@ const statusLabel: Record<string, string> = {
 	inactive: 'Inactivo',
 };
 
+function TenantStatusBadge({ status }: { status?: Tenant['status'] }) {
+	return (
+		<Badge variant={status === 'inactive' ? 'secondary' : 'default'}>
+			{statusLabel[status ?? 'active'] ?? 'Activo'}
+		</Badge>
+	);
+}
+
+function EmptyState({ onAddClick }: { onAddClick: () => void }) {
+	return (
+		<div className="text-center py-12">
+			<p className="text-muted-foreground mb-4">
+				No hay negocios registrados todavía
+			</p>
+			<Button onClick={onAddClick}>
+				<Plus className="w-4 h-4 mr-2" />
+				Crear negocio
+			</Button>
+		</div>
+	);
+}
+
 export function TenantTable({
 	tenants,
 	onEdit,
@@ -33,17 +55,7 @@ export function TenantTable({
 	onAddClick,
 }: TenantTableProps) {
 	if (tenants.length === 0) {
-		return (
-			<div className="text-center py-12">
-				<p className="text-muted-foreground mb-4">
-					No hay negocios registrados todavía
-				</p>
-				<Button onClick={onAddClick}>
-					<Plus className="w-4 h-4 mr-2" />
-					Crear negocio
-				</Button>
-			</div>
-		);
+		return <EmptyState onAddClick={onAddClick} />;
 	}
 
 	return (
@@ -69,13 +81,7 @@ export function TenantTable({
 								<TableCell>{tenant.email || 'Sin correo'}</TableCell>
 								<TableCell>{tenant.whatsappPhoneNumber}</TableCell>
 								<TableCell>
-									<Badge
-										variant={
-											tenant.status === 'inactive' ? 'secondary' : 'default'
-										}
-									>
-										{statusLabel[tenant.status ?? 'active'] ?? 'Activo'}
-									</Badge>
+									<TenantStatusBadge status={tenant.status} />
 								</TableCell>
 								<TableCell>{formatDate(new Date(tenant.createdAt))}</TableCell>
 								<TableCell className="text-right">
@@ -116,11 +122,7 @@ export function TenantTable({
 									{tenant.businessType || 'Sin definir'}
 								</p>
 							</div>
-							<Badge
-								variant={tenant.status === 'inactive' ? 'secondary' : 'default'}
-							>
-								{statusLabel[tenant.status ?? 'active'] ?? 'Activo'}
-							</Badge>
+							<TenantStatusBadge status={tenant.status} />
 						</div>
 
 						<div className="mt-4 space-y-2 text-sm">

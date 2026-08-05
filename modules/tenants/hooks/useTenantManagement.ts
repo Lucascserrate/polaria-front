@@ -20,7 +20,6 @@ export const useTenantManagement = () => {
 	const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
 	const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
 	const [submissionError, setSubmissionError] = useState<string | null>(null);
-	const [formSeed, setFormSeed] = useState(0);
 
 	const activeCount = useMemo(
 		() => tenants.filter((tenant) => tenant.status !== 'inactive').length,
@@ -35,14 +34,12 @@ export const useTenantManagement = () => {
 	const handleOpenCreate = () => {
 		setEditingTenant(null);
 		setSubmissionError(null);
-		setFormSeed((current) => current + 1);
 		setFormOpen(true);
 	};
 
 	const handleOpenEdit = (tenant: Tenant) => {
 		setEditingTenant(tenant);
 		setSubmissionError(null);
-		setFormSeed((current) => current + 1);
 		setFormOpen(true);
 	};
 
@@ -127,7 +124,6 @@ export const useTenantManagement = () => {
 			isLoading,
 			isError,
 			error,
-			formSeed,
 		},
 		actions: {
 			handleOpenCreate,

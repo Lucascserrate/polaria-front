@@ -21,7 +21,7 @@ import { useTenantManagement } from '@/modules/tenants/hooks/useTenantManagement
 export default function TenantManagementPage() {
 	const { state, derived, actions } = useTenantManagement();
 	const { formOpen, editingTenant, tenantToDelete, submissionError } = state;
-	const { tenants, isLoading, isError, error, formSeed, activeCount, inactiveCount } =
+	const { tenants, isLoading, isError, error, activeCount, inactiveCount } =
 		derived;
 	const {
 		handleOpenCreate,
@@ -141,7 +141,6 @@ export default function TenantManagementPage() {
 			</AlertDialog>
 
 			<TenantForm
-				key={`${editingTenant?.id ?? 'create'}-${formSeed}`}
 				open={formOpen}
 				onOpenChange={handleFormOpenChange}
 				initialTenant={editingTenant}
