@@ -11,6 +11,10 @@ import {
 } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import type { StaffMember } from '@/types/staff.types';
+import {
+	formatCommissionRate,
+	parseCommissionRate,
+} from '@/modules/staff/utils/commission';
 
 interface Props {
 	staff: StaffMember[];
@@ -48,6 +52,7 @@ const StaffTable = ({
 						<TableRow>
 							<TableHead>Nombre</TableHead>
 							<TableHead>Servicios</TableHead>
+							<TableHead>Comisión</TableHead>
 							<TableHead>Estado</TableHead>
 							<TableHead className="text-right">Acciones</TableHead>
 						</TableRow>
@@ -61,6 +66,15 @@ const StaffTable = ({
 										<span>{member.services.map((s) => s.name).join(', ')}</span>
 									) : (
 										<span className="text-muted-foreground">Sin servicios</span>
+									)}
+								</TableCell>
+								<TableCell>
+									{parseCommissionRate(member.commissionRate) === null ? (
+										<span className="text-muted-foreground">Sin comisión</span>
+									) : (
+										<span className="font-medium">
+											{formatCommissionRate(member.commissionRate)}
+										</span>
 									)}
 								</TableCell>
 								<TableCell>
@@ -113,6 +127,9 @@ const StaffTable = ({
 									{member.services && member.services.length > 0
 										? member.services.map((s) => s.name).join(', ')
 										: 'Sin servicios'}
+								</p>
+								<p className="text-sm text-muted-foreground mt-1">
+									Comisión: {formatCommissionRate(member.commissionRate)}
 								</p>
 							</div>
 							<div className="flex items-center gap-2">
