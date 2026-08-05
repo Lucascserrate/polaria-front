@@ -87,7 +87,7 @@ export default function StaffPage() {
 				</Button>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div>
 				<StaffStats staff={staff} />
 			</div>
 
