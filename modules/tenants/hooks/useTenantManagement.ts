@@ -4,6 +4,7 @@ import { useCreateTenant } from '@/modules/tenants/hooks/useCreateTenant';
 import { useDeleteTenant } from '@/modules/tenants/hooks/useDeleteTenant';
 import { useGetTenants } from '@/modules/tenants/hooks/useGetTenants';
 import { useUpdateTenant } from '@/modules/tenants/hooks/useUpdateTenant';
+import { validateTenantSubmission } from '@/modules/tenants/utils/tenantValidation';
 import type {
 	CreateTenantDto,
 	Tenant,
@@ -62,23 +63,15 @@ export const useTenantManagement = () => {
 		try {
 			setSubmissionError(null);
 
-			if (!editingTenant && 'whatsappPhoneNumber' in payload) {
-				const normalizedPhone = payload.whatsappPhoneNumber?.trim();
-				if (!normalizedPhone) {
-					setSubmissionError('El número de WhatsApp es obligatorio.');
-					return;
-				}
+			const validation = validateTenantSubmission(
+				payload,
+				tenants,
+				editingTenant ? 'edit' : 'create',
+			);
 
-				const duplicateTenant = tenants.find(
-					(tenant) => tenant.whatsappPhoneNumber === normalizedPhone,
-				);
-
-				if (duplicateTenant) {
-					setSubmissionError(
-						'Ya existe un tenant con ese número de WhatsApp. Usa un número diferente.',
-					);
-					return;
-				}
+			if (!validation.valid) {
+				setSubmissionError(validation.error ?? null);
+				return;
 			}
 
 			if (editingTenant) {

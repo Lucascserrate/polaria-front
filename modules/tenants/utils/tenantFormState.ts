@@ -1,6 +1,10 @@
 import type { Tenant, TenantStatus } from '@/types/tenant.types';
 
 import { getInitialPhoneState, getPhoneCountryByValue } from './phoneUtils';
+import {
+	DEFAULT_TENANT_AI_ENABLED,
+	DEFAULT_TENANT_STATUS,
+} from './tenantDefaults';
 import { DEFAULT_TIMEZONE, getInitialTimezone, isAllowedTimezone } from './timezoneUtils';
 
 type TenantFormState = {
@@ -30,8 +34,8 @@ const getInitialFormState = (initialTenant?: Tenant | null): TenantFormState => 
 		timezone: isAllowedTimezone(initialTenant?.timezone)
 			? initialTenant?.timezone ?? DEFAULT_TIMEZONE
 			: getInitialTimezone(),
-		status: initialTenant?.status ?? 'active',
-		aiEnabled: initialTenant?.aiEnabled ?? true,
+		status: initialTenant?.status ?? DEFAULT_TENANT_STATUS,
+		aiEnabled: initialTenant?.aiEnabled ?? DEFAULT_TENANT_AI_ENABLED,
 	};
 };
 

@@ -42,7 +42,7 @@ export const TIMEZONE_GROUPS = [
 	},
 ] as const satisfies readonly TimezoneGroup[];
 
-export const DEFAULT_TIMEZONE = 'America/Bogota' as const;
+export const DEFAULT_TIMEZONE = 'America/La_Paz' as const;
 
 const ALL_ALLOWED_TIMEZONES: readonly string[] = TIMEZONE_GROUPS.flatMap(
 	(group) => group.options,

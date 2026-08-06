@@ -20,7 +20,6 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import isValidEmail from '@/lib/isValidEmail';
 import type {
 	CreateTenantDto,
 	Tenant,
@@ -36,6 +35,8 @@ import {
 	getInitialFormState,
 	type TenantFormState,
 } from './utils/tenantFormState';
+import { normalizeTenantPayload } from './utils/tenantPayload';
+import { validateTenantForm } from './utils/tenantValidation';
 
 interface Props {
 	open: boolean;
@@ -72,51 +73,38 @@ export function TenantForm({
 		setForm((current) => ({ ...current, [field]: value }));
 	};
 
-	const validate = () => {
-		const nextErrors: Record<string, string> = {};
-
-		if (!form.name.trim()) {
-			nextErrors.name = 'El nombre es obligatorio.';
-		}
-
-		if (!form.email.trim()) {
-			nextErrors.email = 'El correo electrónico es obligatorio.';
-		} else if (!isValidEmail(form.email)) {
-			nextErrors.email = 'Ingresa un correo válido.';
-		}
-
-		setErrors(nextErrors);
-		return Object.keys(nextErrors).length === 0;
-	};
-
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (!validate()) return;
+
+		const nextErrors = validateTenantForm(form);
+		setErrors(nextErrors);
+		if (Object.keys(nextErrors).length > 0) return;
 
 		const whatsappPhoneNumber = composeInternationalPhoneNumber(
 			form.phoneCountry,
 			form.phoneValue,
 		);
 
-		const payload: CreateTenantDto | UpdateTenantDto =
+		const timezone =
 			mode === 'create'
-				? {
-						name: form.name.trim(),
-						email: form.email.trim(),
-						whatsappPhoneNumber,
-						timezone: form.timezone.trim() || getInitialTimezone(),
-					}
-				: {
-						name: form.name.trim(),
-						email: form.email.trim(),
-						whatsappPhoneNumber,
-						businessType: form.businessType.trim() || undefined,
-						whatsappPhoneId: form.whatsappPhoneId.trim() || undefined,
-						whatsappAccessToken: form.whatsappAccessToken.trim() || undefined,
-						timezone: form.timezone.trim() || undefined,
-						status: form.status,
-						aiEnabled: form.aiEnabled,
-					};
+				? form.timezone.trim() || getInitialTimezone()
+				: form.timezone.trim() || undefined;
+
+		const basePayload = {
+			name: form.name.trim(),
+			email: form.email.trim(),
+			whatsappPhoneNumber,
+			businessType: form.businessType.trim() || undefined,
+			whatsappPhoneId: form.whatsappPhoneId.trim() || undefined,
+			whatsappAccessToken: form.whatsappAccessToken.trim() || undefined,
+			timezone,
+			status: form.status,
+			aiEnabled: form.aiEnabled,
+		};
+
+		const payload = normalizeTenantPayload(
+			basePayload,
+		) as CreateTenantDto | UpdateTenantDto;
 
 		onSubmit(payload);
 		onOpenChange(false);

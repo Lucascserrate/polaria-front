@@ -1,4 +1,8 @@
 import { axiosInstance } from '@/lib/axios';
+import {
+	DEFAULT_TENANT_AI_ENABLED,
+	DEFAULT_TENANT_STATUS,
+} from '@/modules/tenants/utils/tenantDefaults';
 import { normalizeTenantPayload } from '@/modules/tenants/utils/tenantPayload';
 import { DEFAULT_TIMEZONE } from '@/modules/tenants/utils/timezoneUtils';
 import type {
@@ -18,9 +22,9 @@ export const createTenant = async (tenantData: CreateTenantDto) => {
 		timezone: tenantData.timezone || DEFAULT_TIMEZONE,
 	};
 	const { data } = await axiosInstance.post<Tenant>('/tenants', {
-		...payload,
-		status: 'active',
-		aiEnabled: true,
+		...normalizeTenantPayload(payload),
+		status: DEFAULT_TENANT_STATUS,
+		aiEnabled: DEFAULT_TENANT_AI_ENABLED,
 	});
 	return data;
 };
