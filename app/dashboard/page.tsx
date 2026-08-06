@@ -8,6 +8,10 @@ import type { Appointment, AppointmentApi } from '@/types/appointments.types';
 import { getTodayAppointments } from '@/services/appointments';
 import { getStaff } from '@/services/staff';
 
+type DashboardAppointment = Appointment & {
+	createdAt?: number;
+};
+
 const getSortKeyFromFormatted = (formatted?: string | null): number => {
 	if (typeof formatted !== 'string' || !formatted.trim()) return 0;
 
@@ -21,7 +25,7 @@ const getSortKeyFromFormatted = (formatted?: string | null): number => {
 	return hours * 60 + minutes;
 };
 
-const mapAppointment = (apt: AppointmentApi): Appointment => {
+const mapAppointment = (apt: AppointmentApi): DashboardAppointment => {
 	const durationMinutes = Number.isFinite(apt.totalDuration)
 		? Number(apt.totalDuration)
 		: 0;
@@ -35,11 +39,12 @@ const mapAppointment = (apt: AppointmentApi): Appointment => {
 		barber: apt.staffName ?? 'Sin barbero',
 		status: apt.status,
 		duration: durationMinutes,
+		createdAt: Date.now(),
 	};
 };
 
 const DashboardPage = () => {
-	const [appointments, setAppointments] = useState<Appointment[]>([]);
+	const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
 	const [totalToday, setTotalToday] = useState(0);
 	const [revenueToday, setRevenueToday] = useState(0);
 	const [activeStaffCount, setActiveStaffCount] = useState(0);
@@ -88,9 +93,23 @@ const DashboardPage = () => {
 		loadStaff();
 	}, []);
 
-	const todayAppointments = useMemo(() => appointments, [appointments]);
+	const todayAppointments = useMemo(
+		() =>
+			[...appointments].sort((a, b) => (b.sortKey ?? 0) - (a.sortKey ?? 0)),
+		[appointments],
+	);
 	const confirmedCount = counts.confirmed;
 	const completedCount = counts.completed;
+	const pendingCount = counts.pending;
+
+	const handleAddAppointment = (apt: DashboardAppointment) => {
+		setAppointments((prev) => [...prev, apt]);
+		setTotalToday((prev) => prev + 1);
+		setCounts((prev) => ({
+			...prev,
+			[apt.status]: (prev[apt.status] ?? 0) + 1,
+		}));
+	};
 
 	return (
 		<div className="space-y-6">
@@ -110,6 +129,7 @@ const DashboardPage = () => {
 					count={totalToday}
 					confirmed={confirmedCount}
 					completed={completedCount}
+					pending={pendingCount}
 				/>
 				<div className="bg-card border border-border rounded-lg p-6">
 					<div className="text-sm font-medium text-muted-foreground">
@@ -138,7 +158,7 @@ const DashboardPage = () => {
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="text-xl font-semibold">Agenda de hoy</h2>
 					<AppointmentModal
-						onAddAppointment={(apt) => setAppointments([...appointments, apt])}
+						onAddAppointment={handleAddAppointment}
 					/>
 				</div>
 

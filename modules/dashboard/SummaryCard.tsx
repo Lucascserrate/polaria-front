@@ -3,11 +3,12 @@ import { Calendar } from 'lucide-react';
 
 interface Props {
 	count: number;
+	pending: number;
 	confirmed: number;
 	completed: number;
 }
 
-export const SummaryCard = ({ count, confirmed, completed }: Props) => {
+export const SummaryCard = ({ count, pending, confirmed, completed }: Props) => {
 	return (
 		<Card>
 			<CardHeader className="pb-2">
@@ -20,6 +21,12 @@ export const SummaryCard = ({ count, confirmed, completed }: Props) => {
 				<div className="space-y-2">
 					<div className="text-3xl font-bold">{count}</div>
 					<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+						<div>
+							<span className="text-amber-600 dark:text-amber-400 font-semibold">
+								{pending}
+							</span>{' '}
+							Pending
+						</div>
 						<div>
 							<span className="text-blue-600 dark:text-blue-400 font-semibold">
 								{confirmed}

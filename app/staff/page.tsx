@@ -1,58 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { DeleteStaffDialog } from '@/modules/staff/DeleteStaffDialog';
 import { StaffForm } from '@/modules/staff/StaffForm';
+import { StaffStats } from '@/modules/staff/StaffStats';
 import StaffTable from '@/modules/staff/StaffTable';
-import { staffService } from '@/services/staff.service';
-import type { StaffFormPayload, StaffMember } from '@/types/staff.types';
+import type { StaffMember } from '@/types/staff.types';
+import { useStaff } from '@/modules/staff/hooks/useStaff';
 
 export default function StaffPage() {
-	const [staff, setStaff] = useState<StaffMember[]>([]);
-	const [loading, setLoading] = useState(true);
-
+	const {
+		staff,
+		loading,
+		deleteError,
+		setDeleteError,
+		toggleActive,
+		createStaff,
+		updateStaff,
+		deleteStaff,
+	} = useStaff();
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-
-	useEffect(() => {
-		let active = true;
-
-		const loadStaff = async () => {
-			try {
-				setLoading(true);
-				const data = await staffService.getAll();
-				if (active) {
-					setStaff(data);
-				}
-			} catch (error) {
-				console.error('Error loading staff:', error);
-			} finally {
-				if (active) {
-					setLoading(false);
-				}
-			}
-		};
-
-		loadStaff();
-
-		return () => {
-			active = false;
-		};
-	}, []);
-
-	const handleToggleActive = async (id: string) => {
-		try {
-			const currentStaff = staff.find((s) => s.id === id);
-			if (!currentStaff) return;
-			const updatedStaff = await staffService.update(id, {
-				isActive: !currentStaff.isActive,
-			});
-			setStaff(staff.map((s) => (s.id === id ? updatedStaff : s)));
-		} catch (error) {
-			console.error('Error toggling staff active status:', error);
-		}
-	};
+	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
 
 	const handleOpenCreate = () => {
 		setEditingStaff(null);
@@ -64,22 +36,31 @@ export default function StaffPage() {
 		setFormOpen(true);
 	};
 
-	const handleUpsert = async (data: StaffFormPayload) => {
-		try {
-			if (editingStaff) {
-				const updated = await staffService.update(editingStaff.id, data);
-				setStaff(staff.map((s) => (s.id === editingStaff.id ? updated : s)));
-				return;
-			}
+	const handleOpenDelete = (member: StaffMember) => {
+		setDeletingStaff(member);
+		setDeleteError(null);
+		setDeleteOpen(true);
+	};
 
-			const created = await staffService.create({ ...data, isActive: true });
-			setStaff([...staff, created]);
-		} catch (error) {
-			console.error('Error saving staff:', error);
+	const handleConfirmDelete = async () => {
+		if (!deletingStaff) return;
+
+		const deleted = await deleteStaff(deletingStaff.id);
+		if (deleted) {
+			setDeleteOpen(false);
+			setDeletingStaff(null);
+			setDeleteError(null);
 		}
 	};
 
-	const activeCount = staff.filter((s) => s.isActive).length;
+	const handleUpsert = async (data: { name: string; serviceIds?: string[] }) => {
+		if (editingStaff) {
+			await updateStaff(editingStaff.id, data);
+			return;
+		}
+
+		await createStaff({ ...data, isActive: true });
+	};
 
 	if (loading) {
 		return (
@@ -94,7 +75,7 @@ export default function StaffPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-3xl font-bold tracking-tight">
-						Gestión del personal
+						Gestion del personal
 					</h1>
 					<p className="text-muted-foreground mt-1">
 						Administra el personal y los servicios que puede realizar
@@ -106,31 +87,17 @@ export default function StaffPage() {
 				</Button>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Personal total</p>
-					<p className="text-2xl font-bold mt-1">{staff.length}</p>
-				</div>
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Activo</p>
-					<p className="text-2xl font-bold mt-1 text-green-600">
-						{activeCount}
-					</p>
-				</div>
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Inactivo</p>
-					<p className="text-2xl font-bold mt-1 text-muted-foreground">
-						{staff.length - activeCount}
-					</p>
-				</div>
+			<div>
+				<StaffStats staff={staff} />
 			</div>
 
 			<div className="bg-card border border-border rounded-lg p-6">
 				<StaffTable
 					staff={staff}
-					onToggleActive={handleToggleActive}
+					onToggleActive={toggleActive}
 					onEdit={handleOpenEdit}
-					onAddClick={() => {}}
+					onDelete={handleOpenDelete}
+					onAddClick={handleOpenCreate}
 				/>
 			</div>
 
@@ -142,7 +109,26 @@ export default function StaffPage() {
 					if (!next) setEditingStaff(null);
 				}}
 				initialStaff={editingStaff}
-				onSubmit={handleUpsert}
+				onSubmit={(payload) =>
+					handleUpsert({
+						name: payload.name ?? '',
+						serviceIds: payload.serviceIds,
+					})
+				}
+			/>
+
+			<DeleteStaffDialog
+				open={deleteOpen}
+				onOpenChange={(open) => {
+					setDeleteOpen(open);
+					if (!open) {
+						setDeletingStaff(null);
+						setDeleteError(null);
+					}
+				}}
+				staff={deletingStaff}
+				error={deleteError}
+				onConfirm={handleConfirmDelete}
 			/>
 		</div>
 	);

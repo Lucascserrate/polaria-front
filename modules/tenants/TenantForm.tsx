@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import {
 	Dialog,
 	DialogContent,
@@ -8,10 +10,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
 	Select,
 	SelectContent,
@@ -19,6 +19,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import type {
 	CreateTenantDto,
 	Tenant,
@@ -26,97 +27,86 @@ import type {
 	UpdateTenantDto,
 } from '@/types/tenant.types';
 
-interface TenantFormProps {
+import PhoneNumberInput from '@/components/PhoneNumberInput';
+import TimezoneInput from '@/components/TimezoneInput';
+import { composeInternationalPhoneNumber } from './utils/phoneUtils';
+import { getInitialTimezone } from './utils/timezoneUtils';
+import {
+	getInitialFormState,
+	type TenantFormState,
+} from './utils/tenantFormState';
+import { normalizeTenantPayload } from './utils/tenantPayload';
+import { validateTenantForm } from './utils/tenantValidation';
+
+interface Props {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	initialTenant?: Tenant | null;
 	onSubmit: (tenant: CreateTenantDto | UpdateTenantDto) => void;
 }
 
-const isValidEmail = (value: string) =>
-	/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-
-const getInitialTimezone = () =>
-	Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/La_Paz';
-
 export function TenantForm({
 	open,
 	onOpenChange,
 	initialTenant,
 	onSubmit,
-}: TenantFormProps) {
+}: Props) {
 	const mode = initialTenant ? 'edit' : 'create';
-
-	const [name, setName] = useState(() => initialTenant?.name ?? '');
-	const [email, setEmail] = useState(() => initialTenant?.email ?? '');
-	const [tenantNumber, setTenantNumber] = useState(
-		() => initialTenant?.whatsappPhoneNumber ?? '',
-	);
-	const [businessType, setBusinessType] = useState(
-		() => initialTenant?.businessType ?? '',
-	);
-	const [whatsappPhoneId, setWhatsappPhoneId] = useState(
-		() => initialTenant?.whatsappPhoneId ?? '',
-	);
-	const [whatsappAccessToken, setWhatsappAccessToken] = useState(
-		() => initialTenant?.whatsappAccessToken ?? '',
-	);
-	const [timezone, setTimezone] = useState(
-		() => initialTenant?.timezone ?? getInitialTimezone(),
-	);
-	const [status, setStatus] = useState<TenantStatus>(
-		() => initialTenant?.status ?? 'active',
-	);
-	const [aiEnabled, setAiEnabled] = useState(
-		() => initialTenant?.aiEnabled ?? true,
+	const [form, setForm] = useState<TenantFormState>(() =>
+		getInitialFormState(initialTenant),
 	);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [{ open: prevOpen, initialTenant: prevInitialTenant }, setPrevProps] =
+		useState({ open, initialTenant });
 
-	const validate = () => {
-		const nextErrors: Record<string, string> = {};
+	// Sincroniza el estado del formulario cuando se abre o cambia el tenant
+	if (open && (prevOpen !== open || prevInitialTenant !== initialTenant)) {
+		setPrevProps({ open, initialTenant });
+		setForm(getInitialFormState(initialTenant));
+		setErrors({});
+	}
 
-		if (!name.trim()) {
-			nextErrors.name = 'El nombre del tenant es obligatorio.';
-		}
-
-		if (!tenantNumber.trim()) {
-			nextErrors.tenantNumber = 'El número del tenant es obligatorio.';
-		}
-
-		if (!email.trim()) {
-			nextErrors.email = 'El correo electrónico es obligatorio.';
-		} else if (!isValidEmail(email)) {
-			nextErrors.email = 'Ingresa un correo válido.';
-		}
-
-		setErrors(nextErrors);
-		return Object.keys(nextErrors).length === 0;
+	const updateField = <K extends keyof TenantFormState>(
+		field: K,
+		value: TenantFormState[K],
+	) => {
+		setForm((current) => ({ ...current, [field]: value }));
 	};
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (!validate()) return;
 
-		if (mode === 'create') {
-			onSubmit({
-				name: name.trim(),
-				email: email.trim(),
-				whatsappPhoneNumber: tenantNumber.trim(),
-			});
-		} else {
-			onSubmit({
-				name: name.trim(),
-				email: email.trim(),
-				whatsappPhoneNumber: tenantNumber.trim(),
-				businessType: businessType.trim() || undefined,
-				whatsappPhoneId: whatsappPhoneId.trim() || undefined,
-				whatsappAccessToken: whatsappAccessToken.trim() || undefined,
-				timezone: timezone.trim() || undefined,
-				status,
-				aiEnabled,
-			});
-		}
+		const nextErrors = validateTenantForm(form);
+		setErrors(nextErrors);
+		if (Object.keys(nextErrors).length > 0) return;
 
+		const whatsappPhoneNumber = composeInternationalPhoneNumber(
+			form.phoneCountry,
+			form.phoneValue,
+		);
+
+		const timezone =
+			mode === 'create'
+				? form.timezone.trim() || getInitialTimezone()
+				: form.timezone.trim() || undefined;
+
+		const basePayload = {
+			name: form.name.trim(),
+			email: form.email.trim(),
+			whatsappPhoneNumber,
+			businessType: form.businessType.trim() || undefined,
+			whatsappPhoneId: form.whatsappPhoneId.trim() || undefined,
+			whatsappAccessToken: form.whatsappAccessToken.trim() || undefined,
+			timezone,
+			status: form.status,
+			aiEnabled: form.aiEnabled,
+		};
+
+		const payload = normalizeTenantPayload(
+			basePayload,
+		) as CreateTenantDto | UpdateTenantDto;
+
+		onSubmit(payload);
 		onOpenChange(false);
 	};
 
@@ -139,22 +129,24 @@ export function TenantForm({
 						<Label htmlFor="name">Nombre</Label>
 						<Input
 							id="name"
-							value={name}
-							onChange={(event) => setName(event.target.value)}
-							placeholder="Ej. Barbería Central"
+							value={form.name}
+							onChange={(event) => updateField('name', event.target.value)}
+							placeholder="Ej. Barberia Central"
 						/>
-						{errors.name && (
-							<p className="text-sm text-red-600">{errors.name}</p>
-						)}
+						{errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="tenantNumber">Número de teléfono</Label>
-						<Input
-							id="tenantNumber"
-							value={tenantNumber}
-							onChange={(event) => setTenantNumber(event.target.value)}
-							placeholder="Ej. +15556384943"
+						<Label htmlFor="tenantNumber">Número</Label>
+						<PhoneNumberInput
+							phoneCountry={form.phoneCountry}
+							phoneValue={form.phoneValue}
+							onPhoneCountryChange={(phoneCountry) =>
+								updateField('phoneCountry', phoneCountry)
+							}
+							onPhoneValueChange={(phoneValue) =>
+								updateField('phoneValue', phoneValue)
+							}
 						/>
 						{errors.tenantNumber && (
 							<p className="text-sm text-red-600">{errors.tenantNumber}</p>
@@ -166,13 +158,24 @@ export function TenantForm({
 						<Input
 							id="email"
 							type="email"
-							value={email}
-							onChange={(event) => setEmail(event.target.value)}
+							value={form.email}
+							onChange={(event) => updateField('email', event.target.value)}
 							placeholder="admin@negocio.com"
 						/>
-						{errors.email && (
-							<p className="text-sm text-red-600">{errors.email}</p>
-						)}
+						{errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
+					</div>
+
+					<div className="space-y-2">
+						<Label htmlFor="timezone">Zona horaria</Label>
+						<TimezoneInput
+							timezone={form.timezone}
+							setTimezone={(timezone) => updateField('timezone', timezone)}
+						/>
+						<p className="text-xs text-muted-foreground">
+							{mode === 'create'
+								? 'Se completa automáticamente según el navegador, pero puedes cambiarla si lo prefieres.'
+								: 'Selecciona la zona horaria del negocio.'}
+						</p>
 					</div>
 
 					{mode === 'edit' && (
@@ -181,8 +184,10 @@ export function TenantForm({
 								<Label htmlFor="businessType">Tipo de negocio</Label>
 								<Input
 									id="businessType"
-									value={businessType}
-									onChange={(event) => setBusinessType(event.target.value)}
+									value={form.businessType}
+									onChange={(event) =>
+										updateField('businessType', event.target.value)
+									}
 									placeholder="Ej. barberia"
 								/>
 							</div>
@@ -191,8 +196,10 @@ export function TenantForm({
 								<Label htmlFor="whatsappPhoneId">WhatsApp Phone ID</Label>
 								<Input
 									id="whatsappPhoneId"
-									value={whatsappPhoneId}
-									onChange={(event) => setWhatsappPhoneId(event.target.value)}
+									value={form.whatsappPhoneId}
+									onChange={(event) =>
+										updateField('whatsappPhoneId', event.target.value)
+									}
 									placeholder="1013549818517591"
 								/>
 							</div>
@@ -203,29 +210,21 @@ export function TenantForm({
 								</Label>
 								<Input
 									id="whatsappAccessToken"
-									value={whatsappAccessToken}
+									value={form.whatsappAccessToken}
 									onChange={(event) =>
-										setWhatsappAccessToken(event.target.value)
+										updateField('whatsappAccessToken', event.target.value)
 									}
 									placeholder="EAAL..."
 								/>
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="timezone">Zona horaria</Label>
-								<Input
-									id="timezone"
-									value={timezone}
-									onChange={(event) => setTimezone(event.target.value)}
-									placeholder="America/La_Paz"
-								/>
-							</div>
-
-							<div className="space-y-2">
 								<Label htmlFor="status">Estado</Label>
 								<Select
-									value={status}
-									onValueChange={(value) => setStatus(value as TenantStatus)}
+									value={form.status}
+									onValueChange={(value) =>
+										updateField('status', value as TenantStatus)
+									}
 								>
 									<SelectTrigger id="status">
 										<SelectValue placeholder="Selecciona un estado" />
@@ -244,7 +243,12 @@ export function TenantForm({
 										Controla si el tenant puede usar funcionalidades de IA.
 									</p>
 								</div>
-								<Switch checked={aiEnabled} onCheckedChange={setAiEnabled} />
+								<Switch
+									checked={form.aiEnabled}
+									onCheckedChange={(aiEnabled) =>
+										updateField('aiEnabled', aiEnabled)
+									}
+								/>
 							</div>
 						</>
 					)}

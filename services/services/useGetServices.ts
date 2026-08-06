@@ -5,7 +5,12 @@ import { ServiceApi } from '@/types/appointments.types';
 const useGetServices = () => {
 	return useQuery<ServiceApi[]>({
 		queryKey: ['services'],
-		queryFn: getServices,
+		queryFn: async () => {
+			const services = await getServices();
+			return services.filter(
+				(service) => service.isActive && !service.deletedAt,
+			);
+		},
 	});
 };
 
