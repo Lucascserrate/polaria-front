@@ -1,11 +1,18 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AppointmentTimeline from '@/modules/dashboard/AppointmentTimeline';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
 import { SummaryCard } from '@/modules/dashboard/SummaryCard';
-import type { Appointment, AppointmentApi } from '@/types/appointments.types';
-import { getTodayAppointments } from '@/services/appointments';
+import type {
+	Appointment,
+	AppointmentApi,
+	AppointmentStatus,
+} from '@/types/appointments.types';
+import {
+	getTodayAppointments,
+	updateAppointmentStatus,
+} from '@/services/appointments';
 import { getStaff } from '@/services/staff';
 
 const getSortKeyFromFormatted = (formatted?: string | null): number => {
@@ -51,29 +58,64 @@ const DashboardPage = () => {
 		cancelled: 0,
 	});
 
-	useEffect(() => {
-		const loadToday = async () => {
-			try {
-				const data = await getTodayAppointments();
-				setAppointments(data.items.map(mapAppointment));
-				setTotalToday(data.total ?? 0);
-				setRevenueToday(data.revenueTotal ?? 0);
-				setCounts(
-					data.counts ?? {
-						pending: 0,
-						booked: 0,
-						confirmed: 0,
-						completed: 0,
-						cancelled: 0,
-					},
-				);
-			} catch (error) {
-				console.error('Error loading today appointments:', error);
-			}
-		};
+	const [updatingId, setUpdatingId] = useState<string | null>(null);
+	const [actionError, setActionError] = useState<string | null>(null);
 
-		loadToday();
+	const loadToday = useCallback(async () => {
+		try {
+			const data = await getTodayAppointments();
+			setAppointments(data.items.map(mapAppointment));
+			setTotalToday(data.total ?? 0);
+			setRevenueToday(data.revenueTotal ?? 0);
+			setCounts(
+				data.counts ?? {
+					pending: 0,
+					booked: 0,
+					confirmed: 0,
+					completed: 0,
+					cancelled: 0,
+				},
+			);
+		} catch (error) {
+			console.error('Error loading today appointments:', error);
+		}
 	}, []);
+
+	useEffect(() => {
+		loadToday();
+	}, [loadToday]);
+
+	/**
+	 * Cambiar el estado obliga a recargar el día entero: los totales y los
+	 * ingresos los calcula el backend, así que actualizar solo la tarjeta dejaría
+	 * las tarjetas de resumen mostrando los números viejos.
+	 */
+	const changeStatus = useCallback(
+		async (id: string, status: AppointmentStatus) => {
+			setUpdatingId(id);
+			setActionError(null);
+			try {
+				await updateAppointmentStatus(id, status);
+				await loadToday();
+			} catch (error) {
+				console.error('Error updating appointment status:', error);
+				setActionError('No se pudo actualizar la cita. Intenta de nuevo.');
+			} finally {
+				setUpdatingId(null);
+			}
+		},
+		[loadToday],
+	);
+
+	const handleMarkAttended = useCallback(
+		(id: string) => changeStatus(id, 'completed'),
+		[changeStatus],
+	);
+
+	const handleCancel = useCallback(
+		(id: string) => changeStatus(id, 'cancelled'),
+		[changeStatus],
+	);
 
 	useEffect(() => {
 		const loadStaff = async () => {
@@ -142,7 +184,16 @@ const DashboardPage = () => {
 					/>
 				</div>
 
-				<AppointmentTimeline appointments={todayAppointments} />
+				{actionError && (
+					<p className="text-sm text-red-600 mb-4">{actionError}</p>
+				)}
+
+				<AppointmentTimeline
+					appointments={todayAppointments}
+					onMarkAttended={handleMarkAttended}
+					onCancel={handleCancel}
+					updatingId={updatingId}
+				/>
 			</div>
 		</div>
 	);

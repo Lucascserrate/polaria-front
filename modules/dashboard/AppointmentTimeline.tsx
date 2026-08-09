@@ -14,22 +14,29 @@ interface Appointment {
 
 interface Props {
 	appointments: Appointment[];
+	onMarkAttended: (id: string) => void;
+	onCancel: (id: string) => void;
+	updatingId?: string | null;
 }
 
-const AppointmentTimeline = ({ appointments }: Props) => {
+const AppointmentTimeline = ({
+	appointments,
+	onMarkAttended,
+	onCancel,
+	updatingId,
+}: Props) => {
 	if (appointments.length === 0) {
 		return (
 			<div className="text-center py-12">
-				<p className="text-muted-foreground">
-					No appointments scheduled for today
-				</p>
+				<p className="text-muted-foreground">No hay citas para hoy</p>
 			</div>
 		);
 	}
 
-	// Sort by time (latest first)
+	// Cronológico: la agenda se recorre hacia adelante durante el día. Antes
+	// ordenaba al revés y a media mañana la primera tarjeta era la de la noche.
 	const sorted = [...appointments].sort(
-		(a, b) => (b.sortKey ?? 0) - (a.sortKey ?? 0),
+		(a, b) => (a.sortKey ?? 0) - (b.sortKey ?? 0),
 	);
 
 	return (
@@ -44,6 +51,9 @@ const AppointmentTimeline = ({ appointments }: Props) => {
 					barber={appointment.barber}
 					status={appointment.status}
 					duration={appointment.duration}
+					onMarkAttended={onMarkAttended}
+					onCancel={onCancel}
+					isUpdating={updatingId === appointment.id}
 				/>
 			))}
 		</div>
