@@ -57,7 +57,6 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 		serviceIds: [] as string[],
 		staffId: '',
 		clientName: '',
-		clientPhone: '',
 	});
 
 	const activeStaff = useMemo(() => staff.filter((s) => s.isActive), [staff]);
@@ -100,15 +99,11 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 
 		if (
 			!formData.clientName ||
-			!formData.clientPhone ||
 			!formData.date ||
 			!formData.time ||
 			formData.serviceIds.length === 0 ||
 			!formData.staffId
 		) {
-			if (!formData.clientPhone) {
-				setSubmitError('El teléfono es obligatorio');
-			}
 			return;
 		}
 
@@ -134,8 +129,12 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 				: [9, 0];
 		const appointmentTime = new Date(`${formData.date}T${formData.time}:00`);
 		appointmentTime.setHours(hours, minutes, 0, 0);
-		const totalMinutes = services.reduce(
-			(sum, s) => sum + s.durationMinutes,
+
+		const selectedServices = services.filter((service) =>
+			formData.serviceIds.includes(service.id),
+		);
+		const totalMinutes = selectedServices.reduce(
+			(sum, service) => sum + service.durationMinutes,
 			0,
 		);
 		const endTime = new Date(
@@ -146,13 +145,10 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 			try {
 				setSubmitting(true);
 
-				// Primero buscar o crear el cliente
 				const client = await findOrCreateClient({
 					name: formData.clientName,
-					phone: formData.clientPhone,
 				});
 
-				// Luego crear la cita con el clientId
 				const created = await createAppointment({
 					clientId: client.id,
 					staffId: formData.staffId,
@@ -162,7 +158,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 				});
 
 				const staffMember = staff.find((s) => s.name === created.staffName);
-				const serviceNames = services.map((s) => s.name).join(', ');
+				const serviceNames = selectedServices.map((s) => s.name).join(', ');
 
 				onAddAppointment({
 					id: created.id,
@@ -180,7 +176,6 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 					serviceIds: [],
 					staffId: '',
 					clientName: '',
-					clientPhone: '',
 				});
 				setOpen(false);
 			} catch (error) {
@@ -236,18 +231,6 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 								}
 							/>
 						</div>
-						<div>
-							<Label htmlFor="clientPhone">Teléfono</Label>
-							<Input
-								id="clientPhone"
-								placeholder="Ingresa el teléfono del cliente"
-								value={formData.clientPhone}
-								onChange={(e) =>
-									setFormData({ ...formData, clientPhone: e.target.value })
-								}
-							/>
-						</div>
-
 						<div>
 							<Label htmlFor="date">Fecha</Label>
 							<Input
@@ -353,10 +336,10 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 								onClick={() => setOpen(false)}
 								disabled={submitting}
 							>
-								Cancel
+								Cancelar
 							</Button>
 							<Button type="submit" disabled={submitting}>
-								{submitting ? 'Creando...' : 'Create Appointment'}
+								{submitting ? 'Creando...' : 'Crear cita'}
 							</Button>
 						</div>
 					</form>
