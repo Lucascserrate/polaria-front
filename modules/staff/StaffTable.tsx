@@ -10,6 +10,7 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import type { StaffMember } from '@/types/staff.types';
 import {
 	formatCommissionRate,
@@ -53,7 +54,18 @@ const StaffTable = ({ staff, onToggleActive, onEdit, onAddClick }: Props) => {
 					<TableBody>
 						{staff.map((member) => (
 							<TableRow key={member.id}>
-								<TableCell className="font-medium">{member.name}</TableCell>
+								<TableCell className="font-medium">
+									<div className="flex items-center gap-2">
+										{member.name}
+										{/* Solo se marca la excepción: quien usa el horario del
+										    negocio no necesita ningún distintivo. */}
+										{member.usesCustomSchedule && (
+											<Badge variant="outline" className="font-normal">
+												Jornada propia
+											</Badge>
+										)}
+									</div>
+								</TableCell>
 								<TableCell>
 									{member.services && member.services.length > 0 ? (
 										<span>{member.services.map((s) => s.name).join(', ')}</span>
@@ -105,7 +117,14 @@ const StaffTable = ({ staff, onToggleActive, onEdit, onAddClick }: Props) => {
 					>
 						<div className="flex items-start justify-between">
 							<div>
-								<p className="font-medium">{member.name}</p>
+								<div className="flex items-center gap-2">
+									<p className="font-medium">{member.name}</p>
+									{member.usesCustomSchedule && (
+										<Badge variant="outline" className="font-normal">
+											Jornada propia
+										</Badge>
+									)}
+								</div>
 								<p className="text-sm text-muted-foreground mt-1">
 									{member.services && member.services.length > 0
 										? member.services.map((s) => s.name).join(', ')
