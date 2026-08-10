@@ -30,11 +30,10 @@ import axios from 'axios';
 import useGetServices from '@/services/services/useGetServices';
 
 interface Props {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	onAddAppointment: (appointment: any) => void;
+	onCreated: () => void;
 }
 
-const AppointmentModal = ({ onAddAppointment }: Props) => {
+const AppointmentModal = ({ onCreated }: Props) => {
 	const getTodayDate = () => {
 		const now = new Date();
 		const year = now.getFullYear();
@@ -149,7 +148,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 					name: formData.clientName,
 				});
 
-				const created = await createAppointment({
+				await createAppointment({
 					clientId: client.id,
 					staffId: formData.staffId,
 					serviceIds: formData.serviceIds,
@@ -157,18 +156,7 @@ const AppointmentModal = ({ onAddAppointment }: Props) => {
 					endTime: endTime.toISOString(),
 				});
 
-				const staffMember = staff.find((s) => s.name === created.staffName);
-				const serviceNames = selectedServices.map((s) => s.name).join(', ');
-
-				onAddAppointment({
-					id: created.id,
-					clientName: formData.clientName,
-					time: appointmentTime,
-					service: serviceNames || 'Sin servicio',
-					barber: staffMember?.name ?? 'Sin barbero',
-					status: created.status,
-					duration: totalMinutes || 30,
-				});
+				onCreated();
 
 				setFormData({
 					date: getTodayDate(),

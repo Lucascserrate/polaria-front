@@ -113,26 +113,24 @@ export function AppointmentCard({
 					</div>
 
 					{isOpen && (
-						<div className="flex gap-2 pt-3 border-t border-border">
-							{/* Marcar atendida es lo que convierte la cita en ingreso: los
-							    reportes solo cuentan las completadas. */}
+						<div className="flex justify-end gap-2 pt-3 border-t border-border">
 							<Button
 								size="sm"
-								className="flex-1"
-								disabled={isUpdating}
-								onClick={() => onMarkAttended(id)}
-							>
-								<Check className="w-4 h-4 mr-1" />
-								Atendida
-							</Button>
-							<Button
-								size="sm"
-								variant="outline"
+								variant="ghost"
+								className="text-muted-foreground"
 								disabled={isUpdating}
 								onClick={() => setConfirmingCancel(true)}
 							>
 								<X className="w-4 h-4 mr-1" />
 								Cancelar
+							</Button>
+							<Button
+								size="sm"
+								disabled={isUpdating}
+								onClick={() => onMarkAttended(id)}
+							>
+								<Check className="w-4 h-4 mr-1" />
+								Atendida
 							</Button>
 						</div>
 					)}

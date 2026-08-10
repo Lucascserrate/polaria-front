@@ -13,7 +13,7 @@ import {
 	getTodayAppointments,
 	updateAppointmentStatus,
 } from '@/services/appointments';
-import { getStaff } from '@/services/staff';
+import { getWorkingStaff } from '@/services/staff';
 
 const getSortKeyFromFormatted = (formatted?: string | null): number => {
 	if (typeof formatted !== 'string' || !formatted.trim()) return 0;
@@ -49,7 +49,7 @@ const DashboardPage = () => {
 	const [appointments, setAppointments] = useState<Appointment[]>([]);
 	const [totalToday, setTotalToday] = useState(0);
 	const [revenueToday, setRevenueToday] = useState(0);
-	const [activeStaffCount, setActiveStaffCount] = useState(0);
+	const [workingStaffCount, setWorkingStaffCount] = useState(0);
 	const [counts, setCounts] = useState({
 		pending: 0,
 		booked: 0,
@@ -118,16 +118,16 @@ const DashboardPage = () => {
 	);
 
 	useEffect(() => {
-		const loadStaff = async () => {
+		const loadWorkingStaff = async () => {
 			try {
-				const data = await getStaff();
-				setActiveStaffCount(data.filter((s) => s.isActive).length);
+				const data = await getWorkingStaff();
+				setWorkingStaffCount(data.staff.length);
 			} catch (error) {
-				console.error('Error loading staff:', error);
+				console.error('Error loading working staff:', error);
 			}
 		};
 
-		loadStaff();
+		loadWorkingStaff();
 	}, []);
 
 	const todayAppointments = useMemo(() => appointments, [appointments]);
@@ -155,11 +155,11 @@ const DashboardPage = () => {
 				/>
 				<div className="bg-card border border-border rounded-lg p-6">
 					<div className="text-sm font-medium text-muted-foreground">
-						Staff activo
+						Trabajando hoy
 					</div>
-					<div className="text-3xl font-bold mt-2">{activeStaffCount}</div>
+					<div className="text-3xl font-bold mt-2">{workingStaffCount}</div>
 					<p className="text-xs text-muted-foreground mt-2">
-						Miembros del staff trabajando hoy
+						Profesionales con jornada hoy
 					</p>
 				</div>
 				<div className="bg-card border border-border rounded-lg p-6">
@@ -179,9 +179,7 @@ const DashboardPage = () => {
 			<div className="bg-card border border-border rounded-lg p-6">
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="text-xl font-semibold">Agenda de hoy</h2>
-					<AppointmentModal
-						onAddAppointment={(apt) => setAppointments([...appointments, apt])}
-					/>
+					<AppointmentModal onCreated={loadToday} />
 				</div>
 
 				{actionError && (
