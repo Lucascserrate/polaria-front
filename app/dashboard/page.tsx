@@ -170,7 +170,7 @@ const DashboardPage = () => {
 						BOB {Math.round(revenueToday)}
 					</div>
 					<p className="text-xs text-muted-foreground mt-2">
-						Estimado según las citas
+						Solo citas atendidas
 					</p>
 				</div>
 			</div>

@@ -8,6 +8,7 @@ import {
 	Settings,
 	Users,
 	Scissors,
+	Wallet,
 	Menu,
 	X,
 } from 'lucide-react';
@@ -23,6 +24,7 @@ const navItems = [
 	{ href: '/appointments', label: 'Citas', icon: Calendar },
 	{ href: '/staff', label: 'Staff', icon: Users },
 	{ href: '/services', label: 'Servicios', icon: Scissors },
+	{ href: '/reports', label: 'Contabilidad', icon: Wallet },
 	// { href: '/chat', label: 'Chat', icon: MessageCircle },
 	{ href: '/settings', label: 'Configuración', icon: Settings },
 ];
