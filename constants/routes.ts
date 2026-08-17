@@ -3,5 +3,6 @@ export const ROUTES = {
 	auth: '/auth',
 	chat: '/chat',
 	dashboard: '/dashboard',
+	reports: '/reports',
 	settings: '/settings',
 };
