@@ -1,138 +1,44 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import AppointmentTimeline from '@/modules/dashboard/AppointmentTimeline';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
 import { SummaryCard } from '@/modules/dashboard/SummaryCard';
-import type {
-	Appointment,
-	AppointmentApi,
-	AppointmentStatus,
-} from '@/types/appointments.types';
-import {
-	getTodayAppointments,
-	updateAppointmentStatus,
-} from '@/services/appointments';
-import { getWorkingStaff } from '@/services/staff';
-
-const getSortKeyFromFormatted = (formatted?: string | null): number => {
-	if (typeof formatted !== 'string' || !formatted.trim()) return 0;
-
-	const parts = formatted.split(',').map((p) => p.trim());
-	const time = parts.length >= 2 ? parts[1] : formatted.trim();
-	const match = time.match(/^(\d{1,2}):(\d{2})$/);
-	if (!match) return 0;
-	const hours = Number(match[1]);
-	const minutes = Number(match[2]);
-	if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return 0;
-	return hours * 60 + minutes;
-};
-
-const mapAppointment = (apt: AppointmentApi): Appointment => {
-	const durationMinutes = Number.isFinite(apt.totalDuration)
-		? Number(apt.totalDuration)
-		: 0;
-
-	return {
-		id: apt.id,
-		clientName: apt.clientName ?? 'Sin cliente',
-		timeLabel: apt.startTimeFormatted ?? 'Sin hora',
-		sortKey: getSortKeyFromFormatted(apt.startTimeFormatted),
-		service: (apt.serviceNames ?? []).join(', ') || 'Sin servicio',
-		barber: apt.staffName ?? 'Sin barbero',
-		status: apt.status,
-		duration: durationMinutes,
-	};
-};
+import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
+import { EMPTY_COUNTS } from '@/modules/staff/constants';
+import useGetTodayAppointments from '@/services/appointments/useGetTodayAppointments';
+import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 
 const DashboardPage = () => {
-	const [appointments, setAppointments] = useState<Appointment[]>([]);
-	const [totalToday, setTotalToday] = useState(0);
-	const [revenueToday, setRevenueToday] = useState(0);
-	const [workingStaffCount, setWorkingStaffCount] = useState(0);
-	const [counts, setCounts] = useState({
-		pending: 0,
-		booked: 0,
-		confirmed: 0,
-		completed: 0,
-		cancelled: 0,
-	});
+	const { data: today } = useGetTodayAppointments();
+	const { data: workingStaff } = useGetWorkingStaff();
 
-	const [updatingId, setUpdatingId] = useState<string | null>(null);
-	const [actionError, setActionError] = useState<string | null>(null);
-
-	const loadToday = useCallback(async () => {
-		try {
-			const data = await getTodayAppointments();
-			setAppointments(data.items.map(mapAppointment));
-			setTotalToday(data.total ?? 0);
-			setRevenueToday(data.revenueTotal ?? 0);
-			setCounts(
-				data.counts ?? {
-					pending: 0,
-					booked: 0,
-					confirmed: 0,
-					completed: 0,
-					cancelled: 0,
-				},
-			);
-		} catch (error) {
-			console.error('Error loading today appointments:', error);
-		}
-	}, []);
-
-	useEffect(() => {
-		loadToday();
-	}, [loadToday]);
-
-	/**
-	 * Cambiar el estado obliga a recargar el día entero: los totales y los
-	 * ingresos los calcula el backend, así que actualizar solo la tarjeta dejaría
-	 * las tarjetas de resumen mostrando los números viejos.
-	 */
-	const changeStatus = useCallback(
-		async (id: string, status: AppointmentStatus) => {
-			setUpdatingId(id);
-			setActionError(null);
-			try {
-				await updateAppointmentStatus(id, status);
-				await loadToday();
-			} catch (error) {
-				console.error('Error updating appointment status:', error);
-				setActionError('No se pudo actualizar la cita. Intenta de nuevo.');
-			} finally {
-				setUpdatingId(null);
-			}
-		},
-		[loadToday],
-	);
+	const {
+		mutate: statusMutation,
+		isPending,
+		variables,
+		isError: statusError,
+	} = useUpdateAppointmentStatus();
 
 	const handleMarkAttended = useCallback(
-		(id: string) => changeStatus(id, 'completed'),
-		[changeStatus],
+		(id: string) => statusMutation({ id, status: 'completed' }),
+		[statusMutation],
 	);
 
 	const handleCancel = useCallback(
-		(id: string) => changeStatus(id, 'cancelled'),
-		[changeStatus],
+		(id: string) => statusMutation({ id, status: 'cancelled' }),
+		[statusMutation],
 	);
 
-	useEffect(() => {
-		const loadWorkingStaff = async () => {
-			try {
-				const data = await getWorkingStaff();
-				setWorkingStaffCount(data.staff.length);
-			} catch (error) {
-				console.error('Error loading working staff:', error);
-			}
-		};
+	const appointments = today?.items ?? [];
 
-		loadWorkingStaff();
-	}, []);
+	const counts = today?.counts ?? EMPTY_COUNTS;
+	const totalToday = today?.total ?? 0;
+	const revenueToday = today?.revenueTotal ?? 0;
+	const workingStaffCount = workingStaff?.staff.length ?? 0;
 
-	const todayAppointments = useMemo(() => appointments, [appointments]);
-	const confirmedCount = counts.confirmed;
-	const completedCount = counts.completed;
+	// La cita en curso sale de la mutación, así que no hace falta un estado aparte.
+	const updatingId = isPending ? (variables?.id ?? null) : null;
 
 	return (
 		<div className="space-y-6">
@@ -150,8 +56,8 @@ const DashboardPage = () => {
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<SummaryCard
 					count={totalToday}
-					confirmed={confirmedCount}
-					completed={completedCount}
+					confirmed={counts.confirmed}
+					completed={counts.completed}
 				/>
 				<div className="bg-card border border-border rounded-lg p-6">
 					<div className="text-sm font-medium text-muted-foreground">
@@ -179,15 +85,17 @@ const DashboardPage = () => {
 			<div className="bg-card border border-border rounded-lg p-6">
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="text-xl font-semibold">Agenda de hoy</h2>
-					<AppointmentModal onCreated={loadToday} />
+					<AppointmentModal />
 				</div>
 
-				{actionError && (
-					<p className="text-sm text-red-600 mb-4">{actionError}</p>
+				{statusError && (
+					<p className="text-sm text-red-600 mb-4">
+						No se pudo actualizar la cita. Intenta de nuevo.
+					</p>
 				)}
 
 				<AppointmentTimeline
-					appointments={todayAppointments}
+					appointments={appointments}
 					onMarkAttended={handleMarkAttended}
 					onCancel={handleCancel}
 					updatingId={updatingId}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { completeWhatsappEmbeddedSignup } from '@/services/settings';
+import { completeWhatsappEmbeddedSignup } from '@/services/settings/settings.service';
 
 declare global {
 	interface Window {
@@ -72,7 +72,8 @@ const buildSignupExtras = (): Record<string, unknown> => {
 	const version =
 		process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_VERSION?.trim() || 'v4';
 	const coexistenceEnabled =
-		process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_COEXISTENCE?.trim() !== 'false';
+		process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_COEXISTENCE?.trim() !==
+		'false';
 
 	if (version === 'v3') {
 		return {

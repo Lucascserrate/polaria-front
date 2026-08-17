@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,146 +24,86 @@ import {
 	WORKING_DAYS,
 	DEFAULT_SETTINGS,
 } from '@/modules/settings/utils/constants';
-import { Check } from 'lucide-react';
 import {
-	getSettings,
-	updateSettings,
-	type SettingsResponse,
-} from '@/services/settings';
+	fromApiWorkingDays,
+	toApiWorkingDays,
+} from '@/modules/settings/utils/workingDays';
+import { Check } from 'lucide-react';
+import useGetSettings from '@/services/settings/useGetSettings';
+import useUpdateSettings from '@/services/settings/useUpdateSettings';
 
-interface Settings {
-	polariaName: string;
-	workingDays: boolean[];
-	openingHours: { from: string; to: string };
-	appointmentSlotDuration: number;
-}
-
-interface WhatsAppConnection {
-	connected: boolean;
-	phoneNumber: string | null;
-	connectedAt: string | null;
-}
+type SettingsDraft = {
+	polariaName?: string;
+	workingDays?: boolean[];
+	openingHours?: { from: string; to: string };
+};
 
 const SettingsForm: React.FC = () => {
-	const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-	const [saved, setSaved] = useState(false);
-	const [timeFormat, setTimeFormat] = useState<'24h' | '12h'>('24h');
-	const [loading, setLoading] = useState(true);
-	const [saving, setSaving] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [whatsAppConnection, setWhatsAppConnection] =
-		useState<WhatsAppConnection>({
-			connected: false,
-			phoneNumber: null,
-			connectedAt: null,
-		});
+	const { data, isLoading, isError } = useGetSettings();
+	const {
+		mutate: save,
+		isPending,
+		isSuccess,
+		isError: saveError,
+	} = useUpdateSettings();
 
-	const fromApiWorkingDays = useCallback((apiDays: boolean[]) => {
-		if (apiDays.length !== 7) return DEFAULT_SETTINGS.workingDays;
-		return [
-			apiDays[1],
-			apiDays[2],
-			apiDays[3],
-			apiDays[4],
-			apiDays[5],
-			apiDays[6],
-			apiDays[0],
-		];
-	}, []);
+	const [draft, setDraft] = useState<SettingsDraft>({});
 
-	const toApiWorkingDays = useCallback((uiDays: boolean[]) => {
-		if (uiDays.length !== 7) return DEFAULT_SETTINGS.workingDays;
-		return [
-			uiDays[6],
-			uiDays[0],
-			uiDays[1],
-			uiDays[2],
-			uiDays[3],
-			uiDays[4],
-			uiDays[5],
-		];
-	}, []);
-
-	const applyApiSettings = useCallback(
-		(data: SettingsResponse) => {
-			const workingDays = data.workingDays?.length
-				? fromApiWorkingDays(data.workingDays)
-				: DEFAULT_SETTINGS.workingDays;
-			const openingHours = data.openingHours ?? DEFAULT_SETTINGS.openingHours;
-
-			setSettings((prev) => ({
-				...prev,
-				polariaName: data.polariaName ?? prev.polariaName,
-				workingDays,
-				openingHours,
-			}));
-			setWhatsAppConnection({
-				connected: data.whatsappConnection.connected,
-				phoneNumber: data.whatsappConnection.phoneNumber,
-				connectedAt: data.whatsappConnection.connectedAt,
-			});
-		},
-		[fromApiWorkingDays],
+	// Preferencias que hoy no viajan al backend; ver la nota al pie del archivo.
+	const [slotDuration, setSlotDuration] = useState(
+		DEFAULT_SETTINGS.appointmentSlotDuration,
 	);
+	const [timeFormat, setTimeFormat] = useState<'24h' | '12h'>('24h');
 
-	useEffect(() => {
-		let active = true;
+	const polariaName =
+		draft.polariaName ?? data?.polariaName ?? DEFAULT_SETTINGS.polariaName;
 
-		const load = async () => {
-			try {
-				const data = await getSettings();
-				if (active) {
-					applyApiSettings(data);
-					setError(null);
-				}
-			} catch {
-				if (active) {
-					setError('No se pudo cargar la configuracion.');
-				}
-			} finally {
-				if (active) setLoading(false);
-			}
-		};
+	const workingDays =
+		draft.workingDays ??
+		(data?.workingDays?.length
+			? fromApiWorkingDays(data.workingDays)
+			: DEFAULT_SETTINGS.workingDays);
 
-		load();
+	const openingHours =
+		draft.openingHours ?? data?.openingHours ?? DEFAULT_SETTINGS.openingHours;
 
-		return () => {
-			active = false;
-		};
-	}, [applyApiSettings]);
+	const whatsapp = data?.whatsappConnection;
+	const disabled = isLoading || isPending;
 
 	const toggleWorkingDay = (index: number) => {
-		const newDays = [...settings.workingDays];
-		newDays[index] = !newDays[index];
-		setSettings({ ...settings, workingDays: newDays });
+		const next = [...workingDays];
+		next[index] = !next[index];
+		setDraft((prev) => ({ ...prev, workingDays: next }));
 	};
 
-	const handleSave = async () => {
-		setSaving(true);
-		setSaved(false);
-		try {
-			const data = await updateSettings({
-				polariaName: settings.polariaName,
-				workingDays: toApiWorkingDays(settings.workingDays),
-				openingHours: settings.openingHours,
-			});
-			applyApiSettings(data);
-			setSaved(true);
-			setError(null);
-		} catch {
-			setError('No se pudo guardar la configuracion.');
-		} finally {
-			setSaving(false);
-		}
+	const handleSave = () => {
+		save(
+			{
+				polariaName,
+				workingDays: toApiWorkingDays(workingDays),
+				openingHours,
+			},
+			{ onSuccess: () => setDraft({}) },
+		);
 	};
 
 	return (
 		<div className="space-y-6 max-w-2xl">
-			{error ? <p className="text-sm text-red-500">{error}</p> : null}
+			{isError && (
+				<p className="text-sm text-red-500">
+					No se pudo cargar la configuración.
+				</p>
+			)}
+			{saveError && (
+				<p className="text-sm text-red-500">
+					No se pudo guardar la configuración.
+				</p>
+			)}
+
 			<WhatsappEmbeddedSignupButton
-				connected={whatsAppConnection.connected}
-				connectedAt={whatsAppConnection.connectedAt}
-				phoneNumber={whatsAppConnection.phoneNumber}
+				connected={whatsapp?.connected ?? false}
+				connectedAt={whatsapp?.connectedAt ?? null}
+				phoneNumber={whatsapp?.phoneNumber ?? null}
 			/>
 			{/* Barbershop Name */}
 			<Card>
@@ -178,10 +118,10 @@ const SettingsForm: React.FC = () => {
 						<Label htmlFor="barbershop-name">Nombre de la Barbería</Label>
 						<Input
 							id="barbershop-name"
-							value={settings.polariaName}
-							disabled={loading}
+							value={polariaName}
+							disabled={disabled}
 							onChange={(e) =>
-								setSettings({ ...settings, polariaName: e.target.value })
+								setDraft((prev) => ({ ...prev, polariaName: e.target.value }))
 							}
 							placeholder="Ingresa el nombre de tu barbería"
 						/>
@@ -204,16 +144,13 @@ const SettingsForm: React.FC = () => {
 							<Input
 								id="opening-time"
 								type="time"
-								value={settings.openingHours.from}
-								disabled={loading}
+								value={openingHours.from}
+								disabled={disabled}
 								onChange={(e) =>
-									setSettings({
-										...settings,
-										openingHours: {
-											...settings.openingHours,
-											from: e.target.value,
-										},
-									})
+									setDraft((prev) => ({
+										...prev,
+										openingHours: { ...openingHours, from: e.target.value },
+									}))
 								}
 							/>
 						</div>
@@ -222,16 +159,13 @@ const SettingsForm: React.FC = () => {
 							<Input
 								id="closing-time"
 								type="time"
-								value={settings.openingHours.to}
-								disabled={loading}
+								value={openingHours.to}
+								disabled={disabled}
 								onChange={(e) =>
-									setSettings({
-										...settings,
-										openingHours: {
-											...settings.openingHours,
-											to: e.target.value,
-										},
-									})
+									setDraft((prev) => ({
+										...prev,
+										openingHours: { ...openingHours, to: e.target.value },
+									}))
 								}
 							/>
 						</div>
@@ -253,8 +187,8 @@ const SettingsForm: React.FC = () => {
 							<div key={day} className="flex items-center gap-2">
 								<Checkbox
 									id={`day-${index}`}
-									checked={settings.workingDays[index]}
-									disabled={loading}
+									checked={workingDays[index]}
+									disabled={disabled}
 									onCheckedChange={() => toggleWorkingDay(index)}
 								/>
 								<Label
@@ -283,14 +217,9 @@ const SettingsForm: React.FC = () => {
 							Duración por Defecto de Espacios
 						</Label>
 						<Select
-							value={String(settings.appointmentSlotDuration)}
-							disabled={loading}
-							onValueChange={(value) =>
-								setSettings({
-									...settings,
-									appointmentSlotDuration: parseInt(value),
-								})
-							}
+							value={String(slotDuration)}
+							disabled={disabled}
+							onValueChange={(value) => setSlotDuration(parseInt(value))}
 						>
 							<SelectTrigger id="slot-duration">
 								<SelectValue />
@@ -309,6 +238,7 @@ const SettingsForm: React.FC = () => {
 					</div>
 				</CardContent>
 			</Card>
+
 			{/* Time Format Preference */}
 			<Card>
 				<CardHeader>
@@ -322,7 +252,7 @@ const SettingsForm: React.FC = () => {
 						<Label htmlFor="time-format">Formato de Hora</Label>
 						<Select
 							value={timeFormat}
-							disabled={loading}
+							disabled={disabled}
 							onValueChange={(value) => setTimeFormat(value as '24h' | '12h')}
 						>
 							<SelectTrigger id="time-format">
@@ -345,11 +275,11 @@ const SettingsForm: React.FC = () => {
 				onClick={handleSave}
 				className="w-full md:w-auto"
 				size="lg"
-				disabled={loading || saving}
+				disabled={disabled}
 			>
-				{saving ? (
+				{isPending ? (
 					'Guardando...'
-				) : saved ? (
+				) : isSuccess ? (
 					<>
 						<Check className="w-4 h-4 mr-2" />
 						Guardado

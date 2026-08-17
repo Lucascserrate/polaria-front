@@ -1,3 +1,5 @@
+export const SETTINGS_KEY = ['settings'] as const;
+
 export const DEFAULT_SLOT_DURATION = 30;
 
 export const WORKING_DAYS = [

@@ -2,45 +2,12 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import AppointmentsTable from '@/modules/appointments/AppointmentTable';
-import type {
-	Appointment,
-	AppointmentApi,
-	AppointmentStatus,
-} from '@/types/appointments.types';
+import type { Appointment, AppointmentStatus } from '@/types/appointments.types';
 import {
 	getAppointments,
 	updateAppointmentStatus,
-} from '@/services/appointments';
-
-const getSortKeyFromFormatted = (formatted?: string | null): number => {
-	if (typeof formatted !== 'string' || !formatted.trim()) return 0;
-
-	const parts = formatted.split(',').map((p) => p.trim());
-	const time = parts.length >= 2 ? parts[1] : formatted.trim();
-	const match = time.match(/^(\d{1,2}):(\d{2})$/);
-	if (!match) return 0;
-	const hours = Number(match[1]);
-	const minutes = Number(match[2]);
-	if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return 0;
-	return hours * 60 + minutes;
-};
-
-const mapAppointment = (apt: AppointmentApi): Appointment => {
-	const durationMinutes = Number.isFinite(apt.totalDuration)
-		? Number(apt.totalDuration)
-		: 0;
-
-	return {
-		id: apt.id,
-		clientName: apt.clientName ?? 'Sin cliente',
-		timeLabel: apt.startTimeFormatted ?? 'Sin hora',
-		sortKey: getSortKeyFromFormatted(apt.startTimeFormatted),
-		service: (apt.serviceNames ?? []).join(', ') || 'Sin servicio',
-		barber: apt.staffName ?? 'Sin barbero',
-		status: apt.status,
-		duration: durationMinutes,
-	};
-};
+} from '@/services/appointments/appointments.service';
+import { mapAppointment } from '@/modules/appointments/utils/mapAppointment';
 
 const AppointmentsPage = () => {
 	const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -65,33 +32,36 @@ const AppointmentsPage = () => {
 
 	const hasLoaded = useRef(false);
 
-	const loadAppointments = useCallback(async (pageNumber = 1, append = false, currentFilters = filters) => {
-		try {
-			if (append) {
-				setLoadingMore(true);
-			} else {
-				setLoading(true);
-				if (appointments.length > 0) {
-					setIsRefetching(true);
+	const loadAppointments = useCallback(
+		async (pageNumber = 1, append = false, currentFilters = filters) => {
+			try {
+				if (append) {
+					setLoadingMore(true);
+				} else {
+					setLoading(true);
+					if (appointments.length > 0) {
+						setIsRefetching(true);
+					}
 				}
+				const data = await getAppointments(pageNumber, 20, currentFilters);
+				const mapped = data.items.map(mapAppointment);
+				setAppointments((prev) => (append ? [...prev, ...mapped] : mapped));
+				setHasMore(data.hasMore);
+				setPage(data.page);
+				setTotalAppointments(data.total ?? 0);
+				if (data.counts) {
+					setStatusCounts(data.counts);
+				}
+			} catch (error) {
+				console.error('Error loading appointments:', error);
+			} finally {
+				setLoading(false);
+				setLoadingMore(false);
+				setIsRefetching(false);
 			}
-			const data = await getAppointments(pageNumber, 20, currentFilters);
-			const mapped = data.items.map(mapAppointment);
-			setAppointments((prev) => (append ? [...prev, ...mapped] : mapped));
-			setHasMore(data.hasMore);
-			setPage(data.page);
-			setTotalAppointments(data.total ?? 0);
-			if (data.counts) {
-				setStatusCounts(data.counts);
-			}
-		} catch (error) {
-			console.error('Error loading appointments:', error);
-		} finally {
-			setLoading(false);
-			setLoadingMore(false);
-			setIsRefetching(false);
-		}
-	}, [appointments.length, filters]);
+		},
+		[appointments.length, filters],
+	);
 
 	useEffect(() => {
 		if (!hasLoaded.current) {
@@ -100,11 +70,14 @@ const AppointmentsPage = () => {
 		}
 	}, [loadAppointments]);
 
-	const handleFiltersChange = useCallback((newFilters: typeof filters) => {
-		setFilters(newFilters);
-		setPage(1);
-		loadAppointments(1, false, newFilters);
-	}, [loadAppointments]);
+	const handleFiltersChange = useCallback(
+		(newFilters: typeof filters) => {
+			setFilters(newFilters);
+			setPage(1);
+			loadAppointments(1, false, newFilters);
+		},
+		[loadAppointments],
+	);
 
 	// const handleDelete = async (id: string) => {
 	// 	try {
@@ -140,9 +113,10 @@ const AppointmentsPage = () => {
 						timeLabel: updated.startTimeFormatted
 							? updated.startTimeFormatted
 							: current.timeLabel,
-						sortKey: updated.startTimeFormatted
-							? getSortKeyFromFormatted(updated.startTimeFormatted)
-							: current.sortKey,
+						// `sortKey` no se sobrescribe: el PATCH devuelve la entidad, que sí
+						// trae `startTime`, así que el que calculó `mapAppointment` ya es
+						// correcto. Los demás campos se parchean porque esa respuesta no
+						// tiene la forma del listado.
 						duration: Number.isFinite(updated.totalDuration)
 							? Number(updated.totalDuration)
 							: current.duration,
@@ -215,7 +189,7 @@ const AppointmentsPage = () => {
 						Actualizando...
 					</div>
 				)}
-				
+
 				{loading && appointments.length === 0 ? (
 					<div className="text-center text-muted-foreground">
 						Cargando citas...

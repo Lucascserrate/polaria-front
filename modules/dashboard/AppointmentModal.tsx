@@ -19,21 +19,20 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
-import { getStaff } from '@/services/staff';
-import { createAppointment } from '@/services/appointments';
+import { getStaff } from '@/services/staff/staff.service';
+import useCreateAppointment from '@/services/appointments/useCreateAppointment';
 import { findOrCreateClient } from '@/services/clients';
-import { getSettings } from '@/services/settings';
 import type { StaffApi } from '@/types/appointments.types';
-import useAuth from '@/modules/auth/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import useGetServices from '@/services/services/useGetServices';
+import { getSettings } from '@/services/settings/settings.service';
 
-interface Props {
-	onCreated: () => void;
-}
+const AppointmentModal = () => {
+	// La invalidación vive en el hook, así que crear una cita refresca la agenda
+	// sin que el modal tenga que avisarle a nadie.
+	const { mutateAsync: createAppointment } = useCreateAppointment();
 
-const AppointmentModal = ({ onCreated }: Props) => {
 	const getTodayDate = () => {
 		const now = new Date();
 		const year = now.getFullYear();
@@ -48,7 +47,6 @@ const AppointmentModal = ({ onCreated }: Props) => {
 	const [staffError, setStaffError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
-	const { data: user } = useAuth();
 	const [workingDays, setWorkingDays] = useState<boolean[]>([]);
 	const [formData, setFormData] = useState({
 		date: getTodayDate(),
@@ -156,8 +154,6 @@ const AppointmentModal = ({ onCreated }: Props) => {
 					endTime: endTime.toISOString(),
 				});
 
-				onCreated();
-
 				setFormData({
 					date: getTodayDate(),
 					time: '09:00',
@@ -178,8 +174,8 @@ const AppointmentModal = ({ onCreated }: Props) => {
 						return;
 					}
 				}
+				// El hook ya loguea el error; acá solo se traduce a mensaje visible.
 				setSubmitError('No se pudo crear la cita. Intenta de nuevo.');
-				console.error('Error creating appointment:', error);
 			} finally {
 				setSubmitting(false);
 			}

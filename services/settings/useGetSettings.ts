@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { getSettings, type SettingsResponse } from '@/services/settings';
+import { SETTINGS_KEY } from '@/modules/settings/utils/constants';
+import { getSettings, SettingsResponse } from './settings.service';
 
 const useGetSettings = () => {
 	return useQuery<SettingsResponse>({
-		queryKey: ['settings'],
+		queryKey: SETTINGS_KEY,
 		queryFn: getSettings,
 	});
 };

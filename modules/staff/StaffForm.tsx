@@ -26,7 +26,7 @@ import {
 	type ScheduleDraft,
 } from '@/modules/staff/utils/schedule';
 import useGetServices from '@/services/services/useGetServices';
-import useGetSettings from '@/services/useGetSettings';
+import useGetSettings from '@/services/settings/useGetSettings';
 
 interface StaffFormProps {
 	open: boolean;
