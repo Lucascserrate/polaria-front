@@ -16,14 +16,16 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import type { StaffFormPayload, StaffMember } from '@/types/staff.types';
 import { toCommissionInput } from '@/modules/staff/utils/commission';
-import StaffScheduleFields from '@/modules/staff/StaffScheduleFields';
+import WeeklyScheduleFields from '@/modules/schedule/WeeklyScheduleFields';
 import {
-	buildDefaultDraft,
-	findBusinessHoursWarnings,
 	fromScheduleDraft,
 	toScheduleDraft,
 	validateScheduleDraft,
 	type ScheduleDraft,
+} from '@/modules/schedule/utils/weeklySchedule';
+import {
+	buildDefaultDraft,
+	findBusinessHoursWarnings,
 } from '@/modules/staff/utils/schedule';
 import useGetServices from '@/services/services/useGetServices';
 import useGetSettings from '@/services/settings/useGetSettings';
@@ -73,10 +75,13 @@ export function StaffForm({
 			: null;
 
 	const scheduleError = usesCustomSchedule
-		? validateScheduleDraft(scheduleDraft)
+		? validateScheduleDraft(
+				scheduleDraft,
+				'Marca al menos un día de trabajo, o apaga la jornada propia para usar el horario del negocio.',
+			)
 		: null;
 	const scheduleWarnings = usesCustomSchedule
-		? findBusinessHoursWarnings(scheduleDraft, settings)
+		? findBusinessHoursWarnings(scheduleDraft, settings?.businessHours)
 		: [];
 
 	const handleToggleCustomSchedule = (next: boolean) => {
@@ -84,7 +89,7 @@ export function StaffForm({
 		// Al encenderla por primera vez se parte del horario del negocio, que es
 		// lo que el profesional venía haciendo hasta ahora.
 		if (next && fromScheduleDraft(scheduleDraft).length === 0) {
-			setScheduleDraft(buildDefaultDraft(settings));
+			setScheduleDraft(buildDefaultDraft(settings?.businessHours));
 		}
 	};
 
@@ -230,9 +235,10 @@ export function StaffForm({
 
 							{usesCustomSchedule && (
 								<>
-									<StaffScheduleFields
+									<WeeklyScheduleFields
 										draft={scheduleDraft}
 										onChange={setScheduleDraft}
+										emptyDayLabel="No trabaja"
 									/>
 
 									{scheduleError && (

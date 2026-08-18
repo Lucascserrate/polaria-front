@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Select,
 	SelectContent,
@@ -20,22 +19,24 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import WhatsappEmbeddedSignupButton from '@/modules/settings/WhatsappEmbeddedSignupButton';
+import WeeklyScheduleFields from '@/modules/schedule/WeeklyScheduleFields';
 import {
-	WORKING_DAYS,
+	fromScheduleDraft,
+	toScheduleDraft,
+	validateScheduleDraft,
+	type ScheduleDraft,
+} from '@/modules/schedule/utils/weeklySchedule';
+import {
+	DEFAULT_BUSINESS_HOURS,
 	DEFAULT_SETTINGS,
 } from '@/modules/settings/utils/constants';
-import {
-	fromApiWorkingDays,
-	toApiWorkingDays,
-} from '@/modules/settings/utils/workingDays';
 import { Check } from 'lucide-react';
 import useGetSettings from '@/services/settings/useGetSettings';
 import useUpdateSettings from '@/services/settings/useUpdateSettings';
 
 type SettingsDraft = {
 	polariaName?: string;
-	workingDays?: boolean[];
-	openingHours?: { from: string; to: string };
+	schedule?: ScheduleDraft;
 };
 
 const SettingsForm: React.FC = () => {
@@ -58,30 +59,31 @@ const SettingsForm: React.FC = () => {
 	const polariaName =
 		draft.polariaName ?? data?.polariaName ?? DEFAULT_SETTINGS.polariaName;
 
-	const workingDays =
-		draft.workingDays ??
-		(data?.workingDays?.length
-			? fromApiWorkingDays(data.workingDays)
-			: DEFAULT_SETTINGS.workingDays);
+	const savedSchedule = useMemo(
+		() =>
+			toScheduleDraft(
+				data?.businessHours?.length ? data.businessHours : DEFAULT_BUSINESS_HOURS,
+			),
+		[data?.businessHours],
+	);
 
-	const openingHours =
-		draft.openingHours ?? data?.openingHours ?? DEFAULT_SETTINGS.openingHours;
+	const schedule = draft.schedule ?? savedSchedule;
+
+	const scheduleError = validateScheduleDraft(
+		schedule,
+		'Marca al menos un día de atención: sin horarios el negocio no puede recibir reservas.',
+	);
 
 	const whatsapp = data?.whatsappConnection;
 	const disabled = isLoading || isPending;
 
-	const toggleWorkingDay = (index: number) => {
-		const next = [...workingDays];
-		next[index] = !next[index];
-		setDraft((prev) => ({ ...prev, workingDays: next }));
-	};
-
 	const handleSave = () => {
+		if (scheduleError) return;
+
 		save(
 			{
 				polariaName,
-				workingDays: toApiWorkingDays(workingDays),
-				openingHours,
+				businessHours: fromScheduleDraft(schedule),
 			},
 			{ onSuccess: () => setDraft({}) },
 		);
@@ -129,77 +131,30 @@ const SettingsForm: React.FC = () => {
 				</CardContent>
 			</Card>
 
-			{/* Working Hours */}
+			{/*
+			 * Días y horas se editan juntos porque son el mismo dato: un día abierto
+			 * es un día con franjas. Separarlos obligaba a que todos compartieran un
+			 * único horario, y el sábado corto no se podía expresar.
+			 */}
 			<Card>
 				<CardHeader>
-					<CardTitle>Horario de Trabajo</CardTitle>
+					<CardTitle>Horario de Atención</CardTitle>
 					<CardDescription>
-						Establece los horarios de apertura y cierre de tu barbería
+						Marca los días que abres y el horario de cada uno. Puedes agregar
+						una segunda franja si cierras al mediodía.
 					</CardDescription>
 				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="grid grid-cols-2 gap-4">
-						<div>
-							<Label htmlFor="opening-time">Hora de Apertura</Label>
-							<Input
-								id="opening-time"
-								type="time"
-								value={openingHours.from}
-								disabled={disabled}
-								onChange={(e) =>
-									setDraft((prev) => ({
-										...prev,
-										openingHours: { ...openingHours, from: e.target.value },
-									}))
-								}
-							/>
-						</div>
-						<div>
-							<Label htmlFor="closing-time">Hora de Cierre</Label>
-							<Input
-								id="closing-time"
-								type="time"
-								value={openingHours.to}
-								disabled={disabled}
-								onChange={(e) =>
-									setDraft((prev) => ({
-										...prev,
-										openingHours: { ...openingHours, to: e.target.value },
-									}))
-								}
-							/>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
+				<CardContent className="space-y-3">
+					<WeeklyScheduleFields
+						draft={schedule}
+						onChange={(next) =>
+							setDraft((prev) => ({ ...prev, schedule: next }))
+						}
+					/>
 
-			{/* Working Days */}
-			<Card>
-				<CardHeader>
-					<CardTitle>Días de Trabajo</CardTitle>
-					<CardDescription>
-						Selecciona los días que tu barbería está abierta
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="space-y-3">
-						{WORKING_DAYS.map((day, index) => (
-							<div key={day} className="flex items-center gap-2">
-								<Checkbox
-									id={`day-${index}`}
-									checked={workingDays[index]}
-									disabled={disabled}
-									onCheckedChange={() => toggleWorkingDay(index)}
-								/>
-								<Label
-									htmlFor={`day-${index}`}
-									className="cursor-pointer font-normal"
-								>
-									{day}
-								</Label>
-							</div>
-						))}
-					</div>
+					{scheduleError && (
+						<p className="text-sm text-red-600">{scheduleError}</p>
+					)}
 				</CardContent>
 			</Card>
 
@@ -275,7 +230,7 @@ const SettingsForm: React.FC = () => {
 				onClick={handleSave}
 				className="w-full md:w-auto"
 				size="lg"
-				disabled={disabled}
+				disabled={disabled || Boolean(scheduleError)}
 			>
 				{isPending ? (
 					'Guardando...'

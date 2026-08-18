@@ -27,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import useGetServices from '@/services/services/useGetServices';
 import { getSettings } from '@/services/settings/settings.service';
+import type { WeeklyRange } from '@/modules/schedule/utils/weeklySchedule';
 
 const AppointmentModal = () => {
 	// La invalidación vive en el hook, así que crear una cita refresca la agenda
@@ -47,7 +48,7 @@ const AppointmentModal = () => {
 	const [staffError, setStaffError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
-	const [workingDays, setWorkingDays] = useState<boolean[]>([]);
+	const [businessHours, setBusinessHours] = useState<WeeklyRange[]>([]);
 	const [formData, setFormData] = useState({
 		date: getTodayDate(),
 		time: '09:00',
@@ -73,7 +74,7 @@ const AppointmentModal = () => {
 		const loadConfig = async () => {
 			try {
 				const settings = await getSettings();
-				setWorkingDays(settings.workingDays ?? []);
+				setBusinessHours(settings.businessHours ?? []);
 
 				setLoadingStaff(true);
 				setStaffError(null);
@@ -110,8 +111,13 @@ const AppointmentModal = () => {
 			return;
 		}
 
+		// Un día sin franjas es un día cerrado. Se chequea solo si el horario ya
+		// cargó: con la lista vacía no se sabe nada y no hay que bloquear nada.
 		const dayIndex = selectedDate.getDay();
-		if (workingDays.length === 7 && !workingDays[dayIndex]) {
+		if (
+			businessHours.length > 0 &&
+			!businessHours.some((range) => range.dayOfWeek === dayIndex)
+		) {
 			setSubmitError(
 				dayIndex === new Date().getDay()
 					? 'Hoy no se atiende. Selecciona otro día.'

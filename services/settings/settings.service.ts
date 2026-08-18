@@ -1,9 +1,13 @@
 import { axiosInstance } from '@/lib/axios';
+import type { WeeklyRange } from '@/modules/schedule/utils/weeklySchedule';
 
 export type SettingsResponse = {
 	polariaName: string;
-	workingDays: boolean[];
-	openingHours: { from: string; to: string } | null;
+	/**
+	 * Horario semanal del negocio, una entrada por franja. Un día sin entradas
+	 * está cerrado; varias entradas en un mismo día son un turno partido.
+	 */
+	businessHours: WeeklyRange[];
 	aiEnabled: boolean;
 	whatsappConnection: {
 		connected: boolean;
@@ -20,50 +24,24 @@ export type SettingsResponse = {
 
 export type UpdateSettingsPayload = {
 	polariaName?: string;
-	workingDays?: boolean[];
-	openingHours?: { from: string; to: string };
+	/** Reemplaza la semana completa: un día que no viene es un día cerrado. */
+	businessHours?: WeeklyRange[];
 };
 
 export const getSettings = async (): Promise<SettingsResponse> => {
-	const { data } = await axiosInstance.get<{
-		polariaName: string;
-		workingDays: boolean[];
-		openingHours: { from: string; to: string } | null;
-		aiEnabled: boolean;
-		whatsappConnection: SettingsResponse['whatsappConnection'];
-	}>('/settings');
-
-	return {
-		polariaName: data.polariaName,
-		workingDays: data.workingDays,
-		openingHours: data.openingHours,
-		aiEnabled: data.aiEnabled,
-		whatsappConnection: data.whatsappConnection,
-	};
+	const { data } = await axiosInstance.get<SettingsResponse>('/settings');
+	return data;
 };
 
 export const updateSettings = async (
 	payload: UpdateSettingsPayload,
 ): Promise<SettingsResponse> => {
-	const { data } = await axiosInstance.patch<{
-		polariaName: string;
-		workingDays: boolean[];
-		openingHours: { from: string; to: string } | null;
-		aiEnabled: boolean;
-		whatsappConnection: SettingsResponse['whatsappConnection'];
-	}>('/settings', {
+	const { data } = await axiosInstance.patch<SettingsResponse>('/settings', {
 		polariaName: payload.polariaName,
-		workingDays: payload.workingDays,
-		openingHours: payload.openingHours,
+		businessHours: payload.businessHours,
 	});
 
-	return {
-		polariaName: data.polariaName,
-		workingDays: data.workingDays,
-		openingHours: data.openingHours,
-		aiEnabled: data.aiEnabled,
-		whatsappConnection: data.whatsappConnection,
-	};
+	return data;
 };
 
 export type CompleteWhatsappEmbeddedSignupPayload = {
@@ -79,19 +57,10 @@ export type CompleteWhatsappEmbeddedSignupPayload = {
 export const completeWhatsappEmbeddedSignup = async (
 	payload: CompleteWhatsappEmbeddedSignupPayload,
 ): Promise<SettingsResponse> => {
-	const { data } = await axiosInstance.patch<{
-		polariaName: string;
-		workingDays: boolean[];
-		openingHours: { from: string; to: string } | null;
-		aiEnabled: boolean;
-		whatsappConnection: SettingsResponse['whatsappConnection'];
-	}>('/settings/whatsapp/embedded-signup', payload);
+	const { data } = await axiosInstance.patch<SettingsResponse>(
+		'/settings/whatsapp/embedded-signup',
+		payload,
+	);
 
-	return {
-		polariaName: data.polariaName,
-		workingDays: data.workingDays,
-		openingHours: data.openingHours,
-		aiEnabled: data.aiEnabled,
-		whatsappConnection: data.whatsappConnection,
-	};
+	return data;
 };

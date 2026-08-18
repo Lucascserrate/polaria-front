@@ -9,21 +9,28 @@ import {
 	WEEK_DAYS,
 	type DayRange,
 	type ScheduleDraft,
-} from '@/modules/staff/utils/schedule';
+} from '@/modules/schedule/utils/weeklySchedule';
 
 interface Props {
 	draft: ScheduleDraft;
 	onChange: (draft: ScheduleDraft) => void;
+	/** Qué se muestra en un día sin franjas: el negocio cierra, la persona no trabaja. */
+	emptyDayLabel?: string;
 }
 
 /**
- * Grilla semanal de la jornada propia.
+ * Grilla semanal de horarios, para el negocio y para la jornada propia de un
+ * profesional.
  *
- * Un día sin franjas es un día que no trabaja, igual que en el backend. Admite
+ * Un día sin franjas es un día sin atención, igual que en el backend. Admite
  * varias franjas por día para el turno partido del mediodía, que es el caso por
- * el que la tabla acepta más de una fila por día.
+ * el que las tablas aceptan más de una fila por día.
  */
-const StaffScheduleFields: React.FC<Props> = ({ draft, onChange }) => {
+const WeeklyScheduleFields: React.FC<Props> = ({
+	draft,
+	onChange,
+	emptyDayLabel = 'Cerrado',
+}) => {
 	const setDayRanges = (dayOfWeek: number, ranges: DayRange[]) =>
 		onChange({ ...draft, [dayOfWeek]: ranges });
 
@@ -44,13 +51,13 @@ const StaffScheduleFields: React.FC<Props> = ({ draft, onChange }) => {
 		<div className="border border-border rounded-lg divide-y divide-border">
 			{WEEK_DAYS.map(({ dayOfWeek, label }) => {
 				const ranges = draft[dayOfWeek] ?? [];
-				const works = ranges.length > 0;
+				const isOpen = ranges.length > 0;
 
 				return (
 					<div key={dayOfWeek} className="p-3">
 						<label className="flex items-center gap-3 cursor-pointer">
 							<Checkbox
-								checked={works}
+								checked={isOpen}
 								onCheckedChange={(next) =>
 									setDayRanges(
 										dayOfWeek,
@@ -59,12 +66,14 @@ const StaffScheduleFields: React.FC<Props> = ({ draft, onChange }) => {
 								}
 							/>
 							<span className="text-sm font-medium w-24">{label}</span>
-							{!works && (
-								<span className="text-sm text-muted-foreground">No trabaja</span>
+							{!isOpen && (
+								<span className="text-sm text-muted-foreground">
+									{emptyDayLabel}
+								</span>
 							)}
 						</label>
 
-						{works && (
+						{isOpen && (
 							<div className="pl-8 mt-2 space-y-2">
 								{ranges.map((range, index) => (
 									<div key={index} className="flex items-center gap-2">
@@ -129,4 +138,4 @@ const StaffScheduleFields: React.FC<Props> = ({ draft, onChange }) => {
 	);
 };
 
-export default StaffScheduleFields;
+export default WeeklyScheduleFields;
