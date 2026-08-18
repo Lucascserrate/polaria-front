@@ -47,7 +47,7 @@ const DashboardPage = () => {
 	const updatingId = isPending ? (variables?.id ?? null) : null;
 
 	return (
-		<div className="flex flex-col gap-6 lg:h-[calc(100vh-4.5rem)] lg:flex-row lg:min-h-0">
+		<div className="flex flex-col gap-6 lg:flex-1 lg:flex-row lg:min-h-0">
 			<section className="bg-card border border-border rounded-lg flex flex-col lg:flex-1 lg:min-h-0">
 				<div className="flex items-center justify-between p-6 pb-4 shrink-0">
 					<div>

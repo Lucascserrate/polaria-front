@@ -24,7 +24,7 @@ const HumanAttentionCard: React.FC = () => {
 	if (!pending?.length) return null;
 
 	return (
-		<div className="bg-card border border-amber-500/50 rounded-lg overflow-hidden">
+		<div className="bg-card border border-amber-500/50 rounded-lg shrink-0 overflow-hidden">
 			<div className="flex items-center gap-2 px-4 py-3 bg-amber-500/10">
 				<UserRound className="w-4 h-4 text-amber-600 dark:text-amber-500 shrink-0" />
 				<span className="text-sm font-medium">Atención humana</span>
@@ -41,7 +41,8 @@ const HumanAttentionCard: React.FC = () => {
 						'Cliente sin nombre';
 					// La fila que se está devolviendo sale de la mutación, así que no hace
 					// falta un estado aparte.
-					const isResuming = isPending && variables === conversation.conversationId;
+					const isResuming =
+						isPending && variables === conversation.conversationId;
 
 					return (
 						<li key={conversation.conversationId} className="px-4 py-3">
