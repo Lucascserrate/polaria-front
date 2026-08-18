@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import useGetSettings from '@/services/settings/useGetSettings';
 import useUpdateSettings from '@/services/settings/useUpdateSettings';
+import { cn } from '@/lib/utils';
 
 /**
  * Interruptor general de Polaria.
@@ -23,13 +24,12 @@ const BotSwitchCard: React.FC = () => {
 
 	return (
 		<Card className={enabled ? undefined : 'border-amber-500/50'}>
-			<CardContent className="flex items-start gap-4 pt-6">
+			<CardContent className="flex items-start gap-4">
 				<Power
-					className={`w-5 h-5 mt-0.5 shrink-0 ${
-						enabled
-							? 'text-muted-foreground'
-							: 'text-amber-600 dark:text-amber-500'
-					}`}
+					className={cn(
+						'w-5 h-5 mt-0.5 shrink-0',
+						enabled ? 'text-sky-700' : 'text-amber-600 dark:text-amber-500',
+					)}
 				/>
 
 				<div className="flex-1 space-y-1">
