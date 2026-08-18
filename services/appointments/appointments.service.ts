@@ -47,8 +47,13 @@ export const createAppointment = async (input: {
 	return data;
 };
 
-export const getTodayAppointments = async (): Promise<AppointmentApiToday> => {
-	const { data } = await axiosInstance.get('/appointments/today');
+/** Sin `date` devuelve hoy en la zona horaria del negocio. */
+export const getDayAppointments = async (
+	date?: string,
+): Promise<AppointmentApiToday> => {
+	const { data } = await axiosInstance.get('/appointments/day', {
+		params: date ? { date } : undefined,
+	});
 	return data;
 };
 

@@ -28,19 +28,12 @@ import axios from 'axios';
 import useGetServices from '@/services/services/useGetServices';
 import { getSettings } from '@/services/settings/settings.service';
 import type { WeeklyRange } from '@/modules/schedule/utils/weeklySchedule';
+import { todayKey } from '@/lib/date';
 
 const AppointmentModal = () => {
 	// La invalidación vive en el hook, así que crear una cita refresca la agenda
 	// sin que el modal tenga que avisarle a nadie.
 	const { mutateAsync: createAppointment } = useCreateAppointment();
-
-	const getTodayDate = () => {
-		const now = new Date();
-		const year = now.getFullYear();
-		const month = String(now.getMonth() + 1).padStart(2, '0');
-		const day = String(now.getDate()).padStart(2, '0');
-		return `${year}-${month}-${day}`;
-	};
 
 	const [open, setOpen] = useState(false);
 	const [staff, setStaff] = useState<StaffApi[]>([]);
@@ -50,7 +43,7 @@ const AppointmentModal = () => {
 	const [submitError, setSubmitError] = useState<string | null>(null);
 	const [businessHours, setBusinessHours] = useState<WeeklyRange[]>([]);
 	const [formData, setFormData] = useState({
-		date: getTodayDate(),
+		date: todayKey(),
 		time: '09:00',
 		serviceIds: [] as string[],
 		staffId: '',
@@ -161,7 +154,7 @@ const AppointmentModal = () => {
 				});
 
 				setFormData({
-					date: getTodayDate(),
+					date: todayKey(),
 					time: '09:00',
 					serviceIds: [],
 					staffId: '',

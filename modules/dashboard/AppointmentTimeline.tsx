@@ -18,6 +18,13 @@ interface Props {
 	onMarkAttended: (id: string) => void;
 	onCancel: (id: string) => void;
 	updatingId?: string | null;
+	/**
+	 * Ordena por cercanía al ahora en vez de cronológicamente. Solo tiene sentido
+	 * para el día en curso: en otra fecha no hay un "ahora" adentro del día
+	 * contra el cual medir, y el orden natural es el del reloj.
+	 */
+	sortByProximity?: boolean;
+	emptyMessage?: string;
 }
 
 const AppointmentTimeline = ({
@@ -25,11 +32,13 @@ const AppointmentTimeline = ({
 	onMarkAttended,
 	onCancel,
 	updatingId,
+	sortByProximity = true,
+	emptyMessage = 'No hay citas para este día',
 }: Props) => {
 	if (appointments.length === 0) {
 		return (
 			<div className="text-center py-12">
-				<p className="text-muted-foreground">No hay citas para hoy</p>
+				<p className="text-muted-foreground">{emptyMessage}</p>
 			</div>
 		);
 	}
@@ -37,7 +46,9 @@ const AppointmentTimeline = ({
 	// Arriba lo que viene, abajo lo que ya pasó. El orden cronológico puro dejaba
 	// primera la cita de la mañana aunque fueran las 17, y había que recorrer todo
 	// el día atendido para ver qué seguía.
-	const sorted = sortAgendaByProximity(appointments);
+	const sorted = sortByProximity
+		? sortAgendaByProximity(appointments)
+		: [...appointments].sort((a, b) => a.sortKey - b.sortKey);
 
 	return (
 		<div className="space-y-3">

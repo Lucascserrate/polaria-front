@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateAppointmentStatus } from './appointments.service';
 import { AppointmentStatus } from '@/types/appointments.types';
-import { TODAY_APPOINTMENTS_KEY } from '@/modules/staff/constants';
+import { APPOINTMENTS_KEY } from '@/modules/staff/constants';
 
 const useUpdateAppointmentStatus = () => {
 	const queryClient = useQueryClient();
@@ -9,7 +9,10 @@ const useUpdateAppointmentStatus = () => {
 		mutationFn: ({ id, status }: { id: string; status: AppointmentStatus }) =>
 			updateAppointmentStatus(id, status),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: TODAY_APPOINTMENTS_KEY });
+			// Por la raíz y no por el día visible: la agenda de cada fecha es su
+			// propia entrada en caché, y marcar una cita como atendida no puede
+			// dejar desactualizadas a las demás.
+			queryClient.invalidateQueries({ queryKey: APPOINTMENTS_KEY });
 		},
 		onError: (error) => {
 			console.error('Error updating appointment status:', error);

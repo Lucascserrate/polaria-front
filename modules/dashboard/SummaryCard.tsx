@@ -12,7 +12,7 @@ export const SummaryCard = ({ count, confirmed, completed }: Props) => {
 		<Card>
 			<CardHeader className="pb-2">
 				<div className="flex items-center justify-between">
-					<CardTitle className="text-sm font-medium">Citas de Hoy</CardTitle>
+					<CardTitle className="text-sm font-medium">Citas del día</CardTitle>
 					<Calendar className="w-4 h-4 text-muted-foreground" />
 				</div>
 			</CardHeader>

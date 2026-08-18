@@ -18,7 +18,13 @@ export const AGENDA_REFETCH_MS = 30_000;
  */
 export const APPOINTMENTS_KEY = ['appointments'] as const;
 
-export const TODAY_APPOINTMENTS_KEY = [...APPOINTMENTS_KEY, 'today'] as const;
+/**
+ * La agenda de un día concreto. La fecha entra en la clave para que cada día
+ * tenga su propia entrada en caché: volver a uno ya visto lo muestra al
+ * instante y después se revalida.
+ */
+export const dayAppointmentsKey = (date: string) =>
+	[...APPOINTMENTS_KEY, 'day', date] as const;
 
 export const EMPTY_COUNTS = {
 	pending: 0,
