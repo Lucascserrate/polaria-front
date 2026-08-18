@@ -46,85 +46,73 @@ const DashboardPage = () => {
 	const updatingId = isPending ? (variables?.id ?? null) : null;
 
 	return (
-		<div className="flex flex-col gap-6 md:h-full md:min-h-0">
-			{/* Header */}
-			<div className="flex items-center justify-between shrink-0">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Panel</h1>
-					<p className="text-muted-foreground mt-1">
-						Gestiona las citas y horarios de tu barbería
+		<div className="flex flex-col gap-6 lg:flex-row lg:flex-1 lg:min-h-0">
+			<section className="bg-card border border-border rounded-lg flex flex-col lg:flex-1 lg:min-h-0">
+				<div className="flex items-center justify-between p-6 pb-4 shrink-0">
+					<div>
+						<h2 className="text-xl font-semibold">
+							{isToday ? 'Agenda de hoy' : 'Agenda'}
+						</h2>
+						{!isToday && (
+							<p className="text-sm text-muted-foreground capitalize mt-0.5">
+								{formatLongDate(selectedDate)}
+							</p>
+						)}
+					</div>
+					<AppointmentModal />
+				</div>
+
+				{statusError && (
+					<p className="text-sm text-red-600 px-6 pb-4 shrink-0">
+						No se pudo actualizar la cita. Intenta de nuevo.
+					</p>
+				)}
+
+				<div className="flex-1 overflow-y-auto px-6 pb-6 lg:min-h-0">
+					<AppointmentTimeline
+						appointments={appointments}
+						onMarkAttended={handleMarkAttended}
+						onCancel={handleCancel}
+						updatingId={updatingId}
+						sortByProximity={isToday}
+						emptyMessage={
+							isToday
+								? 'No hay citas para hoy'
+								: `No hay citas para el ${formatLongDate(selectedDate)}`
+						}
+					/>
+				</div>
+			</section>
+
+			<aside className="flex flex-col gap-4 shrink-0 lg:w-80 lg:overflow-y-auto lg:min-h-0 pr-2">
+				<MonthCalendar value={selectedDate} onChange={setSelectedDate} />
+
+				<SummaryCard
+					count={totalDay}
+					confirmed={counts.confirmed}
+					completed={counts.completed}
+				/>
+				<div className="bg-card border border-border rounded-lg p-6">
+					<div className="text-sm font-medium text-muted-foreground">
+						{isToday ? 'Trabajando hoy' : 'Trabajando ese día'}
+					</div>
+					<div className="text-3xl font-bold mt-2">{workingStaffCount}</div>
+					<p className="text-xs text-muted-foreground mt-2">
+						Profesionales con jornada
 					</p>
 				</div>
-			</div>
-
-			<div className="flex flex-col gap-6 lg:flex-row lg:flex-1 lg:min-h-0">
-				<section className="bg-card border border-border rounded-lg flex flex-col lg:flex-1 lg:min-h-0">
-					<div className="flex items-center justify-between p-6 pb-4 shrink-0">
-						<div>
-							<h2 className="text-xl font-semibold">
-								{isToday ? 'Agenda de hoy' : 'Agenda'}
-							</h2>
-							{!isToday && (
-								<p className="text-sm text-muted-foreground capitalize mt-0.5">
-									{formatLongDate(selectedDate)}
-								</p>
-							)}
-						</div>
-						<AppointmentModal />
+				<div className="bg-card border border-border rounded-lg p-6">
+					<div className="text-sm font-medium text-muted-foreground">
+						Ingresos del día
 					</div>
-
-					{statusError && (
-						<p className="text-sm text-red-600 px-6 pb-4 shrink-0">
-							No se pudo actualizar la cita. Intenta de nuevo.
-						</p>
-					)}
-
-					<div className="flex-1 overflow-y-auto px-6 pb-6 lg:min-h-0">
-						<AppointmentTimeline
-							appointments={appointments}
-							onMarkAttended={handleMarkAttended}
-							onCancel={handleCancel}
-							updatingId={updatingId}
-							sortByProximity={isToday}
-							emptyMessage={
-								isToday
-									? 'No hay citas para hoy'
-									: `No hay citas para el ${formatLongDate(selectedDate)}`
-							}
-						/>
+					<div className="text-3xl font-bold mt-2">
+						BOB {Math.round(revenueDay)}
 					</div>
-				</section>
-
-				<aside className="flex flex-col gap-4 shrink-0 lg:w-80 lg:overflow-y-auto lg:min-h-0 pr-2">
-					<MonthCalendar value={selectedDate} onChange={setSelectedDate} />
-
-					<SummaryCard
-						count={totalDay}
-						confirmed={counts.confirmed}
-						completed={counts.completed}
-					/>
-					<div className="bg-card border border-border rounded-lg p-6">
-						<div className="text-sm font-medium text-muted-foreground">
-							{isToday ? 'Trabajando hoy' : 'Trabajando ese día'}
-						</div>
-						<div className="text-3xl font-bold mt-2">{workingStaffCount}</div>
-						<p className="text-xs text-muted-foreground mt-2">
-							Profesionales con jornada
-						</p>
-					</div>
-					<div className="bg-card border border-border rounded-lg p-6">
-						<div className="text-sm font-medium text-muted-foreground">
-							Ingresos del día
-						</div>
-						<div className="text-3xl font-bold mt-2">
-							BOB {Math.round(revenueDay)}
-						</div>
-						<p className="text-xs text-muted-foreground mt-2">
-							Solo citas atendidas
-						</p>
-					</div>
-				</aside>
-			</div>
+					<p className="text-xs text-muted-foreground mt-2">
+						Solo citas atendidas
+					</p>
+				</div>
+			</aside>
 		</div>
 	);
 };
