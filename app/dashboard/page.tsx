@@ -95,12 +95,7 @@ const DashboardPage = () => {
 					</div>
 				</section>
 
-				{/*
-				 * `overflow-y-auto` es una válvula, no el comportamiento esperado: el
-				 * calendario y las tarjetas entran en casi cualquier pantalla, pero sin
-				 * esto quedarían recortados en una ventana muy baja.
-				 */}
-				<aside className="flex flex-col gap-4 shrink-0 lg:w-80 lg:overflow-y-auto lg:min-h-0 apple-scrollbar pr-2">
+				<aside className="flex flex-col gap-4 shrink-0 lg:w-80 lg:overflow-y-auto lg:min-h-0 pr-2">
 					<MonthCalendar value={selectedDate} onChange={setSelectedDate} />
 
 					<SummaryCard

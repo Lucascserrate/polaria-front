@@ -128,15 +128,20 @@
 	}
 }
 
-.apple-scrollbar::-webkit-scrollbar {
+::-webkit-scrollbar {
 	width: 4px;
+	height: 4px;
 }
 
-.apple-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
 	background: transparent;
 }
 
-.apple-scrollbar::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.18);
+::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.15);
 	border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(0, 0, 0, 0.25);
 }
