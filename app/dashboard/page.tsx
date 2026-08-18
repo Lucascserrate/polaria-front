@@ -65,7 +65,7 @@ const DashboardPage = () => {
 						</p>
 					)}
 
-					<div className="flex-1 overflow-y-auto px-6 pb-6 lg:min-h-0">
+					<div className="flex-1 overflow-y-auto px-6 pb-6 lg:min-h-0 apple-scrollbar">
 						<AppointmentTimeline
 							appointments={appointments}
 							onMarkAttended={handleMarkAttended}
