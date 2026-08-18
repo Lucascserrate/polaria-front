@@ -11,9 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import type { StaffFormPayload, StaffMember } from '@/types/staff.types';
 import { toCommissionInput } from '@/modules/staff/utils/commission';
 import WeeklyScheduleFields from '@/modules/schedule/WeeklyScheduleFields';
@@ -27,8 +25,9 @@ import {
 	buildDefaultDraft,
 	findBusinessHoursWarnings,
 } from '@/modules/staff/utils/schedule';
-import useGetServices from '@/services/services/useGetServices';
 import useGetSettings from '@/services/settings/useGetSettings';
+import ComissionSection from './ComissionSection';
+import ServiceSection from './ServiceSection';
 
 interface StaffFormProps {
 	open: boolean;
@@ -57,10 +56,7 @@ export function StaffForm({
 		toScheduleDraft(initialStaff?.schedules),
 	);
 
-	const { data: servicesData } = useGetServices();
 	const { data: settings } = useGetSettings();
-
-	const services = servicesData || [];
 
 	const mode: 'create' | 'edit' = initialStaff ? 'edit' : 'create';
 
@@ -126,10 +122,8 @@ export function StaffForm({
 				</DialogHeader>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
-					{/* La grilla semanal no entra en pantalla junto al resto: los campos
-					    scrollean y las acciones quedan siempre visibles. */}
 					<div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-						<div>
+						<div className="space-y-2">
 							<Label htmlFor="name">Nombre</Label>
 							<Input
 								id="name"
@@ -139,82 +133,16 @@ export function StaffForm({
 							/>
 						</div>
 
-						<div>
-							<Label htmlFor="commission">Comisión</Label>
-							<div className="relative">
-								<Input
-									id="commission"
-									type="number"
-									min="0"
-									max="100"
-									step="0.5"
-									inputMode="decimal"
-									placeholder="0"
-									className="pr-8"
-									value={commission}
-									onChange={(e) => setCommission(e.target.value)}
-									aria-invalid={Boolean(commissionError)}
-								/>
-								<span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
-									%
-								</span>
-							</div>
-							{commissionError ? (
-								<p className="text-sm text-red-600 mt-1">{commissionError}</p>
-							) : (
-								<p className="text-xs text-muted-foreground mt-1">
-									Porcentaje de lo que factura. Déjalo vacío si no trabaja a
-									comisión.
-								</p>
-							)}
-						</div>
+						<ServiceSection
+							serviceIds={serviceIds}
+							setServiceIds={setServiceIds}
+						/>
 
-						<div className="space-y-2">
-							<div className="flex items-center justify-between gap-2">
-								<Label>Servicios</Label>
-								{serviceIds.length > 0 ? (
-									<Badge variant="secondary">
-										{serviceIds.length} seleccionados
-									</Badge>
-								) : (
-									<Badge variant="outline">Sin servicios</Badge>
-								)}
-							</div>
-
-							<div className="border border-border rounded-lg p-3 space-y-2 max-h-56 overflow-auto">
-								{services.length === 0 ? (
-									<p className="text-sm text-muted-foreground">
-										No hay servicios activos para asignar.
-									</p>
-								) : (
-									services.map((service) => {
-										const checked = serviceIds.includes(service.id);
-										return (
-											<label
-												key={service.id}
-												className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-accent cursor-pointer"
-											>
-												<Checkbox
-													checked={checked}
-													onCheckedChange={(next) => {
-														const isChecked = next === true;
-														setServiceIds((prev) => {
-															if (isChecked) {
-																return Array.from(
-																	new Set([...prev, service.id]),
-																);
-															}
-															return prev.filter((id) => id !== service.id);
-														});
-													}}
-												/>
-												<span className="text-sm">{service.name}</span>
-											</label>
-										);
-									})
-								)}
-							</div>
-						</div>
+						<ComissionSection
+							commission={commission}
+							setCommission={setCommission}
+							commissionError={commissionError}
+						/>
 
 						<div className="space-y-2">
 							<div className="flex items-start justify-between gap-3">
