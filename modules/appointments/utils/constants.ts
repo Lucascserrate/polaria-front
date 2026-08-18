@@ -10,19 +10,19 @@ export const APPOINTMENT_STATUS = {
 
 export const STATUS_COLORS = {
 	pending: {
-		badge: 'bg-yellow-100 text-yellow-700',
-		dot: 'bg-yellow-500',
-	},
-	booked: {
-		badge: 'bg-blue-100 text-blue-700',
+		badge: 'bg-blue-50 text-blue-700',
 		dot: 'bg-blue-500',
 	},
-	confirmed: {
-		badge: 'bg-purple-100 text-purple-700',
+	booked: {
+		badge: 'bg-purple-50 text-purple-700',
 		dot: 'bg-purple-500',
 	},
+	confirmed: {
+		badge: 'bg-sky-50 text-sky-700',
+		dot: 'bg-sky-500',
+	},
 	completed: {
-		badge: 'bg-green-100 text-green-700',
+		badge: 'bg-green-50 text-green-700',
 		dot: 'bg-green-500',
 	},
 	cancelled: {
@@ -35,7 +35,7 @@ const appointmentMap: Record<AppointmentStatus, string> = {
 	pending: 'Pendiente',
 	booked: 'Agendado',
 	confirmed: 'Confirmado',
-	completed: 'Completado',
+	completed: 'Finalizado',
 	cancelled: 'Cancelado',
 };
 
