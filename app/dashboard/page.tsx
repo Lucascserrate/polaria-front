@@ -47,7 +47,7 @@ const DashboardPage = () => {
 	const updatingId = isPending ? (variables?.id ?? null) : null;
 
 	return (
-		<div className="flex flex-col gap-6 lg:flex-row lg:flex-1 lg:min-h-0">
+		<div className="flex flex-col gap-6 lg:h-[calc(100vh-4.5rem)] lg:flex-row lg:min-h-0">
 			<section className="bg-card border border-border rounded-lg flex flex-col lg:flex-1 lg:min-h-0">
 				<div className="flex items-center justify-between p-6 pb-4 shrink-0">
 					<div>
@@ -97,15 +97,6 @@ const DashboardPage = () => {
 				/>
 				<div className="bg-card border border-border rounded-lg p-6">
 					<div className="text-sm font-medium text-muted-foreground">
-						{isToday ? 'Trabajando hoy' : 'Trabajando ese día'}
-					</div>
-					<div className="text-3xl font-bold mt-2">{workingStaffCount}</div>
-					<p className="text-xs text-muted-foreground mt-2">
-						Profesionales con jornada
-					</p>
-				</div>
-				<div className="bg-card border border-border rounded-lg p-6">
-					<div className="text-sm font-medium text-muted-foreground">
 						Ingresos del día
 					</div>
 					<div className="text-3xl font-bold mt-2">
@@ -113,6 +104,15 @@ const DashboardPage = () => {
 					</div>
 					<p className="text-xs text-muted-foreground mt-2">
 						Solo citas atendidas
+					</p>
+				</div>
+				<div className="bg-card border border-border rounded-lg p-6">
+					<div className="text-sm font-medium text-muted-foreground">
+						{isToday ? 'Trabajando hoy' : 'Trabajando ese día'}
+					</div>
+					<div className="text-3xl font-bold mt-2">{workingStaffCount}</div>
+					<p className="text-xs text-muted-foreground mt-2">
+						Profesionales con jornada
 					</p>
 				</div>
 			</aside>
