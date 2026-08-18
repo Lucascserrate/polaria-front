@@ -6,9 +6,9 @@ interface Props {
 
 const DashboardLayout: React.FC<Props> = ({ children }) => {
 	return (
-		<div className="flex min-h-screen bg-background">
+		<div className="flex min-h-screen md:h-screen md:overflow-hidden bg-background">
 			<Sidebar />
-			<main className="flex-1 pt-10 md:ml-60 p-4 md:p-8 transition-all duration-200">
+			<main className="flex-1 pt-10 md:ml-60 p-4 md:p-8 transition-all duration-200 md:flex md:flex-col md:min-h-0 md:overflow-hidden">
 				{children}
 			</main>
 		</div>

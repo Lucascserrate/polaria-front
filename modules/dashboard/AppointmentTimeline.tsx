@@ -1,4 +1,5 @@
 import { AppointmentStatus } from '@/types/appointments.types';
+import { sortAgendaByProximity } from '@/modules/appointments/utils/sortAgenda';
 import { AppointmentCard } from './AppointmentCard';
 
 interface Appointment {
@@ -33,11 +34,10 @@ const AppointmentTimeline = ({
 		);
 	}
 
-	// Cronológico: la agenda se recorre hacia adelante durante el día. Antes
-	// ordenaba al revés y a media mañana la primera tarjeta era la de la noche.
-	const sorted = [...appointments].sort(
-		(a, b) => (a.sortKey ?? 0) - (b.sortKey ?? 0),
-	);
+	// Arriba lo que viene, abajo lo que ya pasó. El orden cronológico puro dejaba
+	// primera la cita de la mañana aunque fueran las 17, y había que recorrer todo
+	// el día atendido para ver qué seguía.
+	const sorted = sortAgendaByProximity(appointments);
 
 	return (
 		<div className="space-y-3">
