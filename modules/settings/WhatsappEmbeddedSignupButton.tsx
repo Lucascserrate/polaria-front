@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { completeWhatsappEmbeddedSignup } from '@/services/settings/settings.service';
+import {
+	COEXISTENCE_FEATURE_TYPE,
+	COEXISTENCE_FINISH_EVENT,
+	META_SDK_SRC,
+} from './utils/constants';
+import { Card } from '@/components/ui/card';
 
 declare global {
 	interface Window {
@@ -43,16 +49,6 @@ type WhatsappEmbeddedSignupButtonProps = {
 	connectedAt?: string | null;
 	phoneNumber?: string | null;
 };
-
-const META_SDK_SRC = 'https://connect.facebook.net/en_US/sdk.js';
-
-/**
- * Evento que Meta emite cuando el negocio conectó su cuenta de la app WhatsApp
- * Business en lugar de crear una WABA nueva (Coexistence).
- */
-const COEXISTENCE_FINISH_EVENT = 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING';
-
-const COEXISTENCE_FEATURE_TYPE = 'whatsapp_business_app_onboarding';
 
 /**
  * `extras` del flujo de Embedded Signup.
@@ -323,7 +319,7 @@ const WhatsappEmbeddedSignupButton: React.FC<
 	};
 
 	return (
-		<div className="rounded-2xl border border-emerald-500/20 bg-linear-to-r from-emerald-500/10 via-cyan-500/10 to-sky-500/10 p-4 shadow-sm">
+		<Card className="p-4">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div className="space-y-1">
 					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
@@ -362,8 +358,8 @@ const WhatsappEmbeddedSignupButton: React.FC<
 				) : null}
 			</div>
 
-			{error ? <p className="mt-3 text-sm text-red-500">{error}</p> : null}
-		</div>
+			{error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}
+		</Card>
 	);
 };
 
