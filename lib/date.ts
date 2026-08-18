@@ -32,3 +32,27 @@ const longDateFormatter = new Intl.DateTimeFormat('es', {
 /** `martes 18 de agosto`, para encabezados. */
 export const formatLongDate = (key: string): string =>
 	longDateFormatter.format(parseDateKey(key));
+
+const relativeFormatter = new Intl.RelativeTimeFormat('es', {
+	numeric: 'auto',
+});
+
+/**
+ * `hace 5 minutos` a partir de un instante ISO.
+ *
+ * Se recalcula en cada render, así que solo se mantiene al día donde algo vuelve
+ * a renderizar —un refetch periódico, por ejemplo—. Para una espera que se mide
+ * en minutos alcanza; para un reloj no serviría.
+ */
+export const formatTimeAgo = (iso: string, now: number = Date.now()): string => {
+	const elapsedMs = now - new Date(iso).getTime();
+	const minutes = Math.round(elapsedMs / 60_000);
+
+	if (minutes < 1) return 'hace un momento';
+	if (minutes < 60) return relativeFormatter.format(-minutes, 'minute');
+
+	const hours = Math.round(minutes / 60);
+	if (hours < 24) return relativeFormatter.format(-hours, 'hour');
+
+	return relativeFormatter.format(-Math.round(hours / 24), 'day');
+};

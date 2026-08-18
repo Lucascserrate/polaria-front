@@ -5,6 +5,7 @@ import AppointmentTimeline from '@/modules/dashboard/AppointmentTimeline';
 import AppointmentModal from '@/modules/dashboard/AppointmentModal';
 import { SummaryCard } from '@/modules/dashboard/SummaryCard';
 import MonthCalendar from '@/components/MonthCalendar';
+import HumanAttentionCard from '@/modules/dashboard/HumanAttentionCard';
 import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
 import { EMPTY_COUNTS } from '@/modules/staff/constants';
 import useGetDayAppointments from '@/services/appointments/useGetDayAppointments';
@@ -85,6 +86,8 @@ const DashboardPage = () => {
 			</section>
 
 			<aside className="flex flex-col gap-4 shrink-0 lg:w-80 lg:overflow-y-auto lg:min-h-0 pr-2">
+				<HumanAttentionCard />
+
 				<MonthCalendar value={selectedDate} onChange={setSelectedDate} />
 
 				<SummaryCard
