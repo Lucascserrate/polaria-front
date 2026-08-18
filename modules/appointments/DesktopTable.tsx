@@ -6,7 +6,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { STATUS_COLORS } from './utils/constants';
+import { getAppointmentStatusText, STATUS_COLORS } from './utils/constants';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SquarePen } from 'lucide-react';
@@ -57,7 +57,9 @@ const DesktopTable: React.FC<Props> = ({
 								<TableCell>{apt.barber}</TableCell>
 								<TableCell>{apt.duration}min</TableCell>
 								<TableCell>
-									<Badge className={colors.badge}>{apt.status}</Badge>
+									<Badge className={colors.badge}>
+										{getAppointmentStatusText(apt.status)}
+									</Badge>
 								</TableCell>
 								<TableCell className="text-right space-x-2">
 									<div className="flex items-center justify-end gap-1">
