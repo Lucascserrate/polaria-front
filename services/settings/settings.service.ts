@@ -24,8 +24,9 @@ export type SettingsResponse = {
 
 export type UpdateSettingsPayload = {
 	polariaName?: string;
-	/** Reemplaza la semana completa: un día que no viene es un día cerrado. */
 	businessHours?: WeeklyRange[];
+	/** Apagado, Polaria deja de responder por WhatsApp en todo el negocio. */
+	aiEnabled?: boolean;
 };
 
 export const getSettings = async (): Promise<SettingsResponse> => {
@@ -39,6 +40,7 @@ export const updateSettings = async (
 	const { data } = await axiosInstance.patch<SettingsResponse>('/settings', {
 		polariaName: payload.polariaName,
 		businessHours: payload.businessHours,
+		aiEnabled: payload.aiEnabled,
 	});
 
 	return data;

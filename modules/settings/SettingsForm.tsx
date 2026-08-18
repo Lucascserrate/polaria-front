@@ -19,6 +19,7 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import WhatsappEmbeddedSignupButton from '@/modules/settings/WhatsappEmbeddedSignupButton';
+import BotSwitchCard from '@/modules/settings/BotSwitchCard';
 import WeeklyScheduleFields from '@/modules/schedule/WeeklyScheduleFields';
 import {
 	fromScheduleDraft,
@@ -62,7 +63,9 @@ const SettingsForm: React.FC = () => {
 	const savedSchedule = useMemo(
 		() =>
 			toScheduleDraft(
-				data?.businessHours?.length ? data.businessHours : DEFAULT_BUSINESS_HOURS,
+				data?.businessHours?.length
+					? data.businessHours
+					: DEFAULT_BUSINESS_HOURS,
 			),
 		[data?.businessHours],
 	);
@@ -101,6 +104,8 @@ const SettingsForm: React.FC = () => {
 					No se pudo guardar la configuración.
 				</p>
 			)}
+
+			<BotSwitchCard />
 
 			<WhatsappEmbeddedSignupButton
 				connected={whatsapp?.connected ?? false}
