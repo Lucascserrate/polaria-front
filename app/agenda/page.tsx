@@ -67,7 +67,7 @@ const AgendaPage = () => {
 	return (
 		<div className="flex flex-col gap-6 lg:flex-1 lg:flex-row lg:min-h-0">
 			<section className="bg-card border border-border rounded-lg flex flex-col lg:flex-1 lg:min-h-0">
-				<div className="flex items-center justify-between p-6 pb-4 shrink-0">
+				<div className="flex items-center justify-between p-6 pb-2 shrink-0">
 					<div>
 						<h2 className="text-xl font-semibold">
 							{isToday ? 'Agenda de hoy' : 'Agenda'}
@@ -89,10 +89,10 @@ const AgendaPage = () => {
 				)}
 
 				{/*
-				  * El scroll lo maneja la timeline, no este contenedor: al abrir el día
-				  * de hoy se desplaza sola hasta la hora actual, y para eso necesita ser
-				  * dueña del elemento que scrollea.
-				  */}
+				 * El scroll lo maneja la timeline, no este contenedor: al abrir el día
+				 * de hoy se desplaza sola hasta la hora actual, y para eso necesita ser
+				 * dueña del elemento que scrollea.
+				 */}
 				<div className="flex-1 px-6 pb-6 lg:min-h-0">
 					<AppointmentTimeline
 						appointments={appointments}

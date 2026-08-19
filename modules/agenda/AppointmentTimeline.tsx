@@ -119,7 +119,7 @@ const AppointmentTimeline = ({
 	}
 
 	return (
-		<div ref={scrollRef} className="h-full overflow-y-auto">
+		<div ref={scrollRef} className="h-full overflow-y-auto pt-2">
 			<div className="relative" style={{ height: totalHeight }}>
 				{/* Regla de horas. */}
 				{hourMarks.map((minute) => {
