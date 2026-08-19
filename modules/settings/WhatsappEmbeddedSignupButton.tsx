@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { completeWhatsappEmbeddedSignup } from '@/services/settings/settings.service';
+import axios from 'axios';
+import useCompleteWhatsappSignup from '@/services/settings/useCompleteWhatsappSignup';
 import {
 	COEXISTENCE_FEATURE_TYPE,
 	COEXISTENCE_FINISH_EVENT,
@@ -48,6 +49,7 @@ type WhatsappEmbeddedSignupButtonProps = {
 	connected?: boolean;
 	connectedAt?: string | null;
 	phoneNumber?: string | null;
+	verifiedName?: string | null;
 };
 
 /**
@@ -94,12 +96,21 @@ const isMetaOrigin = (origin: string): boolean => {
 
 const WhatsappEmbeddedSignupButton: React.FC<
 	WhatsappEmbeddedSignupButtonProps
-> = ({ connected = false, connectedAt = null, phoneNumber = null }) => {
+> = ({
+	connected = false,
+	connectedAt = null,
+	phoneNumber = null,
+	verifiedName = null,
+}) => {
 	const [loading, setLoading] = useState(false);
-	const [localConnected, setLocalConnected] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const embeddedSignupMetaRef = useRef<EmbeddedSignupMetaPayload>({});
-	const isConnected = connected || localConnected;
+	const { mutateAsync: completeSignup } = useCompleteWhatsappSignup();
+
+	// El estado de conexión sale de `/settings`, que es lo único que sabe qué
+	// número quedó guardado. Un flag local además mentiría al cambiar de número:
+	// diría "conectado" sin poder decir a cuál.
+	const isConnected = connected;
 
 	const initializeSdk = useCallback(() => {
 		const appId = process.env.NEXT_PUBLIC_META_APP_ID;
@@ -258,7 +269,6 @@ const WhatsappEmbeddedSignupButton: React.FC<
 		}
 
 		setLoading(true);
-		setLocalConnected(false);
 		setError(null);
 		embeddedSignupMetaRef.current = {};
 
@@ -299,11 +309,18 @@ const WhatsappEmbeddedSignupButton: React.FC<
 							// tiene que disparar la sincronización de contactos e historial.
 							coexistence: meta.event === COEXISTENCE_FINISH_EVENT,
 						};
-						await completeWhatsappEmbeddedSignup(finalPayload);
-						setLocalConnected(true);
+						await completeSignup(finalPayload);
 					} catch (signupError) {
 						console.error('[Embedded Signup] complete failed', signupError);
-						setError('No se pudo completar la conexión con WhatsApp.');
+						// El caso más probable acá es un 409: el número o la cuenta ya
+						// están conectados a otro negocio. Ese mensaje le sirve al dueño,
+						// así que se muestra tal cual en vez de un error genérico.
+						const message =
+							axios.isAxiosError(signupError) &&
+							typeof signupError.response?.data?.message === 'string'
+								? signupError.response.data.message
+								: 'No se pudo completar la conexión con WhatsApp. La conexión anterior sigue activa.';
+						setError(message);
 					} finally {
 						setLoading(false);
 					}
@@ -320,43 +337,72 @@ const WhatsappEmbeddedSignupButton: React.FC<
 
 	return (
 		<Card className="p-4">
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+			<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 				<div className="space-y-1">
 					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
 						WhatsApp Embedded Signup
 					</p>
 					<h3 className="text-lg font-semibold text-foreground">
-						{isConnected ? 'WhatsApp conectado' : 'Conecta WhatsApp desde Meta'}
+						{isConnected ? 'WhatsApp conectado' : 'Conectá WhatsApp desde Meta'}
 					</h3>
-					<p className="text-sm text-muted-foreground">
-						{isConnected
-							? 'La cuenta ya quedo vinculada desde Meta y esta lista para usar.'
-							: 'Activa la integracion oficial para empezar a recibir mensajes en tu cuenta.'}
-					</p>
+
 					{isConnected ? (
-						<p className="text-xs text-emerald-300">
-							{phoneNumber
-								? `Numero conectado: ${phoneNumber}`
-								: 'Conexion activa'}
-							{connectedAt
-								? ` - Desde ${new Date(connectedAt).toLocaleString()}`
-								: ''}
+						<div className="space-y-0.5 pt-1">
+							<p className="text-sm text-foreground">
+								{phoneNumber ?? 'Número no disponible'}
+								{verifiedName ? (
+									<span className="text-muted-foreground">
+										{' '}
+										· {verifiedName}
+									</span>
+								) : null}
+							</p>
+							<p className="text-xs text-muted-foreground">
+								{connectedAt
+									? `Conectado el ${new Date(connectedAt).toLocaleString('es')}`
+									: 'Conexión activa'}
+							</p>
+						</div>
+					) : (
+						<p className="text-sm text-muted-foreground">
+							Activá la integración oficial para empezar a recibir mensajes en
+							tu cuenta.
 						</p>
-					) : null}
+					)}
 				</div>
 
-				{!isConnected ? (
-					<Button
-						type="button"
-						onClick={handleActivate}
-						className="w-full md:w-auto md:min-w-44"
-						size="lg"
-						disabled={loading}
-					>
-						{loading ? 'Conectando...' : 'Activar WhatsApp'}
-					</Button>
-				) : null}
+				{/*
+				 * Conectado, el botón no desaparece: cambiar de número es el mismo
+				 * Embedded Signup, y esconderlo dejaba al negocio atado para siempre al
+				 * primer número que eligió. Va en `outline` porque acá ya no es la
+				 * acción principal de la pantalla.
+				 */}
+				<Button
+					type="button"
+					onClick={handleActivate}
+					variant={isConnected ? 'outline' : 'default'}
+					className="w-full md:w-auto md:min-w-44"
+					size="lg"
+					disabled={loading}
+				>
+					{loading
+						? isConnected
+							? 'Cambiando...'
+							: 'Conectando...'
+						: isConnected
+							? 'Cambiar número'
+							: 'Activar WhatsApp'}
+				</Button>
 			</div>
+
+			{isConnected ? (
+				<p className="mt-3 text-xs text-muted-foreground">
+					Al cambiar el número conservás todo lo demás: servicios, staff,
+					horarios y el historial de conversaciones. Solo se reemplaza la cuenta
+					de WhatsApp que usa Polaria, y el número actual sigue activo hasta que
+					la nueva conexión se complete.
+				</p>
+			) : null}
 
 			{error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}
 		</Card>
