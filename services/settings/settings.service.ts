@@ -21,6 +21,12 @@ export type SettingsResponse = {
 		/** El número sigue activo en la app de WhatsApp Business (Coexistence). */
 		isOnBusinessApp: boolean;
 		platformType: string | null;
+		/**
+		 * Meta informó que la conexión dejó de estar disponible. Las credenciales
+		 * siguen guardadas: estas caídas pueden revertirse solas.
+		 */
+		unavailableSince: string | null;
+		unavailableReason: string | null;
 	};
 };
 
@@ -66,5 +72,16 @@ export const completeWhatsappEmbeddedSignup = async (
 		payload,
 	);
 
+	return data;
+};
+
+/**
+ * Suelta la conexión del lado de Polaria. No toca nada en Meta: el número sigue
+ * existiendo en su WABA y puede volver a conectarse con Embedded Signup.
+ */
+export const disconnectWhatsapp = async (): Promise<SettingsResponse> => {
+	const { data } = await axiosInstance.post<SettingsResponse>(
+		'/settings/whatsapp/disconnect',
+	);
 	return data;
 };
