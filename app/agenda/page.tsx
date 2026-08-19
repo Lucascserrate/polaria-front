@@ -78,7 +78,8 @@ const AgendaPage = () => {
 							</p>
 						)}
 					</div>
-					<AppointmentModal />
+					{/* La fecha de la cita nueva es el día abierto: una sola fuente. */}
+					<AppointmentModal selectedDate={selectedDate} />
 				</div>
 
 				{statusError && (
