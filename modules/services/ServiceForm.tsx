@@ -30,6 +30,8 @@ interface Props {
 	triggerVariant?: VariantProps<typeof buttonVariants>['variant'];
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	isSubmitting?: boolean;
+	errorMessage?: string;
 }
 
 const ServiceForm: React.FC<Props> = ({
@@ -43,6 +45,8 @@ const ServiceForm: React.FC<Props> = ({
 	triggerVariant = 'default',
 	open: controlledOpen,
 	onOpenChange,
+	isSubmitting = false,
+	errorMessage,
 }) => {
 	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
 	const isControlled = typeof controlledOpen === 'boolean' && !!onOpenChange;
@@ -90,6 +94,8 @@ const ServiceForm: React.FC<Props> = ({
 						submitLabel={submitLabel}
 						onSubmit={onSubmit}
 						onClose={() => setOpen(false)}
+						isSubmitting={isSubmitting}
+						errorMessage={errorMessage}
 					/>
 				</DialogContent>
 			</Dialog>

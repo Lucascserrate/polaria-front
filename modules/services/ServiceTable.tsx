@@ -17,16 +17,23 @@ interface Props {
 	onDelete: (id: string) => void;
 	onEdit: (service: Service) => void;
 	onAddClick: () => void;
+	disableActions?: boolean;
 }
 
-const ServicesTable: React.FC<Props> = ({ services, onDelete, onEdit, onAddClick }) => {
+const ServicesTable: React.FC<Props> = ({
+	services,
+	onDelete,
+	onEdit,
+	onAddClick,
+	disableActions = false,
+}) => {
 	if (services.length === 0) {
 		return (
 			<div className="text-center py-12">
 				<p className="text-muted-foreground mb-4">
 					No hay servicios añadidos aún
 				</p>
-				<Button onClick={onAddClick}>
+				<Button onClick={onAddClick} disabled={disableActions}>
 					<Plus className="w-4 h-4 mr-2" />
 					Agregar Servicio
 				</Button>
@@ -59,6 +66,7 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onEdit, onAddClick
 											variant="ghost"
 											size="sm"
 											onClick={() => onEdit(service)}
+											disabled={disableActions}
 										>
 											<Pencil className="w-4 h-4" />
 										</Button>
@@ -66,6 +74,7 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onEdit, onAddClick
 											variant="ghost"
 											size="sm"
 											onClick={() => onDelete(service.id)}
+											disabled={disableActions}
 										>
 											<Trash2 className="w-4 h-4 text-destructive" />
 										</Button>
@@ -99,6 +108,7 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onEdit, onAddClick
 									variant="ghost"
 									size="sm"
 									onClick={() => onEdit(service)}
+									disabled={disableActions}
 								>
 									<Pencil className="w-4 h-4" />
 								</Button>
@@ -106,6 +116,7 @@ const ServicesTable: React.FC<Props> = ({ services, onDelete, onEdit, onAddClick
 									variant="ghost"
 									size="sm"
 									onClick={() => onDelete(service.id)}
+									disabled={disableActions}
 								>
 									<Trash2 className="w-4 h-4 text-destructive" />
 								</Button>

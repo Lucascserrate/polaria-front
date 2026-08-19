@@ -22,7 +22,9 @@ const ServiceFormFields: React.FC<{
 	submitLabel: string;
 	onSubmit: (payload: SubmitPayload) => void;
 	onClose: () => void;
-}> = ({ defaults, submitLabel, onSubmit, onClose }) => {
+	isSubmitting?: boolean;
+	errorMessage?: string;
+}> = ({ defaults, submitLabel, onSubmit, onClose, isSubmitting = false, errorMessage }) => {
 	const [name, setName] = useState(defaults.name);
 	const [duration, setDuration] = useState(defaults.duration);
 	const [price, setPrice] = useState(defaults.price);
@@ -45,7 +47,12 @@ const ServiceFormFields: React.FC<{
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="space-y-4">
+	<form onSubmit={handleSubmit} className="space-y-4">
+			{errorMessage && (
+				<p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+					{errorMessage}
+				</p>
+			)}
 			<div>
 				<Label htmlFor="service-name">Nombre del Servicio</Label>
 				<Input
@@ -94,10 +101,10 @@ const ServiceFormFields: React.FC<{
 			</div>
 
 			<div className="flex justify-end gap-2 pt-4">
-				<Button type="button" variant="outline" onClick={onClose}>
+				<Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
 					Cancelar
 				</Button>
-				<Button type="submit" disabled={!name || !duration || !price}>
+				<Button type="submit" disabled={isSubmitting || !name || !duration || !price}>
 					{submitLabel}
 				</Button>
 			</div>
