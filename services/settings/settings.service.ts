@@ -15,6 +15,8 @@ export type SettingsResponse = {
 		wabaId: string | null;
 		phoneNumberId: string | null;
 		phoneNumber: string | null;
+		/** Nombre que Meta aprobó para el número, no el nombre del negocio en Polaria. */
+		verifiedName: string | null;
 		connectedAt: string | null;
 		/** El número sigue activo en la app de WhatsApp Business (Coexistence). */
 		isOnBusinessApp: boolean;

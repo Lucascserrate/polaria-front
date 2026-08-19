@@ -111,6 +111,7 @@ const SettingsForm: React.FC = () => {
 				connected={whatsapp?.connected ?? false}
 				connectedAt={whatsapp?.connectedAt ?? null}
 				phoneNumber={whatsapp?.phoneNumber ?? null}
+				verifiedName={whatsapp?.verifiedName ?? null}
 			/>
 			{/* Barbershop Name */}
 			<Card>
