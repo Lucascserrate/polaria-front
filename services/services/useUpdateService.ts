@@ -1,12 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateService } from './services.service';
 import { serviceKeys } from './serviceKeys';
-import type { UpdateServiceDto } from '@/types/services.types';
-
-type UpdateServiceInput = {
-	id: string;
-	data: UpdateServiceDto;
-};
+import type { UpdateServiceInput } from '@/types/services.types';
 
 const useUpdateService = () => {
 	const queryClient = useQueryClient();
