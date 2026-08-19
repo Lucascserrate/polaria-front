@@ -4,5 +4,7 @@ export const ROUTES = {
 	auth: '/auth',
 	chat: '/chat',
 	reports: '/reports',
+	services: '/services',
 	settings: '/settings',
+	staff: '/staff',
 };
