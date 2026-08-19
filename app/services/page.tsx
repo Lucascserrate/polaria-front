@@ -2,7 +2,7 @@
 
 import ServiceForm from '@/modules/services/ServiceForm';
 import ServicesTable from '@/modules/services/ServiceTable';
-import useServicesPage from './hooks/useServicesPage';
+import useServicesPage from '../../modules/services/hooks/useServicesPage';
 
 const ServicesPage = () => {
 	const {
