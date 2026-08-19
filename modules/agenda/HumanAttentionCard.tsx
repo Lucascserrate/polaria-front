@@ -61,10 +61,6 @@ const HumanAttentionCard: React.FC = () => {
 										size="sm"
 										className="h-7 px-2 text-xs"
 									>
-										{/*
-										 * Responder se hace en WhatsApp: el panel todavía no manda
-										 * mensajes, así que el enlace es el camino real y no un atajo.
-										 */}
 										<a
 											href={toWhatsAppLink(conversation.clientPhone)}
 											target="_blank"

@@ -5,7 +5,7 @@
  * del negocio. Acá se construyen y se leen siempre con los getters locales,
  * nunca con `new Date('2026-08-18')`: esa forma se parsea como UTC y en
  * cualquier zona al oeste de Greenwich devuelve el día anterior, que es
- * exactamente el error que un panel de agenda no puede cometer.
+ * exactamente el error que una agenda no puede cometer.
  */
 
 export const toDateKey = (date: Date): string => {
@@ -44,7 +44,10 @@ const relativeFormatter = new Intl.RelativeTimeFormat('es', {
  * a renderizar —un refetch periódico, por ejemplo—. Para una espera que se mide
  * en minutos alcanza; para un reloj no serviría.
  */
-export const formatTimeAgo = (iso: string, now: number = Date.now()): string => {
+export const formatTimeAgo = (
+	iso: string,
+	now: number = Date.now(),
+): string => {
 	const elapsedMs = now - new Date(iso).getTime();
 	const minutes = Math.round(elapsedMs / 60_000);
 

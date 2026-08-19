@@ -1,7 +1,7 @@
 import { axiosInstance } from '@/lib/axios';
 import type {
-	StaffMember,
 	CreateStaffDto,
+	StaffMember,
 	UpdateStaffDto,
 	WorkingStaffResponse,
 } from '@/types/staff.types';

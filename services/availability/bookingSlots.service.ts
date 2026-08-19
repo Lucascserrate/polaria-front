@@ -1,0 +1,26 @@
+import { axiosInstance } from '@/lib/axios';
+
+/**
+ * Un horario ofrecible, tal como lo devuelve el mismo motor que usa WhatsApp.
+ *
+ * `endTime` viene del backend y no se recalcula acá: la duración del servicio ya
+ * está resuelta del lado que decide la disponibilidad, y volver a sumarla en el
+ * navegador abriría la puerta a que las dos cuentas no coincidan.
+ */
+export interface BookingSlot {
+	startTime: string;
+	endTime: string;
+	eligibleStaffIds: string[];
+}
+
+export const getBookingSlots = async (params: {
+	date: string;
+	serviceId: string;
+	staffId: string;
+}): Promise<BookingSlot[]> => {
+	const { data } = await axiosInstance.get<BookingSlot[]>(
+		'/availability/booking-slots',
+		{ params },
+	);
+	return data;
+};

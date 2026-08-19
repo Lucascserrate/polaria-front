@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
 	Calendar,
-	Home,
 	Settings,
 	Users,
 	Scissors,
 	Wallet,
 	Menu,
 	X,
+	BookIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -18,15 +18,16 @@ import { LuLogOut } from 'react-icons/lu';
 import { useLogout } from '@/modules/auth/hooks/useLogout';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/app/logo';
+import { ROUTES } from '@/constants/routes';
 
 const navItems = [
-	{ href: '/dashboard', label: 'Panel', icon: Home },
-	{ href: '/appointments', label: 'Citas', icon: Calendar },
-	{ href: '/staff', label: 'Staff', icon: Users },
-	{ href: '/services', label: 'Servicios', icon: Scissors },
-	{ href: '/reports', label: 'Contabilidad', icon: Wallet },
-	// { href: '/chat', label: 'Chat', icon: MessageCircle },
-	{ href: '/settings', label: 'Configuración', icon: Settings },
+	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
+	{ href: ROUTES.appointments, label: 'Citas', icon: Calendar },
+	{ href: ROUTES.staff, label: 'Staff', icon: Users },
+	{ href: ROUTES.services, label: 'Servicios', icon: Scissors },
+	{ href: ROUTES.reports, label: 'Contabilidad', icon: Wallet },
+	// { href: ROUTES.chat, label: 'Chat', icon: MessageCircle },
+	{ href: ROUTES.settings, label: 'Configuración', icon: Settings },
 ];
 
 export function Sidebar() {

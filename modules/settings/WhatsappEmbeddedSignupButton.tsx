@@ -4,6 +4,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import useCompleteWhatsappSignup from '@/services/settings/useCompleteWhatsappSignup';
+import useDisconnectWhatsapp from '@/services/settings/useDisconnectWhatsapp';
+import { describeUnavailableReason } from './utils/whatsappStatus';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
 	COEXISTENCE_FEATURE_TYPE,
 	COEXISTENCE_FINISH_EVENT,
@@ -50,6 +63,9 @@ type WhatsappEmbeddedSignupButtonProps = {
 	connectedAt?: string | null;
 	phoneNumber?: string | null;
 	verifiedName?: string | null;
+	/** Meta informó que la conexión cayó. Las credenciales siguen guardadas. */
+	unavailableSince?: string | null;
+	unavailableReason?: string | null;
 };
 
 /**
@@ -101,16 +117,24 @@ const WhatsappEmbeddedSignupButton: React.FC<
 	connectedAt = null,
 	phoneNumber = null,
 	verifiedName = null,
+	unavailableSince = null,
+	unavailableReason = null,
 }) => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const embeddedSignupMetaRef = useRef<EmbeddedSignupMetaPayload>({});
 	const { mutateAsync: completeSignup } = useCompleteWhatsappSignup();
+	const { mutate: disconnect, isPending: disconnecting } =
+		useDisconnectWhatsapp();
 
 	// El estado de conexión sale de `/settings`, que es lo único que sabe qué
 	// número quedó guardado. Un flag local además mentiría al cambiar de número:
 	// diría "conectado" sin poder decir a cuál.
 	const isConnected = connected;
+	// Tres estados, no dos: "hay credenciales" y "Meta las considera sanas" son
+	// cosas distintas, y confundirlas haría que una caída se lea como si el
+	// negocio nunca hubiera conectado nada.
+	const isUnavailable = isConnected && Boolean(unavailableSince);
 
 	const initializeSdk = useCallback(() => {
 		const appId = process.env.NEXT_PUBLIC_META_APP_ID;
@@ -336,14 +360,18 @@ const WhatsappEmbeddedSignupButton: React.FC<
 	};
 
 	return (
-		<Card className="p-4">
+		<Card className={isUnavailable ? 'p-4 border-amber-500/50' : 'p-4'}>
 			<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 				<div className="space-y-1">
 					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
 						WhatsApp Embedded Signup
 					</p>
 					<h3 className="text-lg font-semibold text-foreground">
-						{isConnected ? 'WhatsApp conectado' : 'Conectá WhatsApp desde Meta'}
+						{!isConnected
+							? 'Conectá WhatsApp desde Meta'
+							: isUnavailable
+								? 'WhatsApp no disponible'
+								: 'WhatsApp conectado'}
 					</h3>
 
 					{isConnected ? (
@@ -351,10 +379,7 @@ const WhatsappEmbeddedSignupButton: React.FC<
 							<p className="text-sm text-foreground">
 								{phoneNumber ?? 'Número no disponible'}
 								{verifiedName ? (
-									<span className="text-muted-foreground">
-										{' '}
-										· {verifiedName}
-									</span>
+									<span className="text-muted-foreground"> · {verifiedName}</span>
 								) : null}
 							</p>
 							<p className="text-xs text-muted-foreground">
@@ -365,8 +390,8 @@ const WhatsappEmbeddedSignupButton: React.FC<
 						</div>
 					) : (
 						<p className="text-sm text-muted-foreground">
-							Activá la integración oficial para empezar a recibir mensajes en
-							tu cuenta.
+							Activá la integración oficial para empezar a recibir mensajes en tu
+							cuenta.
 						</p>
 					)}
 				</div>
@@ -374,34 +399,101 @@ const WhatsappEmbeddedSignupButton: React.FC<
 				{/*
 				 * Conectado, el botón no desaparece: cambiar de número es el mismo
 				 * Embedded Signup, y esconderlo dejaba al negocio atado para siempre al
-				 * primer número que eligió. Va en `outline` porque acá ya no es la
-				 * acción principal de la pantalla.
+				 * primer número que eligió.
 				 */}
 				<Button
 					type="button"
 					onClick={handleActivate}
-					variant={isConnected ? 'outline' : 'default'}
+					variant={isConnected && !isUnavailable ? 'outline' : 'default'}
 					className="w-full md:w-auto md:min-w-44"
 					size="lg"
-					disabled={loading}
+					disabled={loading || disconnecting}
 				>
 					{loading
 						? isConnected
-							? 'Cambiando...'
+							? 'Conectando...'
 							: 'Conectando...'
-						: isConnected
-							? 'Cambiar número'
-							: 'Activar WhatsApp'}
+						: !isConnected
+							? 'Activar WhatsApp'
+							: isUnavailable
+								? 'Volver a conectar'
+								: 'Cambiar número'}
 				</Button>
 			</div>
 
+			{isUnavailable ? (
+				<div className="mt-3 rounded-md border border-amber-500/50 bg-amber-500/10 p-3">
+					<p className="text-sm text-foreground">
+						Meta informó que esta conexión dejó de estar disponible
+						{unavailableSince
+							? ` el ${new Date(unavailableSince).toLocaleString('es')}`
+							: ''}
+						: {describeUnavailableReason(unavailableReason)}.
+					</p>
+					<p className="mt-1 text-xs text-muted-foreground">
+						Polaria no está recibiendo mensajes en este número. Algunas causas se
+						resuelven solas cuando el teléfono vuelve a conectarse; si no, volvé
+						a conectar desde acá.
+					</p>
+				</div>
+			) : null}
+
 			{isConnected ? (
-				<p className="mt-3 text-xs text-muted-foreground">
-					Al cambiar el número conservás todo lo demás: servicios, staff,
-					horarios y el historial de conversaciones. Solo se reemplaza la cuenta
-					de WhatsApp que usa Polaria, y el número actual sigue activo hasta que
-					la nueva conexión se complete.
-				</p>
+				<div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+					<p className="text-xs text-muted-foreground">
+						Al cambiar el número conservás todo lo demás: servicios, staff,
+						horarios y el historial de conversaciones.
+					</p>
+
+					<AlertDialog>
+						<AlertDialogTrigger asChild>
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								className="text-xs text-muted-foreground hover:text-destructive"
+								disabled={loading || disconnecting}
+							>
+								{disconnecting ? 'Desconectando...' : 'Desconectar'}
+							</Button>
+						</AlertDialogTrigger>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>¿Desconectar WhatsApp?</AlertDialogTitle>
+								<AlertDialogDescription asChild>
+									<div className="space-y-2 text-sm text-muted-foreground">
+										<p>
+											Polaria va a dejar de recibir y responder mensajes en{' '}
+											{phoneNumber ?? 'este número'}, y se cancelan las reservas
+											que estén a medias. Las citas ya agendadas no se tocan.
+										</p>
+										{/*
+										 * Lo primero que hay que aclarar: desconectar acá no borra
+										 * nada en Meta. Sin esta frase, el dueño puede creer que
+										 * está dando de baja el número de WhatsApp.
+										 */}
+										<p>
+											El número sigue existiendo en tu cuenta de Meta. Esto solo
+											deja de usarlo desde Polaria, y podés volver a conectarlo
+											cuando quieras.
+										</p>
+										<p>
+											Si lo que querés es que Polaria deje de responder por un
+											rato, apagá el interruptor de arriba en vez de
+											desconectar.
+										</p>
+									</div>
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel>Cancelar</AlertDialogCancel>
+								<AlertDialogAction onClick={() => disconnect()}>
+									Desconectar
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
+				</div>
 			) : null}
 
 			{error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}
