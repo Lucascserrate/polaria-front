@@ -40,17 +40,16 @@ export const STATUS_COLORS = {
 		accent: 'bg-sky-500',
 	},
 	completed: {
-		badge: 'bg-green-50 text-green-700',
-		dot: 'bg-green-500',
+		badge: 'bg-emerald-50 text-emerald-700',
+		dot: 'bg-emerald-500',
 		surface:
-			'bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-green-900',
-		accent: 'bg-green-500',
+			'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900',
+		accent: 'bg-emerald-500',
 	},
 	cancelled: {
 		badge: 'bg-red-100 text-red-700',
 		dot: 'bg-red-500',
-		surface:
-			'bg-muted/40 border-border opacity-60 dark:bg-muted/20',
+		surface: 'bg-muted/40 border-border opacity-60 dark:bg-muted/20',
 		accent: 'bg-red-400',
 	},
 } as const;

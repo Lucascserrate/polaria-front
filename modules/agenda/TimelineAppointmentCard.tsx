@@ -21,8 +21,13 @@ import {
 	getAppointmentStatusText,
 	STATUS_COLORS,
 } from '@/modules/appointments/utils/constants';
-import type { Appointment, AppointmentStatus } from '@/types/appointments.types';
+import type {
+	Appointment,
+	AppointmentStatus,
+} from '@/types/appointments.types';
 import { formatMinute } from './utils/dayTimeline';
+import { cn } from '@/lib/utils';
+import { COMPACT_HEIGHT } from './utils/constants';
 
 /**
  * Estados en los que la cita todavía espera una resolución. Solo ahí tiene
@@ -30,9 +35,6 @@ import { formatMinute } from './utils/dayTimeline';
  * desde acá, se corrige en la pantalla de citas.
  */
 const OPEN_STATUSES: AppointmentStatus[] = ['pending', 'booked', 'confirmed'];
-
-/** Por debajo de esto no entra una segunda línea de texto sin apretujarla. */
-const COMPACT_HEIGHT = 56;
 
 interface Props {
 	appointment: Appointment;
@@ -73,12 +75,15 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 
 	return (
 		<div
-			className={`group relative h-full overflow-hidden rounded-md border pl-2 pr-1 py-1 text-left transition-shadow hover:shadow-md ${colors.surface}`}
+			className={cn(
+				'group relative h-full overflow-hidden rounded-md border pl-2 pr-1 py-1 text-left transition-shadow hover:shadow-md',
+				colors.surface,
+			)}
 		>
 			{/* Franja de color: identifica el estado sin ocupar ancho de texto. */}
 			<span
 				aria-hidden="true"
-				className={`absolute left-0 top-0 h-full w-1 ${colors.accent}`}
+				className={cn('absolute left-0 top-0 h-full w-1', colors.accent)}
 			/>
 
 			<Popover>
@@ -100,9 +105,12 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 						</span>
 
 						<span
-							className={`block truncate text-xs font-medium ${
-								isCancelled ? 'line-through text-muted-foreground' : 'text-foreground'
-							}`}
+							className={cn(
+								'block truncate text-xs font-medium',
+								isCancelled
+									? 'line-through text-muted-foreground'
+									: 'text-foreground',
+							)}
 						>
 							{appointment.clientName}
 						</span>
