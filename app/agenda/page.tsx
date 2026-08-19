@@ -1,18 +1,18 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import AppointmentTimeline from '@/modules/dashboard/AppointmentTimeline';
-import AppointmentModal from '@/modules/dashboard/AppointmentModal';
-import { SummaryCard } from '@/modules/dashboard/SummaryCard';
+import AppointmentTimeline from '@/modules/agenda/AppointmentTimeline';
+import AppointmentModal from '@/modules/agenda/AppointmentModal';
+import { SummaryCard } from '@/modules/agenda/SummaryCard';
 import MonthCalendar from '@/components/MonthCalendar';
-import HumanAttentionCard from '@/modules/dashboard/HumanAttentionCard';
+import HumanAttentionCard from '@/modules/agenda/HumanAttentionCard';
 import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
 import { EMPTY_COUNTS } from '@/modules/staff/constants';
 import useGetDayAppointments from '@/services/appointments/useGetDayAppointments';
 import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import { formatLongDate, todayKey } from '@/lib/date';
 
-const DashboardPage = () => {
+const AgendaPage = () => {
 	const [selectedDate, setSelectedDate] = useState(todayKey);
 	const isToday = selectedDate === todayKey();
 
@@ -120,4 +120,4 @@ const DashboardPage = () => {
 	);
 };
 
-export default DashboardPage;
+export default AgendaPage;

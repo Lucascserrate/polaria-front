@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
 	Calendar,
-	Home,
 	Settings,
 	Users,
 	Scissors,
 	Wallet,
 	Menu,
 	X,
+	BookIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/app/logo';
 
 const navItems = [
-	{ href: '/dashboard', label: 'Panel', icon: Home },
+	{ href: '/dashboard', label: 'Agenda', icon: BookIcon },
 	{ href: '/appointments', label: 'Citas', icon: Calendar },
 	{ href: '/staff', label: 'Staff', icon: Users },
 	{ href: '/services', label: 'Servicios', icon: Scissors },
