@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -19,16 +19,14 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
-import { getStaff } from '@/services/staff/staff.service';
 import useCreateAppointment from '@/services/appointments/useCreateAppointment';
 import { findOrCreateClient } from '@/services/clients';
-import type { StaffApi } from '@/types/appointments.types';
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import useGetServices from '@/services/services/useGetServices';
-import { getSettings } from '@/services/settings/settings.service';
-import type { WeeklyRange } from '@/modules/schedule/utils/weeklySchedule';
 import { todayKey } from '@/lib/date';
+import useGetStaff from '@/services/staff/useGetStaff';
+import useGetSettings from '@/services/settings/useGetSettings';
 
 const AppointmentModal = () => {
 	// La invalidación vive en el hook, así que crear una cita refresca la agenda
@@ -36,12 +34,8 @@ const AppointmentModal = () => {
 	const { mutateAsync: createAppointment } = useCreateAppointment();
 
 	const [open, setOpen] = useState(false);
-	const [staff, setStaff] = useState<StaffApi[]>([]);
-	const [loadingStaff, setLoadingStaff] = useState(false);
-	const [staffError, setStaffError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
-	const [businessHours, setBusinessHours] = useState<WeeklyRange[]>([]);
 	const [formData, setFormData] = useState({
 		date: todayKey(),
 		time: '09:00',
@@ -49,6 +43,13 @@ const AppointmentModal = () => {
 		staffId: '',
 		clientName: '',
 	});
+
+	const {
+		data: staff = [],
+		isLoading: loadingStaff,
+		error: staffQueryError,
+	} = useGetStaff();
+	const { data: settings } = useGetSettings();
 
 	const activeStaff = useMemo(() => staff.filter((s) => s.isActive), [staff]);
 
@@ -59,30 +60,6 @@ const AppointmentModal = () => {
 	} = useGetServices();
 
 	const services = servicesData || [];
-
-	useEffect(() => {
-		if (!open) {
-			return;
-		}
-		const loadConfig = async () => {
-			try {
-				const settings = await getSettings();
-				setBusinessHours(settings.businessHours ?? []);
-
-				setLoadingStaff(true);
-				setStaffError(null);
-				const data = await getStaff();
-				setStaff(data);
-			} catch (error) {
-				console.error('Error loading staff:', error);
-				setStaffError('No se pudieron cargar los barberos');
-			} finally {
-				setLoadingStaff(false);
-			}
-		};
-
-		loadConfig();
-	}, [open]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -107,6 +84,7 @@ const AppointmentModal = () => {
 		// Un día sin franjas es un día cerrado. Se chequea solo si el horario ya
 		// cargó: con la lista vacía no se sabe nada y no hay que bloquear nada.
 		const dayIndex = selectedDate.getDay();
+		const businessHours = settings?.businessHours ?? [];
 		if (
 			businessHours.length > 0 &&
 			!businessHours.some((range) => range.dayOfWeek === dayIndex)
@@ -307,8 +285,12 @@ const AppointmentModal = () => {
 									))}
 								</SelectContent>
 							</Select>
-							{staffError && (
-								<p className="text-xs text-destructive mt-2">{staffError}</p>
+							{staffQueryError && (
+								<p className="text-xs text-destructive mt-2">
+									{staffQueryError instanceof Error
+										? staffQueryError.message
+										: 'No se pudieron cargar los barberos'}
+								</p>
 							)}
 						</div>
 

@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { getWorkingStaff } from './staff.service';
+import { staffKeys } from './staffKeys';
+import type { WorkingStaffResponse } from '@/types/staff.types';
 
-/** @param date `YYYY-MM-DD`; sin fecha, hoy. */
 const useGetWorkingStaff = (date?: string) => {
-	return useQuery({
-		queryKey: ['staff', 'working', date ?? 'today'],
-		// En una lambda porque `getWorkingStaff` recibe un argumento opcional y
-		// React Query le pasaría su contexto como ese argumento.
+	return useQuery<WorkingStaffResponse>({
+		queryKey: staffKeys.working(date),
 		queryFn: () => getWorkingStaff(date),
 	});
 };
