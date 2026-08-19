@@ -1,8 +1,8 @@
 export const ROUTES = {
+	agenda: '/agenda',
 	appointments: '/appointments',
 	auth: '/auth',
 	chat: '/chat',
-	dashboard: '/dashboard',
 	reports: '/reports',
 	settings: '/settings',
 };

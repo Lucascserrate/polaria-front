@@ -15,7 +15,7 @@ export default function HomeClient() {
 		if (isError) {
 			router.replace(ROUTES.auth);
 		} else {
-			router.replace(ROUTES.dashboard);
+			router.replace(ROUTES.agenda);
 		}
 	}, [isLoading, isError, router]);
 
