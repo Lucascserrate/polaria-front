@@ -181,12 +181,10 @@ const AppointmentTimeline = ({
 						aria-hidden="true"
 					>
 						<span
-							className="shrink-0 pr-2 text-right text-[11px] font-semibold tabular-nums text-red-600 dark:text-red-400"
+							className="shrink-0 pr-2 text-right"
 							style={{ width: RULER_WIDTH }}
-						>
-							{formatMinute(nowMinute ?? 0)}
-						</span>
-						<span className="h-px flex-1 bg-red-500" />
+						></span>
+						<span className="h-px flex-1 bg-sky-500" />
 					</div>
 				)}
 			</div>
