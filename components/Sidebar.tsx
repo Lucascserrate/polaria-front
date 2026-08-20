@@ -23,7 +23,7 @@ import { ROUTES } from '@/constants/routes';
 const navItems = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
 	{ href: ROUTES.appointments, label: 'Citas', icon: Calendar },
-	{ href: ROUTES.staff, label: 'Staff', icon: Users },
+	{ href: ROUTES.staff, label: 'Personal', icon: Users },
 	{ href: ROUTES.services, label: 'Servicios', icon: Scissors },
 	{ href: ROUTES.reports, label: 'Contabilidad', icon: Wallet },
 	// { href: ROUTES.chat, label: 'Chat', icon: MessageCircle },

@@ -141,7 +141,7 @@ const ServicesPage = () => {
 						Gestión de Servicios
 					</h1>
 					<p className="text-muted-foreground mt-1">
-						Gestiona los servicios y precios de tu barbería
+						Gestiona los servicios y precios de tu negocio
 					</p>
 				</div>
 				<ServiceForm

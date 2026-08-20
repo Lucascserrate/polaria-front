@@ -54,7 +54,7 @@ export interface Appointment {
 	timeLabel: string;
 	sortKey: number;
 	service: string;
-	barber: string;
+	staff: string;
 	status: AppointmentStatus;
 	duration: number;
 	/** Instante ISO de inicio. La agenda lo posiciona con `timezone`. */

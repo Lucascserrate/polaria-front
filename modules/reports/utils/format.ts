@@ -1,7 +1,3 @@
-/**
- * Montos en la moneda del negocio, que viaja en cada reporte. Sin decimales:
- * en una barbería los precios son redondos y los centavos solo hacen ruido.
- */
 export const formatMoney = (value: number, currency: string): string => {
 	try {
 		return new Intl.NumberFormat('es-BO', {

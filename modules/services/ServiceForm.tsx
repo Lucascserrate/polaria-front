@@ -36,7 +36,7 @@ const ServiceForm: React.FC<Props> = ({
 	onSubmit,
 	initialValues,
 	title = 'Agregar Nuevo Servicio',
-	description = 'Añade un nuevo servicio al menu de tu barbería',
+	description = 'Añade un nuevo servicio al menu de tu negocio.',
 	submitLabel = 'Agregar Servicio',
 	showTrigger = true,
 	triggerLabel = 'Agregar Servicio',

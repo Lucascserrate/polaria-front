@@ -40,7 +40,7 @@ const DesktopTable: React.FC<Props> = ({
 						<TableHead>Cliente</TableHead>
 						<TableHead>Fecha y Hora</TableHead>
 						<TableHead>Servicio</TableHead>
-						<TableHead>Barbero</TableHead>
+						<TableHead>Profesional</TableHead>
 						<TableHead>Duración</TableHead>
 						<TableHead>Estado</TableHead>
 						<TableHead className="text-right">Acciones</TableHead>
@@ -54,7 +54,7 @@ const DesktopTable: React.FC<Props> = ({
 								<TableCell className="font-medium">{apt.clientName}</TableCell>
 								<TableCell>{apt.timeLabel}</TableCell>
 								<TableCell>{apt.service}</TableCell>
-								<TableCell>{apt.barber}</TableCell>
+								<TableCell>{apt.staff}</TableCell>
 								<TableCell>{apt.duration}min</TableCell>
 								<TableCell>
 									<Badge className={colors.badge}>

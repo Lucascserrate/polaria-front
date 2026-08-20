@@ -46,15 +46,14 @@ const AppointmentsTable: React.FC<Props> = ({
 
 	const isRequestingRef = useRef(false);
 
-useEffect(() => {
-	if (!inView || !hasMore || isFetchingNextPage) return;
-	if (isRequestingRef.current) return;
+	useEffect(() => {
+		if (!inView || !hasMore || isFetchingNextPage) return;
+		if (isRequestingRef.current) return;
 
-	isRequestingRef.current = true;
+		isRequestingRef.current = true;
 
-	onLoadMore();
-
-}, [inView, hasMore, isFetchingNextPage, onLoadMore]);
+		onLoadMore();
+	}, [inView, hasMore, isFetchingNextPage, onLoadMore]);
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {
@@ -80,7 +79,7 @@ useEffect(() => {
 			<div className="flex flex-col md:flex-row gap-4">
 				<div className="flex-1">
 					<label className="text-sm font-medium text-muted-foreground">
-						Buscar por nombre, barbero o servicio
+						Buscar por nombre, profesional o servicio
 					</label>
 					<Input
 						placeholder="Buscar..."
@@ -92,7 +91,10 @@ useEffect(() => {
 					<label className="text-sm font-medium text-muted-foreground">
 						Filtrar por Estado
 					</label>
-					<Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
+					<Select
+						value={filters.status || 'all'}
+						onValueChange={handleStatusChange}
+					>
 						<SelectTrigger>
 							<SelectValue />
 						</SelectTrigger>
@@ -138,7 +140,10 @@ useEffect(() => {
 							isFetchingNextPage={isFetchingNextPage}
 							loadMoreRef={ref}
 						/>
-						<MobileCards filtered={appointments} onStatusChange={onStatusChange} />
+						<MobileCards
+							filtered={appointments}
+							onStatusChange={onStatusChange}
+						/>
 					</>
 				)}
 			</div>

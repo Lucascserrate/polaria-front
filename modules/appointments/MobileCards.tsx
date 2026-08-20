@@ -27,9 +27,7 @@ const MobileCards: React.FC<Props> = ({ filtered, onStatusChange }) => {
 						<div className="flex items-start justify-between">
 							<div>
 								<p className="font-medium">{apt.clientName}</p>
-								<p className="text-sm text-muted-foreground">
-									{apt.timeLabel}
-								</p>
+								<p className="text-sm text-muted-foreground">{apt.timeLabel}</p>
 							</div>
 							<Badge className={colors.badge}>{apt.status}</Badge>
 						</div>
@@ -39,8 +37,8 @@ const MobileCards: React.FC<Props> = ({ filtered, onStatusChange }) => {
 								<p className="font-medium">{apt.service}</p>
 							</div>
 							<div>
-								<p className="text-muted-foreground">Barbero</p>
-								<p className="font-medium">{apt.barber}</p>
+								<p className="text-muted-foreground">Personal</p>
+								<p className="font-medium">{apt.staff}</p>
 							</div>
 							<div>
 								<p className="text-muted-foreground">Duración</p>

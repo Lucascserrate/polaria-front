@@ -115,25 +115,23 @@ const SettingsForm: React.FC = () => {
 				unavailableSince={whatsapp?.unavailableSince ?? null}
 				unavailableReason={whatsapp?.unavailableReason ?? null}
 			/>
-			{/* Barbershop Name */}
+			{/* Business Name */}
 			<Card>
 				<CardHeader>
-					<CardTitle>Información de la Barbería</CardTitle>
-					<CardDescription>
-						Información básica sobre tu barbería
-					</CardDescription>
+					<CardTitle>Información del Negocio</CardTitle>
+					<CardDescription>Información básica sobre tu negocio</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div>
-						<Label htmlFor="barbershop-name">Nombre de la Barbería</Label>
+						<Label htmlFor="business-name">Nombre del Negocio</Label>
 						<Input
-							id="barbershop-name"
+							id="business-name"
 							value={polariaName}
 							disabled={disabled}
 							onChange={(e) =>
 								setDraft((prev) => ({ ...prev, polariaName: e.target.value }))
 							}
-							placeholder="Ingresa el nombre de tu barbería"
+							placeholder="Ingresa el nombre de tu negocio"
 						/>
 					</div>
 				</CardContent>

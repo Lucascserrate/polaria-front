@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import AppointmentsTable from '@/modules/appointments/AppointmentTable';
-import type { Appointment, AppointmentStatus } from '@/types/appointments.types';
+import type {
+	Appointment,
+	AppointmentStatus,
+} from '@/types/appointments.types';
 import {
 	getAppointments,
 	updateAppointmentStatus,
@@ -109,7 +112,7 @@ const AppointmentsPage = () => {
 						service: updated.serviceNames
 							? updated.serviceNames.join(', ') || current.service
 							: current.service,
-						barber: updated.staffName ?? current.barber,
+						staff: updated.staffName ?? current.staff,
 						timeLabel: updated.startTimeFormatted
 							? updated.startTimeFormatted
 							: current.timeLabel,

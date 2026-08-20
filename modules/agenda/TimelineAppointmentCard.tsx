@@ -122,7 +122,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 						 */}
 						{!isCompact && (
 							<span className="block truncate text-[11px] text-muted-foreground">
-								{appointment.barber} · {appointment.service}
+								{appointment.staff} · {appointment.service}
 							</span>
 						)}
 					</button>
@@ -139,7 +139,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 					<div className="space-y-1 text-xs">
 						<p className="flex items-center gap-2">
 							<User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-							{appointment.barber}
+							{appointment.staff}
 						</p>
 						<p className="flex items-center gap-2">
 							<Scissors className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

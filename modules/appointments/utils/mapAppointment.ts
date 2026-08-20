@@ -15,7 +15,7 @@ export const mapAppointment = (apt: AppointmentApi): Appointment => ({
 	timeLabel: apt.startTimeFormatted ?? 'Sin hora',
 	sortKey: toSortKey(apt.startTime),
 	service: (apt.serviceNames ?? []).join(', ') || 'Sin servicio',
-	barber: apt.staffName ?? 'Sin barbero',
+	staff: apt.staffName ?? 'Sin personal',
 	status: apt.status,
 	duration: Number.isFinite(apt.totalDuration) ? Number(apt.totalDuration) : 0,
 	// Los instantes crudos viajan sin tocar: la agenda necesita ubicarlos en la

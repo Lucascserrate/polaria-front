@@ -7,7 +7,7 @@ export default function SettingsPage() {
 			<div>
 				<h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
 				<p className="text-muted-foreground mt-1">
-					Configura los ajustes y preferencias de tu barbería
+					Configura los ajustes y preferencias de tu negocio
 				</p>
 			</div>
 
