@@ -57,6 +57,12 @@ export interface Appointment {
 	barber: string;
 	status: AppointmentStatus;
 	duration: number;
+	/** Instante ISO de inicio. La agenda lo posiciona con `timezone`. */
+	startTime: string;
+	/** Instante ISO de fin. Ausente en citas viejas: se cae a `duration`. */
+	endTime?: string;
+	/** Zona del negocio. Sin ella la agenda se dibujaría en la hora del navegador. */
+	timezone?: string;
 }
 
 export interface ServiceApi {

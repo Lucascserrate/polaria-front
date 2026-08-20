@@ -1,7 +1,11 @@
+import type { StaffMember } from '@/types/staff.types';
 import { axiosInstance } from '@/lib/axios';
-import type { StaffApi } from '@/types/appointments.types';
 
-export const getStaff = async (): Promise<StaffApi[]> => {
+/**
+ * El equipo completo. El backend carga la relación `services`, que es lo que
+ * permite saber qué profesional puede hacer cada servicio.
+ */
+export const getStaff = async (): Promise<StaffMember[]> => {
 	const { data } = await axiosInstance.get('/staff');
 	return data;
 };
@@ -28,3 +32,11 @@ export const getWorkingStaff = async (
 	});
 	return data;
 };
+
+/** Horarios disponibles para crear una cita a mano desde Agenda. */
+export interface BookingSlotApi {
+	startTime: string;
+	endTime: string;
+	/** Profesionales habilitados y libres en ese horario. */
+	eligibleStaffIds: string[];
+}

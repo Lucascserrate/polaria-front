@@ -27,7 +27,7 @@ const AuthPage = () => {
 			setLoading(true);
 			setError(null);
 			await localLogin(trimmedEmail);
-			router.replace(ROUTES.dashboard);
+			router.replace(ROUTES.agenda);
 		} catch (loginError) {
 			console.error('Error local login:', loginError);
 			setError(

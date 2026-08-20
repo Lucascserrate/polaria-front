@@ -18,6 +18,11 @@ export const mapAppointment = (apt: AppointmentApi): Appointment => ({
 	barber: apt.staffName ?? 'Sin barbero',
 	status: apt.status,
 	duration: Number.isFinite(apt.totalDuration) ? Number(apt.totalDuration) : 0,
+	// Los instantes crudos viajan sin tocar: la agenda necesita ubicarlos en la
+	// zona del negocio, y cualquier formateo previo perdería esa información.
+	startTime: apt.startTime ?? '',
+	endTime: apt.endTime,
+	timezone: apt.timezone,
 });
 
 /**
