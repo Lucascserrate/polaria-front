@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { STAFF_KEY } from '@/modules/staff/constants';
-import type { UpdateStaffDto } from '@/types/staff.types';
 import { updateStaff } from './staff.service';
+import { staffKeys } from './staffKeys';
+import type { UpdateStaffDto } from '@/types/staff.types';
 
 const useUpdateStaff = () => {
 	const queryClient = useQueryClient();
@@ -10,10 +10,10 @@ const useUpdateStaff = () => {
 		mutationFn: ({ id, data }: { id: string; data: UpdateStaffDto }) =>
 			updateStaff(id, data),
 		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: STAFF_KEY });
+			void queryClient.invalidateQueries({ queryKey: staffKeys.all });
 		},
 		onError: (error) => {
-			console.error('Error updating staff:', error);
+			console.error('Error updating staff member:', error);
 		},
 	});
 };

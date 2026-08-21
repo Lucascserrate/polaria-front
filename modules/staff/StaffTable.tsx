@@ -35,10 +35,12 @@ const StaffTable = ({
 	if (staff.length === 0) {
 		return (
 			<div className="text-center py-12">
-				<p className="text-muted-foreground mb-4">No staff members added yet</p>
+				<p className="text-muted-foreground mb-4">
+					Aún no hay miembros del personal agregados
+				</p>
 				<Button onClick={onAddClick}>
 					<Plus className="w-4 h-4 mr-2" />
-					Add Staff Member
+					Agregar personal
 				</Button>
 			</div>
 		);
@@ -164,7 +166,7 @@ const StaffTable = ({
 						</div>
 						<div className="flex gap-2 pt-2 border-t border-border">
 							<Button variant="ghost" size="sm" className="flex-1">
-								{member.isActive ? 'Active' : 'Inactive'}
+								{member.isActive ? 'Activo' : 'Inactivo'}
 							</Button>
 							<Button
 								variant="ghost"
@@ -173,7 +175,7 @@ const StaffTable = ({
 								onClick={() => onEdit(member)}
 							>
 								<SquarePen className="w-4 h-4 mr-1" />
-								Edit
+								Editar
 							</Button>
 						</div>
 					</div>

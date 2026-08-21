@@ -1,35 +1,18 @@
+import { axiosInstance } from '@/lib/axios';
 import type {
 	CreateStaffDto,
 	StaffMember,
 	UpdateStaffDto,
+	WorkingStaffResponse,
 } from '@/types/staff.types';
-import { axiosInstance } from '@/lib/axios';
 
 export const getStaff = async (): Promise<StaffMember[]> => {
 	const { data } = await axiosInstance.get('/staff');
 	return data;
 };
 
-export interface WorkingStaffResponse {
-	date: string;
-	timezone: string;
-	staff: Array<{
-		id: string;
-		name: string;
-		ranges: Array<{ from: string; to: string }>;
-	}>;
-}
-
-/**
- * Quiénes trabajan hoy según el horario del negocio y la jornada propia de cada
- * profesional. Distinto de `getStaff()`, que devuelve al equipo completo.
- */
-export const getWorkingStaff = async (
-	date?: string,
-): Promise<WorkingStaffResponse> => {
-	const { data } = await axiosInstance.get('/availability/working-staff', {
-		params: date ? { date } : undefined,
-	});
+export const getStaffById = async (id: string): Promise<StaffMember> => {
+	const { data } = await axiosInstance.get(`/staff/${id}`);
 	return data;
 };
 
@@ -62,5 +45,18 @@ export const deleteStaff = async (
 		deleted: true;
 		mode: 'HARD' | 'SOFT';
 	}>(`/staff/${id}`);
+	return data;
+};
+
+/**
+ * Quiénes trabajan hoy según el horario del negocio y la jornada propia de cada
+ * profesional. Distinto de `getStaff()`, que devuelve al equipo completo.
+ */
+export const getWorkingStaff = async (
+	date?: string,
+): Promise<WorkingStaffResponse> => {
+	const { data } = await axiosInstance.get('/availability/working-staff', {
+		params: date ? { date } : undefined,
+	});
 	return data;
 };

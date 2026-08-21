@@ -1,4 +1,4 @@
-import type { ServiceSummary } from '@/types/service.types';
+import type { ServiceSummary } from '@/types/services.types';
 
 /** Franja tal como la devuelve el backend: las horas llegan como `HH:MM:SS`. */
 export interface StaffScheduleApi {
@@ -74,4 +74,14 @@ export interface StaffFormPayload {
 	 * franjas guardadas por si el negocio vuelve a encenderla.
 	 */
 	schedules?: StaffScheduleInput[];
+}
+
+export interface WorkingStaffResponse {
+	date: string;
+	timezone: string;
+	staff: Array<{
+		id: string;
+		name: string;
+		ranges: Array<{ from: string; to: string }>;
+	}>;
 }

@@ -1,84 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { StaffForm } from '@/modules/staff/StaffForm';
 import StaffTable from '@/modules/staff/StaffTable';
 import DeleteStaffDialog from '@/modules/staff/DeleteStaffDialog';
-import useGetStaff from '@/services/staff/useGetStaff';
-import useCreateStaff from '@/services/staff/useCreateStaff';
-import useUpdateStaff from '@/services/staff/useUpdateStaff';
-import useDeleteStaff from '@/services/staff/useDeleteStaff';
-import type { StaffFormPayload, StaffMember } from '@/types/staff.types';
+import { useStaffPage } from '@/modules/staff/useStaffPage';
 
 export default function StaffPage() {
-	const { data: staff = [], isLoading } = useGetStaff();
-	const { mutateAsync: createStaff } = useCreateStaff();
-	const { mutateAsync: updateStaff } = useUpdateStaff();
-	const { mutateAsync: deleteStaff, isPending: deletePending } =
-		useDeleteStaff();
+	const {
+		staff,
+		loading,
+		formOpen,
+		editingStaff,
+		activeCount,
+		deletingStaff,
+		deletePending,
+		actionMessage,
+		requestDelete,
+		handleDelete,
+		handleDeleteDialogChange,
+		handleToggleActive,
+		handleOpenCreate,
+		handleOpenEdit,
+		handleUpsert,
+		handleFormOpenChange,
+	} = useStaffPage();
 
-	const [formOpen, setFormOpen] = useState(false);
-	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-	const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
-	/** Resultado de la última acción: tanto el aviso de baja como un error. */
-	const [actionMessage, setActionMessage] = useState<string | null>(null);
-
-	const handleToggleActive = async (id: string) => {
-		const current = staff.find((member) => member.id === id);
-		if (!current) return;
-
-		await updateStaff({ id, data: { isActive: !current.isActive } });
-	};
-
-	const handleOpenCreate = () => {
-		setEditingStaff(null);
-		setFormOpen(true);
-	};
-
-	const handleOpenEdit = (member: StaffMember) => {
-		setEditingStaff(member);
-		setFormOpen(true);
-	};
-
-	const handleUpsert = async (data: StaffFormPayload) => {
-		if (editingStaff) {
-			await updateStaff({ id: editingStaff.id, data });
-			return;
-		}
-
-		await createStaff({ ...data, isActive: true });
-	};
-
-	const handleDelete = async (member: StaffMember) => {
-		setActionMessage(null);
-
-		try {
-			const { mode } = await deleteStaff(member.id);
-			setDeletingStaff(null);
-			setActionMessage(
-				mode === 'SOFT'
-					? `${member.name} se dio de baja. Su historial y sus comisiones quedan intactos.`
-					: null,
-			);
-		} catch (error) {
-			// El 409 llega con la cantidad de citas próximas: es la información que
-			// le dice al negocio qué tiene que resolver antes.
-			const message =
-				axios.isAxiosError(error) &&
-				typeof error.response?.data?.message === 'string'
-					? error.response.data.message
-					: 'No se pudo eliminar al profesional. Intenta de nuevo.';
-			setActionMessage(message);
-			setDeletingStaff(null);
-		}
-	};
-
-	const activeCount = staff.filter((member) => member.isActive).length;
-
-	if (isLoading) {
+	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-64">
 				<div className="text-lg">Cargando personal...</div>
@@ -133,7 +82,7 @@ export default function StaffPage() {
 					staff={staff}
 					onToggleActive={handleToggleActive}
 					onEdit={handleOpenEdit}
-					onDelete={setDeletingStaff}
+					onDelete={requestDelete}
 					onAddClick={handleOpenCreate}
 				/>
 			</div>
@@ -141,15 +90,14 @@ export default function StaffPage() {
 			<DeleteStaffDialog
 				staff={deletingStaff}
 				pending={deletePending}
-				onOpenChange={(open) => {
-					if (!open) setDeletingStaff(null);
-				}}
+				onOpenChange={handleDeleteDialogChange}
 				onConfirm={(member) => void handleDelete(member)}
 			/>
 
 			<StaffForm
+				key={editingStaff?.id ?? 'create'}
 				open={formOpen}
-				onOpenChange={setFormOpen}
+				onOpenChange={handleFormOpenChange}
 				initialStaff={editingStaff}
 				onSubmit={handleUpsert}
 			/>

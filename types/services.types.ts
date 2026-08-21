@@ -4,6 +4,7 @@ export interface Service {
 	description?: string;
 	durationMinutes: number;
 	price: number;
+	timezone?: string;
 	isActive?: boolean;
 	createdAt?: string;
 	updatedAt?: string;
@@ -19,3 +20,10 @@ export interface CreateServiceDto {
 }
 
 export type UpdateServiceDto = Partial<CreateServiceDto>;
+
+export type UpdateServiceInput = {
+	id: string;
+	data: UpdateServiceDto;
+};
+
+export type ServiceSummary = Pick<Service, 'id' | 'name' | 'isActive'>;
