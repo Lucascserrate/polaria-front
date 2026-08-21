@@ -28,7 +28,6 @@ export const dayAppointmentsKey = (date: string) =>
 
 export const EMPTY_COUNTS = {
 	pending: 0,
-	booked: 0,
 	confirmed: 0,
 	completed: 0,
 	cancelled: 0,

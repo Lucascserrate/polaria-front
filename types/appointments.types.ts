@@ -1,9 +1,16 @@
 export type AppointmentStatus =
 	| 'pending'
-	| 'booked'
 	| 'confirmed'
 	| 'completed'
 	| 'cancelled';
+
+/** Estado del recordatorio de una cita, tal como lo informa el backend. */
+export interface AppointmentReminderApi {
+	state: string;
+	scheduledFor: string | null;
+	sentAt: string | null;
+	failureReason: string | null;
+}
 
 export interface AppointmentApi {
 	id: string;
@@ -18,6 +25,7 @@ export interface AppointmentApi {
 	serviceNames?: string[];
 	totalDuration?: number;
 	timezone?: string;
+	reminder?: AppointmentReminderApi | null;
 }
 
 export interface AppointmentApiPage {
@@ -25,7 +33,6 @@ export interface AppointmentApiPage {
 	total: number;
 	counts: {
 		pending: number;
-		booked: number;
 		confirmed: number;
 		completed: number;
 		cancelled: number;
@@ -40,7 +47,6 @@ export interface AppointmentApiToday {
 	total: number;
 	counts: {
 		pending: number;
-		booked: number;
 		confirmed: number;
 		completed: number;
 		cancelled: number;
@@ -63,6 +69,7 @@ export interface Appointment {
 	endTime?: string;
 	/** Zona del negocio. Sin ella la agenda se dibujaría en la hora del navegador. */
 	timezone?: string;
+	reminder?: AppointmentReminderApi | null;
 }
 
 export interface ServiceApi {

@@ -26,6 +26,7 @@ import type {
 	AppointmentStatus,
 } from '@/types/appointments.types';
 import { formatMinute } from './utils/dayTimeline';
+import { describeReminder } from './utils/reminderStatus';
 import { cn } from '@/lib/utils';
 import { COMPACT_HEIGHT } from './utils/constants';
 
@@ -34,7 +35,7 @@ import { COMPACT_HEIGHT } from './utils/constants';
  * sentido ofrecer las acciones: una cita ya atendida o cancelada no se toca
  * desde acá, se corrige en la pantalla de citas.
  */
-const OPEN_STATUSES: AppointmentStatus[] = ['pending', 'booked', 'confirmed'];
+const OPEN_STATUSES: AppointmentStatus[] = ['pending', 'confirmed'];
 
 interface Props {
 	appointment: Appointment;
@@ -66,11 +67,12 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 }) => {
 	const [confirmingCancel, setConfirmingCancel] = useState(false);
 
-	const colors = STATUS_COLORS[appointment.status] ?? STATUS_COLORS.booked;
+	const colors = STATUS_COLORS[appointment.status] ?? STATUS_COLORS.confirmed;
 	const isOpen = OPEN_STATUSES.includes(appointment.status);
 	const isCancelled = appointment.status === 'cancelled';
 	const isCompleted = appointment.status === 'completed';
 	const isCompact = height < COMPACT_HEIGHT;
+	const reminder = describeReminder(appointment.reminder);
 	const timeRange = `${formatMinute(startMinute)}–${formatMinute(endMinute)}`;
 
 	return (
@@ -149,6 +151,23 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 							{getAppointmentStatusText(appointment.status)}
 						</p>
 					</div>
+
+					{/*
+					 * Estado del recordatorio, en el detalle y no en la card: es una
+					 * pregunta que se hace de a una cita, no algo que se barra con la
+					 * vista, y la card no tiene ancho para explicar un motivo.
+					 */}
+					{reminder && (
+						<p
+							className={`border-t border-border pt-3 text-xs ${
+								reminder.tone === 'warning'
+									? 'text-amber-600 dark:text-amber-500'
+									: 'text-muted-foreground'
+							}`}
+						>
+							{reminder.label}
+						</p>
+					)}
 
 					{isOpen && (
 						<div className="flex justify-end gap-2 border-t border-border pt-3">

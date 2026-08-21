@@ -18,7 +18,7 @@ const MobileCards: React.FC<Props> = ({ filtered, onStatusChange }) => {
 	return (
 		<div className="md:hidden space-y-3">
 			{filtered.map((apt) => {
-				const colors = STATUS_COLORS[apt.status] ?? STATUS_COLORS.booked;
+				const colors = STATUS_COLORS[apt.status] ?? STATUS_COLORS.confirmed;
 				return (
 					<div
 						key={apt.id}

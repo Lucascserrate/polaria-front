@@ -22,7 +22,6 @@ const AppointmentsPage = () => {
 	const [totalAppointments, setTotalAppointments] = useState(0);
 	const [statusCounts, setStatusCounts] = useState({
 		pending: 0,
-		booked: 0,
 		confirmed: 0,
 		completed: 0,
 		cancelled: 0,

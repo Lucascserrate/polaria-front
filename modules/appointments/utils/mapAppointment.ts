@@ -23,6 +23,7 @@ export const mapAppointment = (apt: AppointmentApi): Appointment => ({
 	startTime: apt.startTime ?? '',
 	endTime: apt.endTime,
 	timezone: apt.timezone,
+	reminder: apt.reminder ?? null,
 });
 
 /**
