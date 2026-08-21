@@ -27,6 +27,20 @@ export type SettingsResponse = {
 		 */
 		unavailableSince: string | null;
 		unavailableReason: string | null;
+		/**
+		 * Estado de la plantilla con la que se envían los recordatorios. Solo
+		 * `APPROVED` permite enviarlos.
+		 */
+		reminderTemplateStatus: string;
+		reminderTemplateMetaStatus: string | null;
+	};
+	/**
+	 * Recordatorios del negocio. Aparte de `whatsappConnection` porque es una
+	 * capacidad del negocio y no del canal.
+	 */
+	reminders: {
+		enabled: boolean;
+		leadMinutes: number;
 	};
 };
 
@@ -35,6 +49,9 @@ export type UpdateSettingsPayload = {
 	businessHours?: WeeklyRange[];
 	/** Apagado, Polaria deja de responder por WhatsApp en todo el negocio. */
 	aiEnabled?: boolean;
+	remindersEnabled?: boolean;
+	/** Minutos de anticipación; solo los valores que ofrece el panel. */
+	reminderLeadMinutes?: number;
 };
 
 export const getSettings = async (): Promise<SettingsResponse> => {
@@ -49,6 +66,8 @@ export const updateSettings = async (
 		polariaName: payload.polariaName,
 		businessHours: payload.businessHours,
 		aiEnabled: payload.aiEnabled,
+		remindersEnabled: payload.remindersEnabled,
+		reminderLeadMinutes: payload.reminderLeadMinutes,
 	});
 
 	return data;

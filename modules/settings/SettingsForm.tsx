@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/card';
 import WhatsappEmbeddedSignupButton from '@/modules/settings/WhatsappEmbeddedSignupButton';
 import BotSwitchCard from '@/modules/settings/BotSwitchCard';
+import RemindersCard from '@/modules/settings/RemindersCard';
+import { DEFAULT_REMINDER_LEAD_MINUTES } from '@/modules/settings/utils/reminders';
 import WeeklyScheduleFields from '@/modules/schedule/WeeklyScheduleFields';
 import {
 	fromScheduleDraft,
@@ -38,6 +40,8 @@ import useUpdateSettings from '@/services/settings/useUpdateSettings';
 type SettingsDraft = {
 	polariaName?: string;
 	schedule?: ScheduleDraft;
+	remindersEnabled?: boolean;
+	reminderLeadMinutes?: number;
 };
 
 const SettingsForm: React.FC = () => {
@@ -80,6 +84,13 @@ const SettingsForm: React.FC = () => {
 	const whatsapp = data?.whatsappConnection;
 	const disabled = isLoading || isPending;
 
+	const remindersEnabled =
+		draft.remindersEnabled ?? data?.reminders.enabled ?? true;
+	const reminderLeadMinutes =
+		draft.reminderLeadMinutes ??
+		data?.reminders.leadMinutes ??
+		DEFAULT_REMINDER_LEAD_MINUTES;
+
 	const handleSave = () => {
 		if (scheduleError) return;
 
@@ -87,6 +98,8 @@ const SettingsForm: React.FC = () => {
 			{
 				polariaName,
 				businessHours: fromScheduleDraft(schedule),
+				remindersEnabled,
+				reminderLeadMinutes,
 			},
 			{ onSuccess: () => setDraft({}) },
 		);
@@ -163,6 +176,26 @@ const SettingsForm: React.FC = () => {
 					)}
 				</CardContent>
 			</Card>
+
+			{/*
+			 * Se guarda con el botón del final, como el resto del formulario. El
+			 * interruptor de Polaria es la excepción justificada —es un corte de
+			 * emergencia—, y sumar un segundo guardado instantáneo acá dejaría la
+			 * pantalla con dos modelos de guardado compitiendo.
+			 */}
+			<RemindersCard
+				enabled={remindersEnabled}
+				leadMinutes={reminderLeadMinutes}
+				disabled={disabled}
+				whatsappConnected={whatsapp?.connected ?? false}
+				templateStatus={whatsapp?.reminderTemplateStatus}
+				onEnabledChange={(next) =>
+					setDraft((prev) => ({ ...prev, remindersEnabled: next }))
+				}
+				onLeadMinutesChange={(next) =>
+					setDraft((prev) => ({ ...prev, reminderLeadMinutes: next }))
+				}
+			/>
 
 			{/* Appointment Duration */}
 			<Card>
