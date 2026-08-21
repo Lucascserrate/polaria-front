@@ -82,14 +82,6 @@ export interface ServiceApi {
 	isActive: boolean;
 }
 
-export interface StaffApi {
-	id: string;
-	name: string;
-	email: string;
-	calendarId?: string;
-	isActive: boolean;
-}
-
 export interface ClientApi {
 	id: string;
 	name?: string;

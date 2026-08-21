@@ -66,3 +66,13 @@ export interface StaffFormPayload {
 	 */
 	schedules?: StaffScheduleInput[];
 }
+
+export interface WorkingStaffResponse {
+	date: string;
+	timezone: string;
+	staff: Array<{
+		id: string;
+		name: string;
+		ranges: Array<{ from: string; to: string }>;
+	}>;
+}
