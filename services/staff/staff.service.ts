@@ -1,10 +1,10 @@
-import type { StaffMember } from '@/types/staff.types';
+import type {
+	CreateStaffDto,
+	StaffMember,
+	UpdateStaffDto,
+} from '@/types/staff.types';
 import { axiosInstance } from '@/lib/axios';
 
-/**
- * El equipo completo. El backend carga la relación `services`, que es lo que
- * permite saber qué profesional puede hacer cada servicio.
- */
 export const getStaff = async (): Promise<StaffMember[]> => {
 	const { data } = await axiosInstance.get('/staff');
 	return data;
@@ -33,10 +33,34 @@ export const getWorkingStaff = async (
 	return data;
 };
 
-/** Horarios disponibles para crear una cita a mano desde Agenda. */
-export interface BookingSlotApi {
-	startTime: string;
-	endTime: string;
-	/** Profesionales habilitados y libres en ese horario. */
-	eligibleStaffIds: string[];
-}
+export const createStaff = async (
+	staffData: CreateStaffDto,
+): Promise<StaffMember> => {
+	const { data } = await axiosInstance.post('/staff', staffData);
+	return data;
+};
+
+export const updateStaff = async (
+	id: string,
+	staffData: UpdateStaffDto,
+): Promise<StaffMember> => {
+	const { data } = await axiosInstance.patch(`/staff/${id}`, staffData);
+	return data;
+};
+
+/**
+ * Elimina un profesional.
+ *
+ * El backend decide si es definitiva o una baja que conserva el historial, y
+ * devuelve cuál de las dos hizo. Si tiene citas próximas responde 409 y no
+ * elimina nada.
+ */
+export const deleteStaff = async (
+	id: string,
+): Promise<{ deleted: true; mode: 'HARD' | 'SOFT' }> => {
+	const { data } = await axiosInstance.delete<{
+		deleted: true;
+		mode: 'HARD' | 'SOFT';
+	}>(`/staff/${id}`);
+	return data;
+};

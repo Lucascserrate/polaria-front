@@ -30,6 +30,15 @@ export interface StaffMember {
 	usesCustomSchedule?: boolean;
 	schedules?: StaffScheduleApi[];
 	services?: ServiceSummary[];
+	/**
+	 * Segmentos de cita que tiene, de cualquier estado.
+	 *
+	 * Sirve para anticipar el efecto de eliminarlo: con historial, la eliminación
+	 * es una baja que lo conserva; sin historial, es definitiva.
+	 */
+	appointmentCount?: number;
+	/** Citas que todavía ocupan agenda y están por delante. Bloquean la eliminación. */
+	futureAppointmentCount?: number;
 }
 
 export interface CreateStaffDto {

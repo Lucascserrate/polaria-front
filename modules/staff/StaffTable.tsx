@@ -1,5 +1,5 @@
 'use client';
-import { Plus, Pencil, SquarePen } from 'lucide-react';
+import { Plus, Pencil, SquarePen, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	Table,
@@ -21,10 +21,17 @@ interface Props {
 	staff: StaffMember[];
 	onToggleActive: (id: string) => void;
 	onEdit: (staff: StaffMember) => void;
+	onDelete: (staff: StaffMember) => void;
 	onAddClick: () => void;
 }
 
-const StaffTable = ({ staff, onToggleActive, onEdit, onAddClick }: Props) => {
+const StaffTable = ({
+	staff,
+	onToggleActive,
+	onEdit,
+	onDelete,
+	onAddClick,
+}: Props) => {
 	if (staff.length === 0) {
 		return (
 			<div className="text-center py-12">
@@ -97,9 +104,23 @@ const StaffTable = ({ staff, onToggleActive, onEdit, onAddClick }: Props) => {
 									<Button
 										variant="ghost"
 										size="sm"
+										aria-label={`Editar a ${member.name}`}
 										onClick={() => onEdit(member)}
 									>
 										<Pencil className="w-4 h-4" />
+									</Button>
+									{/*
+									 * Destructiva y en `ghost`: la acción habitual de esta fila es
+									 * editar, y eliminar no debería competir por la mirada.
+									 */}
+									<Button
+										variant="ghost"
+										size="sm"
+										className="text-muted-foreground hover:text-destructive"
+										aria-label={`Eliminar a ${member.name}`}
+										onClick={() => onDelete(member)}
+									>
+										<Trash2 className="w-4 h-4" />
 									</Button>
 								</TableCell>
 							</TableRow>

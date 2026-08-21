@@ -1,4 +1,11 @@
 /**
+ * Raíz de las consultas de personal.
+ *
+ * Invalidarla alcanza al equipo completo y a "quiénes trabajan hoy", que es lo
+ * que corresponde: dar de baja a un profesional cambia las dos respuestas.
+ */
+export const STAFF_KEY = ['staff'] as const;
+/**
  * Cada cuánto se recarga la agenda con la pestaña a la vista.
  *
  * Lo que de verdad evita tener que refrescar a mano es el refetch al volver el

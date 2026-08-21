@@ -1,57 +1,36 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { StaffForm } from '@/modules/staff/StaffForm';
 import StaffTable from '@/modules/staff/StaffTable';
-import { staffService } from '@/services/staff.service';
+import DeleteStaffDialog from '@/modules/staff/DeleteStaffDialog';
+import useGetStaff from '@/services/staff/useGetStaff';
+import useCreateStaff from '@/services/staff/useCreateStaff';
+import useUpdateStaff from '@/services/staff/useUpdateStaff';
+import useDeleteStaff from '@/services/staff/useDeleteStaff';
 import type { StaffFormPayload, StaffMember } from '@/types/staff.types';
 
 export default function StaffPage() {
-	const [staff, setStaff] = useState<StaffMember[]>([]);
-	const [loading, setLoading] = useState(true);
+	const { data: staff = [], isLoading } = useGetStaff();
+	const { mutateAsync: createStaff } = useCreateStaff();
+	const { mutateAsync: updateStaff } = useUpdateStaff();
+	const { mutateAsync: deleteStaff, isPending: deletePending } =
+		useDeleteStaff();
 
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-
-	useEffect(() => {
-		let active = true;
-
-		const loadStaff = async () => {
-			try {
-				setLoading(true);
-				const data = await staffService.getAll();
-				if (active) {
-					setStaff(data);
-				}
-			} catch (error) {
-				console.error('Error loading staff:', error);
-			} finally {
-				if (active) {
-					setLoading(false);
-				}
-			}
-		};
-
-		loadStaff();
-
-		return () => {
-			active = false;
-		};
-	}, []);
+	const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
+	/** Resultado de la última acción: tanto el aviso de baja como un error. */
+	const [actionMessage, setActionMessage] = useState<string | null>(null);
 
 	const handleToggleActive = async (id: string) => {
-		try {
-			const currentStaff = staff.find((s) => s.id === id);
-			if (!currentStaff) return;
-			const updatedStaff = await staffService.update(id, {
-				isActive: !currentStaff.isActive,
-			});
-			setStaff(staff.map((s) => (s.id === id ? updatedStaff : s)));
-		} catch (error) {
-			console.error('Error toggling staff active status:', error);
-		}
+		const current = staff.find((member) => member.id === id);
+		if (!current) return;
+
+		await updateStaff({ id, data: { isActive: !current.isActive } });
 	};
 
 	const handleOpenCreate = () => {
@@ -65,23 +44,41 @@ export default function StaffPage() {
 	};
 
 	const handleUpsert = async (data: StaffFormPayload) => {
-		try {
-			if (editingStaff) {
-				const updated = await staffService.update(editingStaff.id, data);
-				setStaff(staff.map((s) => (s.id === editingStaff.id ? updated : s)));
-				return;
-			}
+		if (editingStaff) {
+			await updateStaff({ id: editingStaff.id, data });
+			return;
+		}
 
-			const created = await staffService.create({ ...data, isActive: true });
-			setStaff([...staff, created]);
+		await createStaff({ ...data, isActive: true });
+	};
+
+	const handleDelete = async (member: StaffMember) => {
+		setActionMessage(null);
+
+		try {
+			const { mode } = await deleteStaff(member.id);
+			setDeletingStaff(null);
+			setActionMessage(
+				mode === 'SOFT'
+					? `${member.name} se dio de baja. Su historial y sus comisiones quedan intactos.`
+					: null,
+			);
 		} catch (error) {
-			console.error('Error saving staff:', error);
+			// El 409 llega con la cantidad de citas próximas: es la información que
+			// le dice al negocio qué tiene que resolver antes.
+			const message =
+				axios.isAxiosError(error) &&
+				typeof error.response?.data?.message === 'string'
+					? error.response.data.message
+					: 'No se pudo eliminar al profesional. Intenta de nuevo.';
+			setActionMessage(message);
+			setDeletingStaff(null);
 		}
 	};
 
-	const activeCount = staff.filter((s) => s.isActive).length;
+	const activeCount = staff.filter((member) => member.isActive).length;
 
-	if (loading) {
+	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center h-64">
 				<div className="text-lg">Cargando personal...</div>
@@ -125,22 +122,34 @@ export default function StaffPage() {
 				</div>
 			</div>
 
-			<div className="bg-card border border-border rounded-lg p-6">
+			<div className="space-y-4">
+				{actionMessage && (
+					<p className="rounded-md border border-border p-3 text-sm text-muted-foreground">
+						{actionMessage}
+					</p>
+				)}
+
 				<StaffTable
 					staff={staff}
 					onToggleActive={handleToggleActive}
 					onEdit={handleOpenEdit}
-					onAddClick={() => {}}
+					onDelete={setDeletingStaff}
+					onAddClick={handleOpenCreate}
 				/>
 			</div>
 
-			<StaffForm
-				key={editingStaff?.id ?? 'create'}
-				open={formOpen}
-				onOpenChange={(next) => {
-					setFormOpen(next);
-					if (!next) setEditingStaff(null);
+			<DeleteStaffDialog
+				staff={deletingStaff}
+				pending={deletePending}
+				onOpenChange={(open) => {
+					if (!open) setDeletingStaff(null);
 				}}
+				onConfirm={(member) => void handleDelete(member)}
+			/>
+
+			<StaffForm
+				open={formOpen}
+				onOpenChange={setFormOpen}
 				initialStaff={editingStaff}
 				onSubmit={handleUpsert}
 			/>
