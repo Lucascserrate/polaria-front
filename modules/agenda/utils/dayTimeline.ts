@@ -1,4 +1,5 @@
 import type { Appointment } from '@/types/appointments.types';
+import { minutesInTimeZone } from './calendarLayout';
 
 /**
  * Cálculos de la agenda diaria: dónde va cada cita en el eje vertical y cómo se
@@ -45,44 +46,13 @@ export interface PositionedAppointment {
 	endMinute: number;
 }
 
-/**
- * Minutos desde la medianoche **en la zona horaria del negocio**.
- *
- * No se usa `getHours()` sobre el instante porque devolvería la hora del
- * navegador: quien abra el panel desde otro huso vería la agenda corrida.
- * Tampoco se parsea la cadena ya formateada, por lo que documenta
- * `mapAppointment`: una regex sobre texto formateado ya rompió el orden de la
- * agenda una vez, y sin ningún error visible.
+/*
+ * Estas dos viven en `calendarLayout`, que es la geometría del calendario nuevo.
+ * Se reexportan para que la agenda vieja no tenga su propia copia mientras las
+ * dos convivan: dos implementaciones de "en qué minuto cae esta cita" es
+ * exactamente la clase de duplicado que se desincroniza sin avisar.
  */
-export const minutesInTimeZone = (
-	iso: string,
-	timeZone?: string,
-): number | null => {
-	const date = new Date(iso);
-	if (Number.isNaN(date.getTime())) return null;
-
-	const parts = new Intl.DateTimeFormat('en-GB', {
-		timeZone,
-		hour: '2-digit',
-		minute: '2-digit',
-		hour12: false,
-	}).formatToParts(date);
-
-	const hour = Number(parts.find((part) => part.type === 'hour')?.value);
-	const minute = Number(parts.find((part) => part.type === 'minute')?.value);
-
-	if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
-
-	// `en-GB` devuelve 24 para la medianoche en algunos entornos.
-	return (hour % 24) * 60 + minute;
-};
-
-/** `15:30` a partir de los minutos desde medianoche. */
-export const formatMinute = (minute: number): string => {
-	const hours = Math.floor(minute / 60) % 24;
-	const minutes = Math.floor(minute % 60);
-	return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-};
+export { formatMinute, minutesInTimeZone } from './calendarLayout';
 
 const spanOf = (appointment: Appointment) => {
 	const startMinute = minutesInTimeZone(
