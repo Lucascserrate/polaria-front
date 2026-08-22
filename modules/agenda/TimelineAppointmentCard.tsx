@@ -45,6 +45,13 @@ interface Props {
 	onMarkAttended: (id: string) => void;
 	onCancel: (id: string) => void;
 	isUpdating?: boolean;
+	/**
+	 * Segunda línea de la card. Por defecto, profesional y servicio.
+	 *
+	 * En la agenda por profesional se pasa el servicio del tramo: el nombre ya lo
+	 * dice la columna, y en una cita compartida diría "Varios" en las dos.
+	 */
+	detail?: string;
 }
 
 /**
@@ -64,6 +71,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 	onMarkAttended,
 	onCancel,
 	isUpdating = false,
+	detail,
 }) => {
 	const [confirmingCancel, setConfirmingCancel] = useState(false);
 
@@ -124,7 +132,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 						 */}
 						{!isCompact && (
 							<span className="block truncate text-[11px] text-muted-foreground">
-								{appointment.staff} · {appointment.service}
+								{detail ?? `${appointment.staff} · ${appointment.service}`}
 							</span>
 						)}
 					</button>

@@ -12,6 +12,15 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
 	test: {
 		environment: 'node',
+		/*
+		 * Los tests corren en la zona de un negocio real y no en la de la máquina.
+		 *
+		 * Casi todos los errores de fecha de este calendario solo aparecen al oeste
+		 * de Greenwich: una fecha construida en UTC y leída en local devuelve el día
+		 * anterior. En un runner en UTC ese error pasa desapercibido, que es
+		 * exactamente cómo se escapó una vez.
+		 */
+		env: { TZ: 'America/La_Paz' },
 		include: ['**/*.test.ts'],
 		exclude: ['node_modules/**', '.next/**'],
 	},

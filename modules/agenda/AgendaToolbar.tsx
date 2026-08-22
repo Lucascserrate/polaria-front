@@ -11,67 +11,19 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import MonthCalendar from '@/components/MonthCalendar';
 import { cn } from '@/lib/utils';
+import { describeDay, describeWeek } from './utils/calendarLabels';
 import { weekDaysOf } from './utils/calendarLayout';
 
 export type AgendaView = 'day' | 'week';
 
-const dayFormatter = new Intl.DateTimeFormat('es', {
-	weekday: 'long',
-	day: 'numeric',
-	month: 'long',
-});
-
-const dayMonthFormatter = new Intl.DateTimeFormat('es', {
-	day: 'numeric',
-	month: 'long',
-});
-
-const dayOnlyFormatter = new Intl.DateTimeFormat('es', { day: 'numeric' });
-
-const monthYearFormatter = new Intl.DateTimeFormat('es', {
-	month: 'long',
-	year: 'numeric',
-});
-
-/** Medianoche UTC de la fecha: solo se usa para formatear, nunca para comparar. */
-const toDate = (key: string): Date => {
-	const [year, month, day] = key.split('-').map(Number);
-	return new Date(Date.UTC(year, month - 1, day));
-};
-
-const capitalize = (value: string) =>
-	value.charAt(0).toUpperCase() + value.slice(1);
-
 /**
  * La fecha o el rango que se está mirando.
  *
- * En la semana se dice el mes una sola vez cuando los siete días caen en el
- * mismo: "17 – 23 de agosto de 2026" se lee mejor que repetir "de agosto" dos
- * veces, y cuando la semana está partida entre dos meses hay que decirlo igual.
+ * El formateo vive en `calendarLabels`, en UTC: una fecha del calendario no
+ * tiene huso, y leerla en el del navegador corre el nombre del día.
  */
-export const describePeriod = (view: AgendaView, dateKey: string): string => {
-	if (view === 'day') {
-		return capitalize(dayFormatter.format(toDate(dateKey)));
-	}
-
-	const week = weekDaysOf(dateKey);
-	const first = toDate(week[0]);
-	const last = toDate(week[6]);
-
-	const sameMonth =
-		first.getUTCMonth() === last.getUTCMonth() &&
-		first.getUTCFullYear() === last.getUTCFullYear();
-
-	if (sameMonth) {
-		return `${dayOnlyFormatter.format(first)} – ${dayOnlyFormatter.format(last)} de ${monthYearFormatter.format(first)}`;
-	}
-
-	const sameYear = first.getUTCFullYear() === last.getUTCFullYear();
-
-	return sameYear
-		? `${dayMonthFormatter.format(first)} – ${dayMonthFormatter.format(last)} de ${first.getUTCFullYear()}`
-		: `${dayMonthFormatter.format(first)} de ${first.getUTCFullYear()} – ${dayMonthFormatter.format(last)} de ${last.getUTCFullYear()}`;
-};
+export const describePeriod = (view: AgendaView, dateKey: string): string =>
+	view === 'day' ? describeDay(dateKey) : describeWeek(weekDaysOf(dateKey));
 
 const VIEWS: Array<{ value: AgendaView; label: string }> = [
 	{ value: 'day', label: 'Día' },

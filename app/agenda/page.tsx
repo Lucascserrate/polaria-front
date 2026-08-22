@@ -8,7 +8,11 @@ import CalendarGrid, {
 } from '@/modules/agenda/CalendarGrid';
 import FloatingAttention from '@/modules/agenda/FloatingAttention';
 import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
-import { groupBlocksByDay } from '@/modules/agenda/utils/calendarBlocks';
+import {
+	buildStaffColumns,
+	groupBlocksByDay,
+} from '@/modules/agenda/utils/calendarBlocks';
+import { dayNumber, weekdayLabel } from '@/modules/agenda/utils/calendarLabels';
 import {
 	nowMinuteInTimeZone,
 	openRangesForWeekday,
@@ -19,20 +23,19 @@ import {
 } from '@/modules/agenda/utils/calendarLayout';
 import useNow from '@/lib/useNow';
 import useGetAppointmentsRange from '@/services/appointments/useGetAppointmentsRange';
+import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
 import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useGetSettings from '@/services/settings/useGetSettings';
 
 const weekdayFormatter = new Intl.DateTimeFormat('es', { weekday: 'short' });
-const longDayFormatter = new Intl.DateTimeFormat('es', {
-	weekday: 'long',
-	day: 'numeric',
-	month: 'long',
-});
-
-const toDate = (key: string): Date => {
-	const [year, month, day] = key.split('-').map(Number);
-	return new Date(Date.UTC(year, month - 1, day));
-};
+/** Iniciales del profesional, para la cabecera angosta de su columna. */
+const initialsOf = (name: string) =>
+	name
+		.split(/\s+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((word) => word.charAt(0).toUpperCase())
+		.join('');
 
 /**
  * Agenda: el calendario del negocio.
@@ -90,16 +93,18 @@ const AgendaPage = () => {
 	// La cita en curso sale de la mutación, así que no hace falta un estado aparte.
 	const updatingId = isUpdatingStatus ? (statusVariables?.id ?? null) : null;
 
+	// Solo en la vista diaria: en la semanal sería un pedido que nadie mira.
+	const { data: working } = useGetWorkingStaff(selectedDate, view === 'day');
+
 	const blocksByDay = useMemo(
 		() => groupBlocksByDay(range?.items ?? [], timezone),
 		[range?.items, timezone],
 	);
 
-	const columns = useMemo<CalendarColumn[]>(
+	const weekColumns = useMemo<CalendarColumn[]>(
 		() =>
 			days.map((day) => {
 				const isToday = day === todayKey;
-				const date = toDate(day);
 
 				return {
 					key: day,
@@ -116,40 +121,96 @@ const AgendaPage = () => {
 							updatingId={updatingId}
 						/>
 					),
-					header:
-						view === 'week' ? (
-							<div className="leading-tight">
-								<p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-									{weekdayFormatter.format(date).replace('.', '')}
-								</p>
-								<p
-									className={
-										isToday
-											? 'text-lg font-semibold text-sky-500'
-											: 'text-lg font-semibold'
-									}
-								>
-									{date.getUTCDate()}
-								</p>
-							</div>
-						) : (
-							<p className="text-sm font-medium capitalize">
-								{longDayFormatter.format(date)}
+					header: (
+						<div className="leading-tight">
+							<p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+								{weekdayLabel(day)}
 							</p>
-						),
+							<p
+								className={
+									isToday
+										? 'text-lg font-semibold text-sky-500'
+										: 'text-lg font-semibold'
+								}
+							>
+								{dayNumber(day)}
+							</p>
+						</div>
+					),
 				};
 			}),
 		[
 			days,
 			todayKey,
 			settings?.businessHours,
-			view,
 			blocksByDay,
 			handleMarkAttended,
 			handleCancel,
 			updatingId,
 		],
 	);
+
+	/**
+	 * La vista diaria se parte por profesional.
+	 *
+	 * Cada columna se sombrea con **su** jornada, no con el horario del negocio:
+	 * es lo que responde "qué está haciendo cada uno", incluida la pausa del que
+	 * corta al mediodía mientras el local sigue abierto.
+	 */
+	const dayColumns = useMemo<CalendarColumn[]>(() => {
+		const isToday = selectedDate === todayKey;
+
+		return buildStaffColumns({
+			appointments: range?.items ?? [],
+			workingStaff: working?.staff ?? [],
+			businessRanges: openRangesForWeekday(
+				settings?.businessHours,
+				weekdayOf(selectedDate),
+			),
+			timezone,
+		}).map((column) => ({
+			key: column.key,
+			isToday,
+			openRanges: column.openRanges,
+			content: (
+				<AppointmentBlocks
+					blocks={column.blocks}
+					onMarkAttended={handleMarkAttended}
+					onCancel={handleCancel}
+					updatingId={updatingId}
+				/>
+			),
+			header: (
+				<div className="flex items-center justify-center gap-2">
+					{column.staffId && (
+						<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold">
+							{initialsOf(column.name)}
+						</span>
+					)}
+					<span className="truncate text-sm font-medium">{column.name}</span>
+					{/* Tiene citas pero no le toca trabajar: si no se dice, su columna
+					    cerrada parece un error de horario. */}
+					{column.offDuty && (
+						<span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-500">
+							Fuera de turno
+						</span>
+					)}
+				</div>
+			),
+		}));
+	}, [
+		selectedDate,
+		todayKey,
+		range?.items,
+		working?.staff,
+		settings?.businessHours,
+		timezone,
+		handleMarkAttended,
+		handleCancel,
+		updatingId,
+	]);
+
+	const columns = view === 'week' ? weekColumns : dayColumns;
 
 	const nowMinute =
 		// `now` en 0 significa que el reloj todavía no montó: no hay hora que dibujar.

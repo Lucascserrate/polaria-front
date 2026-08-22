@@ -172,26 +172,40 @@ export const openRangesForWeekday = (
 		endTime: string;
 	}> = [],
 	dayOfWeek: number,
-): MinuteRange[] => {
-	const toMinutes = (time: string): number | null => {
-		const [hours, minutes] = time.split(':').map(Number);
-		if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
-		return hours * 60 + minutes;
-	};
+): MinuteRange[] =>
+	toOpenRanges(
+		businessHours
+			.filter((range) => range.dayOfWeek === dayOfWeek)
+			.map((range) => ({ from: range.startTime, to: range.endTime })),
+	);
 
-	const ranges = businessHours
-		.filter((range) => range.dayOfWeek === dayOfWeek)
-		.map((range) => ({
-			startMinute: toMinutes(range.startTime),
-			endMinute: toMinutes(range.endTime),
-		}))
-		.filter(
-			(range): range is MinuteRange =>
-				range.startMinute !== null && range.endMinute !== null,
-		);
-
-	return normalizeOpenRanges(ranges);
+/** `09:30` a minutos desde medianoche. Tolera el `HH:MM:SS` del backend. */
+export const clockToMinutes = (time: string): number | null => {
+	const [hours, minutes] = time.split(':').map(Number);
+	if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+	return hours * 60 + minutes;
 };
+
+/**
+ * Franjas con horas de reloj a franjas en minutos, normalizadas.
+ *
+ * Es la forma en que llegan tanto el horario del negocio como la jornada de cada
+ * profesional, que es la que sombrea su columna en la vista diaria.
+ */
+export const toOpenRanges = (
+	ranges: Array<{ from: string; to: string }> = [],
+): MinuteRange[] =>
+	normalizeOpenRanges(
+		ranges
+			.map((range) => ({
+				startMinute: clockToMinutes(range.from),
+				endMinute: clockToMinutes(range.to),
+			}))
+			.filter(
+				(range): range is MinuteRange =>
+					range.startMinute !== null && range.endMinute !== null,
+			),
+	);
 
 /**
  * Los minutos que ocupa una cita **dentro del día en que empieza**.

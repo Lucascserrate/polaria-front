@@ -11,10 +11,12 @@ import {
 	isMinuteOpen,
 	minutesInTimeZone,
 	MIN_BLOCK_HEIGHT,
+	PX_PER_MINUTE,
 	normalizeOpenRanges,
 	nowMinuteInTimeZone,
 	openRangesForWeekday,
 	shiftDateKey,
+	SLOT_MINUTES,
 	slotMinuteAt,
 	todayKeyInTimeZone,
 	weekDaysOf,
@@ -378,19 +380,34 @@ describe('buildColumnLayout', () => {
 });
 
 describe('blockGeometry', () => {
+	/*
+	 * Las medidas se expresan contra `PX_PER_MINUTE` y no como números sueltos:
+	 * cambiar el zoom del calendario es un ajuste razonable, y no tiene por qué
+	 * romper seis tests que solo querían decir "el top es el minuto de inicio".
+	 */
 	it('el top es el minuto de inicio', () => {
-		expect(blockGeometry({ startMinute: 540, endMinute: 570 }).top).toBe(540);
+		expect(blockGeometry({ startMinute: 540, endMinute: 570 }).top).toBe(
+			540 * PX_PER_MINUTE,
+		);
 	});
 
 	it('el alto es la duración', () => {
-		expect(blockGeometry({ startMinute: 540, endMinute: 600 }).height).toBe(60);
+		expect(blockGeometry({ startMinute: 540, endMinute: 600 }).height).toBe(
+			60 * PX_PER_MINUTE,
+		);
 	});
 
 	it('garantiza un alto mínimo para las citas cortas', () => {
-		// 15 minutos medirían 15px y no entraría ni la hora.
-		expect(blockGeometry({ startMinute: 540, endMinute: 555 }).height).toBe(
+		// Un bloque de un minuto mediría un píxel y no entraría ni la hora.
+		expect(blockGeometry({ startMinute: 540, endMinute: 541 }).height).toBe(
 			MIN_BLOCK_HEIGHT,
 		);
+
+		// La celda de la grilla nunca queda por debajo del mínimo legible, sea cual
+		// sea el zoom.
+		expect(
+			blockGeometry({ startMinute: 540, endMinute: 540 + SLOT_MINUTES }).height,
+		).toBeGreaterThanOrEqual(MIN_BLOCK_HEIGHT);
 	});
 });
 
@@ -500,10 +517,13 @@ describe('isMinuteOpen', () => {
 });
 
 describe('slotMinuteAt', () => {
+	/** El argumento es una posición vertical, así que se mide en píxeles. */
+	const atMinute = (minute: number) => minute * PX_PER_MINUTE;
+
 	it('redondea hacia abajo a la celda de 15 minutos', () => {
-		expect(slotMinuteAt(540)).toBe(540);
-		expect(slotMinuteAt(552)).toBe(540);
-		expect(slotMinuteAt(555)).toBe(555);
+		expect(slotMinuteAt(atMinute(540))).toBe(540);
+		expect(slotMinuteAt(atMinute(552))).toBe(540);
+		expect(slotMinuteAt(atMinute(555))).toBe(555);
 	});
 
 	it('el primer píxel es medianoche', () => {
@@ -511,12 +531,12 @@ describe('slotMinuteAt', () => {
 	});
 
 	it('el último tramo del día es 23:45', () => {
-		expect(slotMinuteAt(DAY_MINUTES - 1)).toBe(23 * 60 + 45);
+		expect(slotMinuteAt(atMinute(DAY_MINUTES) - 1)).toBe(23 * 60 + 45);
 	});
 
 	it('fuera del lienzo no hay hora', () => {
 		expect(slotMinuteAt(-1)).toBeNull();
-		expect(slotMinuteAt(DAY_MINUTES)).toBeNull();
+		expect(slotMinuteAt(atMinute(DAY_MINUTES))).toBeNull();
 	});
 });
 

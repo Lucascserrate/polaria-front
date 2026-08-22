@@ -58,6 +58,7 @@ const AppointmentBlocks: React.FC<Props> = ({
 						onMarkAttended={onMarkAttended}
 						onCancel={onCancel}
 						isUpdating={updatingId === block.appointment.id}
+						detail={block.detail}
 					/>
 				</div>
 			);
