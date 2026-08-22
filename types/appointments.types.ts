@@ -12,6 +12,21 @@ export interface AppointmentReminderApi {
 	failureReason: string | null;
 }
 
+/**
+ * Un tramo de la cita: un servicio, con quién lo hace y cuándo.
+ *
+ * Una cita de dos servicios puede repartirse entre dos profesionales, y cada
+ * tramo tiene horario propio. La agenda por profesional se dibuja con esto: en
+ * la columna de cada uno va su tramo, no la cita entera.
+ */
+export interface AppointmentSegmentApi {
+	staffId: string | null;
+	staffName: string | null;
+	serviceName: string | null;
+	startTime: string;
+	endTime: string;
+}
+
 export interface AppointmentApi {
 	id: string;
 	startTime?: string;
@@ -25,6 +40,7 @@ export interface AppointmentApi {
 	serviceNames?: string[];
 	totalDuration?: number;
 	timezone?: string;
+	segments?: AppointmentSegmentApi[];
 	reminder?: AppointmentReminderApi | null;
 }
 
@@ -40,6 +56,16 @@ export interface AppointmentApiPage {
 	page: number;
 	limit: number;
 	hasMore: boolean;
+}
+
+/** Las citas de un rango de días, para la agenda semanal. */
+export interface AppointmentApiRange {
+	items: AppointmentApi[];
+	/** `YYYY-MM-DD`, ambos inclusive. */
+	from: string;
+	to: string;
+	/** Zona del negocio. La grilla se dibuja en esta y no en la del navegador. */
+	timezone: string;
 }
 
 export interface AppointmentApiToday {
@@ -69,7 +95,17 @@ export interface Appointment {
 	endTime?: string;
 	/** Zona del negocio. Sin ella la agenda se dibujaría en la hora del navegador. */
 	timezone?: string;
+	/** Tramos de la cita, ordenados por hora. Vacío en citas sin servicios. */
+	segments: AppointmentSegment[];
 	reminder?: AppointmentReminderApi | null;
+}
+
+export interface AppointmentSegment {
+	staffId: string | null;
+	staffName: string | null;
+	serviceName: string | null;
+	startTime: string;
+	endTime: string;
 }
 
 export interface ServiceApi {

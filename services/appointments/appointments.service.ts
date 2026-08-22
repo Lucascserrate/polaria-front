@@ -4,6 +4,7 @@ import type {
 	AppointmentApiPage,
 	AppointmentStatus,
 	AppointmentApiToday,
+	AppointmentApiRange,
 } from '@/types/appointments.types';
 
 export const getAppointments = async (
@@ -53,6 +54,22 @@ export const getDayAppointments = async (
 ): Promise<AppointmentApiToday> => {
 	const { data } = await axiosInstance.get('/appointments/day', {
 		params: date ? { date } : undefined,
+	});
+	return data;
+};
+
+/**
+ * Las citas de varios días, para la agenda semanal.
+ *
+ * @param from `YYYY-MM-DD` en la zona del negocio.
+ * @param to Igual, inclusive: pedir de lunes a domingo trae el domingo entero.
+ */
+export const getAppointmentsRange = async (
+	from: string,
+	to: string,
+): Promise<AppointmentApiRange> => {
+	const { data } = await axiosInstance.get('/appointments/range', {
+		params: { from, to },
 	});
 	return data;
 };

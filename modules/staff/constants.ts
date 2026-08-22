@@ -26,6 +26,14 @@ export const APPOINTMENTS_KEY = ['appointments'] as const;
 export const dayAppointmentsKey = (date: string) =>
 	[...APPOINTMENTS_KEY, 'day', date] as const;
 
+/**
+ * Las citas de un rango de días. Los dos extremos entran en la clave: la agenda
+ * semanal pide de lunes a domingo, y navegar a la semana anterior es otro rango,
+ * no una versión distinta del mismo.
+ */
+export const rangeAppointmentsKey = (from: string, to: string) =>
+	[...APPOINTMENTS_KEY, 'range', from, to] as const;
+
 export const EMPTY_COUNTS = {
 	pending: 0,
 	confirmed: 0,

@@ -23,6 +23,8 @@ export const mapAppointment = (apt: AppointmentApi): Appointment => ({
 	startTime: apt.startTime ?? '',
 	endTime: apt.endTime,
 	timezone: apt.timezone,
+	// Los tramos vienen ya ordenados del backend; acá solo se garantiza la lista.
+	segments: apt.segments ?? [],
 	reminder: apt.reminder ?? null,
 });
 
