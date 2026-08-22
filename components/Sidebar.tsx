@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-	Calendar,
 	Settings,
 	Users,
 	Scissors,
@@ -30,7 +29,6 @@ import AccountBadge from '@/modules/account/AccountBadge';
 
 const navItems = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
-	{ href: ROUTES.appointments, label: 'Citas', icon: Calendar },
 	{ href: ROUTES.staff, label: 'Personal', icon: Users },
 	{ href: ROUTES.services, label: 'Servicios', icon: Scissors },
 	{ href: ROUTES.reports, label: 'Contabilidad', icon: Wallet },
