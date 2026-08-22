@@ -4,10 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-	describeReminderReadiness,
-	REMINDER_TOGGLES,
-} from './utils/reminders';
+import { describeReminderReadiness, REMINDER_TOGGLES } from './utils/reminders';
 
 interface Props {
 	/** Anticipaciones activas, en minutos. */
@@ -42,7 +39,10 @@ const RemindersCard: React.FC<Props> = ({
 	const [previewOpen, setPreviewOpen] = useState(false);
 
 	const anyActive = offsets.length > 0;
-	const readiness = describeReminderReadiness(whatsappConnected, templateStatus);
+	const readiness = describeReminderReadiness(
+		whatsappConnected,
+		templateStatus,
+	);
 
 	const toggle = (minutes: number, next: boolean) => {
 		// Se mantiene el orden del más lejano al más cercano, igual que el backend.
@@ -77,7 +77,9 @@ const RemindersCard: React.FC<Props> = ({
 								id={id}
 								checked={active}
 								disabled={disabled}
-								onCheckedChange={(next) => toggle(option.minutes, next === true)}
+								onCheckedChange={(next) =>
+									toggle(option.minutes, next === true)
+								}
 							/>
 						</div>
 					);
@@ -113,34 +115,45 @@ const RemindersCard: React.FC<Props> = ({
 				</button>
 
 				{previewOpen && (
-					<div className="space-y-2">
+					<div className="rounded-xl bg-neutral-100 p-4 sm:p-5">
 						{/*
-						 * El texto lo arma el backend con la misma plantilla que usa el
-						 * envío real, así que esto no puede mostrar algo distinto a lo que
-						 * llega. Los nombres y la hora sí son inventados.
+						 * Se dice arriba y no al pie: quien abre esto está por leer un
+						 * mensaje con un nombre y una hora que no existen, y tiene que
+						 * saberlo antes de creerlos.
 						 */}
-						<div className="rounded-lg bg-[#dcf8c6] p-3 dark:bg-emerald-950/40">
-							<p className="whitespace-pre-line text-sm text-neutral-900 dark:text-neutral-100">
+						<p className="mb-3 font-mono text-[10px] tracking-[0.12em] text-neutral-500 uppercase">
+							Ejemplo · lo que recibe tu cliente
+						</p>
+
+						{/*
+						 * Una burbuja de chat, no una tarjeta del panel: el texto lo arma el
+						 * backend con la plantilla real, y verlo con la forma en que va a
+						 * llegar es la mitad de la vista previa. El ancho está acotado porque
+						 * un mensaje de WhatsApp nunca ocupa toda la pantalla.
+						 */}
+						<div className="max-w-88 overflow-hidden rounded-2xl rounded-tl-sm bg-white shadow-sm ring-1 ring-black/5">
+							<p className="px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-line text-neutral-800">
 								{previewText}
 							</p>
 
 							{previewButtons.length > 0 && (
-								<div className="mt-3 space-y-1 border-t border-black/10 pt-2 dark:border-white/10">
+								<div className="flex divide-x divide-neutral-100 border-t border-neutral-100">
 									{previewButtons.map((button) => (
-										<p
+										<span
 											key={button}
-											className="text-center text-sm font-medium text-sky-700 dark:text-sky-400"
+											className="flex-1 py-2 text-center text-[13px] font-medium text-sky-600"
 										>
 											{button}
-										</p>
+										</span>
 									))}
 								</div>
 							)}
 						</div>
 
-						<p className="text-xs text-muted-foreground">
-							Es un ejemplo: el nombre, el servicio, el profesional y la hora
-							salen de cada cita.
+						<p className="mt-3 text-xs text-neutral-500">
+							El nombre, el servicio, el profesional y la hora salen de cada
+							cita. Desde los botones el cliente reagenda o cancela sin escribir
+							nada.
 						</p>
 					</div>
 				)}
