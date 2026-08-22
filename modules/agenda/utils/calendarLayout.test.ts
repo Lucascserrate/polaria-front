@@ -13,10 +13,12 @@ import {
 	MIN_BLOCK_HEIGHT,
 	normalizeOpenRanges,
 	nowMinuteInTimeZone,
+	openRangesForWeekday,
 	shiftDateKey,
 	slotMinuteAt,
 	todayKeyInTimeZone,
 	weekDaysOf,
+	weekdayOf,
 } from './calendarLayout';
 
 /** Bolivia: UTC-4 todo el año. Es la zona por defecto de los negocios. */
@@ -150,6 +152,57 @@ describe('weekDaysOf', () => {
 			'2026-09-05',
 			'2026-09-06',
 		]);
+	});
+});
+
+describe('weekdayOf', () => {
+	it('devuelve el día de la semana con domingo en 0', () => {
+		expect(weekdayOf('2026-08-17')).toBe(1); // lunes
+		expect(weekdayOf('2026-08-22')).toBe(6); // sábado
+		expect(weekdayOf('2026-08-23')).toBe(0); // domingo
+	});
+});
+
+describe('openRangesForWeekday', () => {
+	const hours = [
+		{ dayOfWeek: 1, startTime: '09:00', endTime: '13:00' },
+		{ dayOfWeek: 1, startTime: '15:00', endTime: '19:00' },
+		{ dayOfWeek: 6, startTime: '09:00', endTime: '13:00' },
+	];
+
+	it('toma solo las franjas de ese día', () => {
+		expect(openRangesForWeekday(hours, 6)).toEqual([
+			{ startMinute: 540, endMinute: 780 },
+		]);
+	});
+
+	it('conserva el turno partido', () => {
+		expect(openRangesForWeekday(hours, 1)).toEqual([
+			{ startMinute: 540, endMinute: 780 },
+			{ startMinute: 900, endMinute: 1140 },
+		]);
+	});
+
+	it('un día sin franjas está cerrado', () => {
+		expect(openRangesForWeekday(hours, 0)).toEqual([]);
+	});
+
+	it('tolera el formato con segundos que devuelve el backend', () => {
+		expect(
+			openRangesForWeekday(
+				[{ dayOfWeek: 3, startTime: '09:00:00', endTime: '19:00:00' }],
+				3,
+			),
+		).toEqual([{ startMinute: 540, endMinute: 1140 }]);
+	});
+
+	it('descarta una franja con horas ilegibles', () => {
+		expect(
+			openRangesForWeekday(
+				[{ dayOfWeek: 3, startTime: 'mañana', endTime: '19:00' }],
+				3,
+			),
+		).toEqual([]);
 	});
 });
 

@@ -147,6 +147,53 @@ export const weekDaysOf = (key: string): string[] => {
 };
 
 /**
+ * Qué día de la semana es esa fecha. `0` es domingo, igual que `Date.getDay()`.
+ *
+ * Se calcula en UTC y no con `new Date(key)`: esa forma se parsea como UTC pero
+ * se lee en la zona del navegador, y al oeste de Greenwich devuelve el día
+ * anterior.
+ */
+export const weekdayOf = (key: string): number => {
+	const [year, month, day] = key.split('-').map(Number);
+	return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+};
+
+/**
+ * Las franjas de atención de un día de la semana, en minutos.
+ *
+ * Traduce lo que ya devuelve `/settings` —una fila por franja, con `dayOfWeek` y
+ * horas `HH:MM`— a lo que consume la grilla. Un día sin franjas está cerrado, y
+ * eso se dibuja: no es lo mismo que un día sin datos.
+ */
+export const openRangesForWeekday = (
+	businessHours: Array<{
+		dayOfWeek: number;
+		startTime: string;
+		endTime: string;
+	}> = [],
+	dayOfWeek: number,
+): MinuteRange[] => {
+	const toMinutes = (time: string): number | null => {
+		const [hours, minutes] = time.split(':').map(Number);
+		if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+		return hours * 60 + minutes;
+	};
+
+	const ranges = businessHours
+		.filter((range) => range.dayOfWeek === dayOfWeek)
+		.map((range) => ({
+			startMinute: toMinutes(range.startTime),
+			endMinute: toMinutes(range.endTime),
+		}))
+		.filter(
+			(range): range is MinuteRange =>
+				range.startMinute !== null && range.endMinute !== null,
+		);
+
+	return normalizeOpenRanges(ranges);
+};
+
+/**
  * Los minutos que ocupa una cita **dentro del día en que empieza**.
  *
  * El fin se recorta a medianoche: una cita de 23:30 a 00:30 se dibuja hasta el

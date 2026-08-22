@@ -26,6 +26,12 @@ interface Props {
 	/** Día seleccionado, `YYYY-MM-DD`. */
 	value: string;
 	onChange: (date: string) => void;
+	/**
+	 * Hoy, `YYYY-MM-DD`. Lo decide quien lo usa porque la agenda lo resuelve en la
+	 * zona del negocio: con la fecha del navegador, a la noche en Bolivia el
+	 * calendario resaltaría el día de mañana.
+	 */
+	today?: string;
 }
 
 /**
@@ -35,13 +41,16 @@ interface Props {
  * cita hojea meses sin haber elegido todavía, y hacer que la vista salte de
  * vuelta al mes seleccionado en cada render haría imposible navegar.
  */
-const MonthCalendar: React.FC<Props> = ({ value, onChange }) => {
+const MonthCalendar: React.FC<Props> = ({
+	value,
+	onChange,
+	today = todayKey(),
+}) => {
 	const [visibleMonth, setVisibleMonth] = useState(() => {
 		const selected = parseDateKey(value);
 		return new Date(selected.getFullYear(), selected.getMonth(), 1);
 	});
 
-	const today = todayKey();
 	const year = visibleMonth.getFullYear();
 	const month = visibleMonth.getMonth();
 
@@ -54,13 +63,15 @@ const MonthCalendar: React.FC<Props> = ({ value, onChange }) => {
 		setVisibleMonth(new Date(year, month + delta, 1));
 
 	const goToToday = () => {
-		const now = new Date();
-		setVisibleMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+		// El mes sale de `today` y no del reloj del navegador: son la misma fecha
+		// salvo en el borde del mes, que es justo donde importa.
+		const parsed = parseDateKey(today);
+		setVisibleMonth(new Date(parsed.getFullYear(), parsed.getMonth(), 1));
 		onChange(today);
 	};
 
 	return (
-		<div className="bg-card border border-border rounded-lg p-4">
+		<div className="w-60">
 			<div className="flex items-center justify-between mb-3">
 				<span className="text-sm font-medium capitalize">
 					{monthFormatter.format(visibleMonth)}
