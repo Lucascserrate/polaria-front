@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Scissors, User, X } from 'lucide-react';
+import { Check, Pencil, Scissors, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	Popover,
@@ -55,6 +55,8 @@ interface Props {
 	height: number;
 	onMarkAttended: (id: string) => void;
 	onCancel: (id: string) => void;
+	/** Abre la reserva para editarla. Ausente donde no se pueda editar. */
+	onEdit?: (id: string) => void;
 	isUpdating?: boolean;
 	/**
 	 * Segunda línea de la card. Por defecto, profesional y servicio.
@@ -89,6 +91,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 	height,
 	onMarkAttended,
 	onCancel,
+	onEdit,
 	isUpdating = false,
 	detail,
 }) => {
@@ -272,6 +275,13 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 							<Check />
 							Marcar como atendida
 						</ContextMenuItem>
+
+						{onEdit && (
+							<ContextMenuItem onSelect={() => onEdit(appointment.id)}>
+								<Pencil />
+								Editar reserva
+							</ContextMenuItem>
+						)}
 
 						<ContextMenuSeparator />
 

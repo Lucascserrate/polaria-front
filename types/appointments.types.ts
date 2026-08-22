@@ -22,9 +22,13 @@ export interface AppointmentReminderApi {
 export interface AppointmentSegmentApi {
 	staffId: string | null;
 	staffName: string | null;
+	serviceId: string;
 	serviceName: string | null;
 	startTime: string;
 	endTime: string;
+	/** Lo pactado al reservar, no lo que el servicio cuesta hoy. */
+	price: number;
+	durationMinutes: number;
 }
 
 export interface AppointmentApi {
@@ -56,6 +60,18 @@ export interface AppointmentApiPage {
 	page: number;
 	limit: number;
 	hasMore: boolean;
+}
+
+/**
+ * La reserva completa, para verla y editarla.
+ *
+ * El cliente viene aparte del nombre suelto porque el drawer lo muestra con su
+ * teléfono, y en modo lectura: cambiar de quién es la cita no es editarla.
+ */
+export interface AppointmentDetailApi extends AppointmentApi {
+	segments: AppointmentSegmentApi[];
+	client: { id: string; name: string | null; phone: string | null } | null;
+	totalPrice: number;
 }
 
 /** Las citas de un rango de días, para la agenda semanal. */
@@ -103,9 +119,12 @@ export interface Appointment {
 export interface AppointmentSegment {
 	staffId: string | null;
 	staffName: string | null;
+	serviceId: string;
 	serviceName: string | null;
 	startTime: string;
 	endTime: string;
+	price: number;
+	durationMinutes: number;
 }
 
 export interface ServiceApi {

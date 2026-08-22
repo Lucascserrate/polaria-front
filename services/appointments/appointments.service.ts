@@ -5,6 +5,7 @@ import type {
 	AppointmentStatus,
 	AppointmentApiToday,
 	AppointmentApiRange,
+	AppointmentDetailApi,
 } from '@/types/appointments.types';
 
 export const getAppointments = async (
@@ -71,6 +72,14 @@ export const getAppointmentsRange = async (
 	const { data } = await axiosInstance.get('/appointments/range', {
 		params: { from, to },
 	});
+	return data;
+};
+
+/** La reserva completa: lo que muestra y edita el drawer. */
+export const getAppointmentDetail = async (
+	id: string,
+): Promise<AppointmentDetailApi> => {
+	const { data } = await axiosInstance.get(`/appointments/${id}`);
 	return data;
 };
 

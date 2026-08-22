@@ -20,12 +20,14 @@ const segment = (overrides: {
 	end: string;
 }) => ({
 	staffId: overrides.staffId === undefined ? 'diego' : overrides.staffId,
-	staffName:
-		overrides.staffName === undefined ? 'Diego' : overrides.staffName,
+	staffName: overrides.staffName === undefined ? 'Diego' : overrides.staffName,
+	serviceId: 'corte',
 	serviceName:
 		overrides.serviceName === undefined ? 'Corte' : overrides.serviceName,
 	startTime: overrides.start,
 	endTime: overrides.end,
+	price: 50,
+	durationMinutes: 30,
 });
 
 const appointment = (overrides: Partial<Appointment> = {}): Appointment =>

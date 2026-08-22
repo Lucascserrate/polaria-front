@@ -11,6 +11,7 @@ interface Props {
 	blocks: AppointmentBlock[];
 	onMarkAttended: (id: string) => void;
 	onCancel: (id: string) => void;
+	onEdit?: (id: string) => void;
 	updatingId?: string | null;
 }
 
@@ -29,6 +30,7 @@ const AppointmentBlocks: React.FC<Props> = ({
 	blocks,
 	onMarkAttended,
 	onCancel,
+	onEdit,
 	updatingId,
 }) => (
 	<>
@@ -63,6 +65,7 @@ const AppointmentBlocks: React.FC<Props> = ({
 						height={geometry.height}
 						onMarkAttended={onMarkAttended}
 						onCancel={onCancel}
+						onEdit={onEdit}
 						isUpdating={updatingId === block.appointment.id}
 						detail={block.detail}
 					/>

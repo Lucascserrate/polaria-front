@@ -10,6 +10,7 @@ import CalendarGrid, {
 } from '@/modules/agenda/CalendarGrid';
 import FloatingAttention from '@/modules/agenda/FloatingAttention';
 import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
+import BookingDrawer from '@/modules/agenda/BookingDrawer';
 import {
 	buildStaffColumns,
 	groupBlocksByDay,
@@ -70,6 +71,9 @@ const AgendaPage = () => {
 		minute: number | null;
 		staffId: string | null;
 	} | null>(null);
+
+	/** Reserva abierta en el panel lateral. */
+	const [editingId, setEditingId] = useState<string | null>(null);
 
 	const { data: settings } = useGetSettings();
 	const timezone = settings?.timezone;
@@ -138,6 +142,7 @@ const AgendaPage = () => {
 							blocks={blocksByDay.get(day) ?? []}
 							onMarkAttended={handleMarkAttended}
 							onCancel={handleCancel}
+							onEdit={setEditingId}
 							updatingId={updatingId}
 						/>
 					),
@@ -371,6 +376,11 @@ const AgendaPage = () => {
 				date={draftSlot?.date ?? selectedDate}
 				minute={draftSlot?.minute ?? null}
 				staffId={draftSlot?.staffId ?? null}
+			/>
+
+			<BookingDrawer
+				appointmentId={editingId}
+				onClose={() => setEditingId(null)}
 			/>
 
 			<FloatingAttention />
