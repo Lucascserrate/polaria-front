@@ -90,7 +90,7 @@ export function Sidebar() {
 			{/* Sidebar */}
 			<aside
 				className={cn(
-					'fixed top-0 left-0 h-screen w-[var(--sidebar-width)] bg-white border-r border-neutral-200 transition-all duration-200 z-40',
+					'fixed top-0 left-0 h-screen w-(--sidebar-width) bg-white border-r border-neutral-200 transition-all duration-200 z-40',
 					isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
 				)}
 			>
@@ -134,7 +134,6 @@ export function Sidebar() {
 							<Link
 								href={ROUTES.setup}
 								onClick={() => setIsOpen(false)}
-								title={`Empezar · ${completedSteps} de ${SETUP_STEP_COUNT}`}
 								className={itemClasses(pathname === ROUTES.setup)}
 							>
 								<span className="relative flex shrink-0">
@@ -156,7 +155,10 @@ export function Sidebar() {
 
 						{/* "Empezar" no es una sección del producto: el separador lo dice. */}
 						{setupPending && (
-							<div className="my-2 border-t border-neutral-200" aria-hidden="true" />
+							<div
+								className="my-2 border-t border-neutral-200"
+								aria-hidden="true"
+							/>
 						)}
 
 						{navItems.map((item) => {
@@ -167,7 +169,6 @@ export function Sidebar() {
 									key={item.href}
 									href={item.href}
 									onClick={() => setIsOpen(false)}
-									title={item.label}
 									className={itemClasses(isActive)}
 								>
 									<Icon className="w-4 h-4 shrink-0" />
@@ -194,7 +195,6 @@ export function Sidebar() {
 
 						<button
 							className="flex w-full items-center gap-2 cursor-pointer collapsed:justify-center"
-							title="Cerrar sesión"
 							onClick={() => mutate()}
 						>
 							<LuLogOut size={16} className="shrink-0" />
