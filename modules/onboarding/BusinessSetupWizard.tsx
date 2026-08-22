@@ -110,7 +110,8 @@ const BusinessSetupWizard: React.FC = () => {
 	};
 
 	const goBack = () => setStep(STEPS[Math.max(0, stepIndex - 1)]);
-	const goNext = () => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)]);
+	const goNext = () =>
+		setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)]);
 
 	/**
 	 * Se guarda todo junto al final y no paso por paso.
@@ -146,13 +147,13 @@ const BusinessSetupWizard: React.FC = () => {
 	const isLast = stepIndex === STEPS.length - 1;
 
 	return (
-		<div className="flex min-h-[100dvh] flex-col">
+		<div className="flex min-h-dvh flex-col">
 			<div className="flex-1 space-y-8">
 				<div className="space-y-4">
 					{/* Progreso: cuántos pasos hay y en cuál va, sin números. */}
 					<div className="flex items-center gap-2">
 						<span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-							Armá tu Polaria · {stepIndex + 1} de {STEPS.length}
+							Configura tu negocio · {stepIndex + 1} de {STEPS.length}
 						</span>
 					</div>
 					<div className="flex gap-2" aria-hidden="true">
