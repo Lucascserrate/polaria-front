@@ -1,5 +1,14 @@
 import { axiosInstance } from '@/lib/axios';
 
+/**
+ * Estado de configuración del negocio.
+ *
+ * Se exporta porque conectar WhatsApp lo cambia desde otra pantalla: sin
+ * invalidarla, el menú seguiría ofreciendo "Empezar" con un paso que ya está
+ * hecho.
+ */
+export const ONBOARDING_KEY = ['onboarding', 'status'] as const;
+
 export type OnboardingStep =
 	| 'BUSINESS_INFO'
 	| 'BUSINESS_HOURS'

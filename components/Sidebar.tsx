@@ -22,6 +22,7 @@ import { Logo } from '@/app/logo';
 import { ROUTES } from '@/constants/routes';
 import useGetOnboardingStatus from '@/services/onboarding/useGetOnboardingStatus';
 import { SETUP_STEP_COUNT } from '@/modules/onboarding/PolariaSetupChecklist';
+import TrialStatus from '@/modules/onboarding/TrialStatus';
 
 const navItems = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
@@ -131,7 +132,10 @@ export function Sidebar() {
 					</nav>
 
 					{/* Footer */}
-					<div className="px-4 py-6 border-t border-neutral-200">
+					<div className="space-y-4 px-4 py-6 border-t border-neutral-200">
+						{/* Solo dice algo durante la prueba y cuando venció. */}
+						<TrialStatus />
+
 						<button
 							className="flex items-center gap-2 cursor-pointer"
 							onClick={() => mutate()}

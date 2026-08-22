@@ -132,7 +132,9 @@ const BusinessSetupWizard: React.FC = () => {
 			businessHours: fromScheduleDraft(currentSchedule),
 		});
 
-		router.replace(ROUTES.agenda);
+		// A los pasos que faltan y no a la agenda: crear el negocio es la mitad
+		// del camino, y ahí es donde el usuario ve qué sigue.
+		router.replace(ROUTES.setup);
 	};
 
 	if (isLoading) {

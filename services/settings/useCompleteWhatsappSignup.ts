@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SETTINGS_KEY } from '@/modules/settings/utils/constants';
+import { ONBOARDING_KEY } from '@/services/onboarding/onboarding.service';
 import { completeWhatsappEmbeddedSignup } from './settings.service';
 
 /**
@@ -16,6 +17,9 @@ const useCompleteWhatsappSignup = () => {
 		mutationFn: completeWhatsappEmbeddedSignup,
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: SETTINGS_KEY });
+			// Conectar WhatsApp completa un paso del onboarding y arranca la prueba:
+			// las dos cosas se leen desde el estado de onboarding.
+			void queryClient.invalidateQueries({ queryKey: ONBOARDING_KEY });
 		},
 	});
 };

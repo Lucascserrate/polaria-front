@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getOnboardingStatus } from './onboarding.service';
+import { getOnboardingStatus, ONBOARDING_KEY } from './onboarding.service';
 
 /**
  * Estado de configuración del negocio.
@@ -9,7 +9,7 @@ import { getOnboardingStatus } from './onboarding.service';
  */
 const useGetOnboardingStatus = () => {
 	return useQuery({
-		queryKey: ['onboarding', 'status'],
+		queryKey: ONBOARDING_KEY,
 		queryFn: getOnboardingStatus,
 		staleTime: 0,
 	});
