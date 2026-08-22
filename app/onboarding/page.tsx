@@ -1,4 +1,4 @@
-import BusinessSetupForm from '@/modules/onboarding/BusinessSetupForm';
+import BusinessSetupWizard from '@/modules/onboarding/BusinessSetupWizard';
 
 /**
  * Configuración inicial, fuera del layout del panel a propósito: quien llega acá
@@ -8,7 +8,7 @@ import BusinessSetupForm from '@/modules/onboarding/BusinessSetupForm';
 export default function OnboardingPage() {
 	return (
 		<main className="mx-auto w-full max-w-xl px-4 py-10">
-			<BusinessSetupForm />
+			<BusinessSetupWizard />
 		</main>
 	);
 }
