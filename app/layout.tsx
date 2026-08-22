@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from '@/lib/query-provider';
+import { SIDEBAR_PREFERENCE_SCRIPT } from '@/components/sidebar-preference';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -23,6 +24,9 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.className} antialiased h-full flex flex-col`}
 			>
+				<script
+					dangerouslySetInnerHTML={{ __html: SIDEBAR_PREFERENCE_SCRIPT }}
+				/>
 				<QueryProvider>{children}</QueryProvider>
 			</body>
 		</html>

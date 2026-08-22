@@ -4,6 +4,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/**
+ * Menú lateral colapsado, con solo los iconos.
+ *
+ * El estado vive en un atributo del `html` y no en React porque el ancho tiene
+ * que estar resuelto antes del primer pintado: se lee de `localStorage` en un
+ * script que corre antes del contenido, así quien lo dejó colapsado no ve el
+ * menú completo aparecer y encogerse en cada recarga.
+ *
+ * Solo aplica desde `md`: en pantallas chicas el menú es un cajón que se abre
+ * encima del contenido, y ahí dejar únicamente iconos no gana espacio.
+ */
+@custom-variant collapsed {
+	@media (width >= 48rem) {
+		html[data-sidebar='collapsed'] & {
+			@slot;
+		}
+	}
+}
+
 @theme inline {
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
@@ -48,6 +67,12 @@
 }
 
 :root {
+	/*
+	 * Ancho del menú lateral. Es una variable porque cada pantalla se aparta con
+	 * este mismo valor: con dos números separados, colapsar el menú dejaría una
+	 * franja vacía o taparía el borde del contenido.
+	 */
+	--sidebar-width: 16rem;
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);
 	--card: oklch(1 0 0);
@@ -144,4 +169,10 @@
 
 ::-webkit-scrollbar-thumb:hover {
 	background: rgba(0, 0, 0, 0.25);
+}
+
+@media (width >= 48rem) {
+	html[data-sidebar='collapsed'] {
+		--sidebar-width: 4.5rem;
+	}
 }
