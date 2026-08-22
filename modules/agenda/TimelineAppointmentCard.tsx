@@ -28,7 +28,11 @@ import type {
 import { formatMinute } from './utils/dayTimeline';
 import { describeReminder } from './utils/reminderStatus';
 import { cn } from '@/lib/utils';
-import { COMPACT_HEIGHT } from './utils/constants';
+import {
+	DETAIL_HEIGHT,
+	QUICK_ACTIONS_HEIGHT,
+	SINGLE_LINE_HEIGHT,
+} from './utils/constants';
 
 /**
  * Estados en los que la cita todavía espera una resolución. Solo ahí tiene
@@ -57,11 +61,15 @@ interface Props {
 /**
  * Una cita dentro de la agenda diaria.
  *
- * La card muestra solo información porque el ancho no es suyo: con tres
- * profesionales simultáneos cada carril mide poco más de 130px, y dos botones
- * con texto no entran. Las acciones aparecen como íconos al pasar por encima o
- * al enfocar con el teclado, y el detalle completo vive en un popover al hacer
- * click, que además es la única forma de llegar a él desde una pantalla táctil.
+ * La card muestra solo información porque **ni el ancho ni el alto son suyos**:
+ * el ancho lo reparten las citas simultáneas y el alto es la duración, o sea
+ * 30px para media hora. Por eso el contenido se adapta en tres escalones —una
+ * línea, dos, y con botones— en vez de dibujar siempre lo mismo y recortarlo.
+ *
+ * Lo que nunca se cae es la hora y el cliente: es lo que se busca al barrer la
+ * agenda con la vista. El servicio es información de segundo orden y el detalle
+ * completo vive en el popover, que además es la única forma de llegar a él desde
+ * una pantalla táctil.
  */
 const TimelineAppointmentCard: React.FC<Props> = ({
 	appointment,
@@ -79,59 +87,82 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 	const isOpen = OPEN_STATUSES.includes(appointment.status);
 	const isCancelled = appointment.status === 'cancelled';
 	const isCompleted = appointment.status === 'completed';
-	const isCompact = height < COMPACT_HEIGHT;
+	const inline = height < SINGLE_LINE_HEIGHT;
+	const showDetail = height >= DETAIL_HEIGHT;
+	const showQuickActions = height >= QUICK_ACTIONS_HEIGHT;
 	const reminder = describeReminder(appointment.reminder);
 	const timeRange = `${formatMinute(startMinute)}–${formatMinute(endMinute)}`;
 
 	return (
 		<div
 			className={cn(
-				'group relative h-full overflow-hidden rounded-md border pl-2 pr-1 py-1 text-left transition-shadow hover:shadow-md',
+				'group relative h-full overflow-hidden rounded-md border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
 				colors.surface,
 			)}
 		>
 			{/* Franja de color: identifica el estado sin ocupar ancho de texto. */}
 			<span
 				aria-hidden="true"
-				className={cn('absolute left-0 top-0 h-full w-1', colors.accent)}
+				className={cn('absolute top-0 left-0 h-full w-[3px]', colors.accent)}
 			/>
 
 			<Popover>
 				<PopoverTrigger asChild>
 					<button
 						type="button"
-						className="block h-full w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+						className="block h-full w-full rounded-sm text-left leading-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
-						<span className="flex items-center gap-1">
-							<span className="text-[11px] font-semibold tabular-nums text-foreground">
+						{/*
+						 * En una card de media hora la hora y el nombre comparten línea; a
+						 * partir de dos líneas se apilan, que es más fácil de leer cuando
+						 * hay lugar.
+						 */}
+						<span
+							className={cn(
+								'flex min-w-0 items-center gap-1',
+								!inline && 'flex-wrap',
+							)}
+						>
+							<span className="shrink-0 font-mono text-[10px] tabular-nums text-foreground">
 								{formatMinute(startMinute)}
 							</span>
+
 							{isCompleted && (
 								<Check
-									className="h-3 w-3 text-green-600 dark:text-green-400 shrink-0"
+									className="h-3 w-3 shrink-0 text-green-600 dark:text-green-400"
 									aria-label="Atendida"
 								/>
 							)}
-						</span>
 
-						<span
-							className={cn(
-								'block truncate text-xs font-medium',
-								isCancelled
-									? 'line-through text-muted-foreground'
-									: 'text-foreground',
+							{inline && (
+								<span
+									className={cn(
+										'min-w-0 flex-1 truncate text-[11px] font-medium',
+										isCancelled
+											? 'text-muted-foreground line-through'
+											: 'text-foreground',
+									)}
+								>
+									{appointment.clientName}
+								</span>
 							)}
-						>
-							{appointment.clientName}
 						</span>
 
-						{/*
-						 * Profesional y servicio son la información de segundo orden: en una
-						 * card corta se ocultan antes que la hora o el cliente, que es lo
-						 * que se busca al barrer la agenda con la vista.
-						 */}
-						{!isCompact && (
-							<span className="block truncate text-[11px] text-muted-foreground">
+						{!inline && (
+							<span
+								className={cn(
+									'block truncate text-[11px] font-medium',
+									isCancelled
+										? 'text-muted-foreground line-through'
+										: 'text-foreground',
+								)}
+							>
+								{appointment.clientName}
+							</span>
+						)}
+
+						{showDetail && (
+							<span className="block truncate text-[10px] text-muted-foreground">
 								{detail ?? `${appointment.staff} · ${appointment.service}`}
 							</span>
 						)}
@@ -207,8 +238,8 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 			 * de teclado, así que no queda fuera del alcance de quien no usa mouse; en
 			 * táctil, el camino es el popover.
 			 */}
-			{isOpen && (
-				<div className="absolute right-1 top-1 hidden gap-0.5 group-hover:flex group-focus-within:flex">
+			{isOpen && showQuickActions && (
+				<div className="absolute top-1 right-1 hidden gap-0.5 group-hover:flex group-focus-within:flex">
 					<Button
 						type="button"
 						size="sm"

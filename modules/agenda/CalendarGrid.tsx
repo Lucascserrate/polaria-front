@@ -32,7 +32,7 @@ const MIN_COLUMN_WIDTH = 116;
 const GRID_LINES = {
 	backgroundImage: [
 		`repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px ${60 * PX_PER_MINUTE}px)`,
-		`repeating-linear-gradient(to bottom, color-mix(in oklab, var(--border) 45%, transparent) 0 1px, transparent 1px ${SLOT_MINUTES * PX_PER_MINUTE}px)`,
+		`repeating-linear-gradient(to bottom, color-mix(in oklab, var(--border) 45%, transparent) 0 1px, transparent 1px ${30 * PX_PER_MINUTE}px)`,
 	].join(', '),
 };
 
@@ -157,7 +157,8 @@ const CalendarGrid: React.FC<Props> = ({
 		const bounds = event.currentTarget.getBoundingClientRect();
 		const minute = slotMinuteAt(event.clientY - bounds.top);
 
-		if (minute === null || !isMinuteOpen(minute, column.openRanges)) return null;
+		if (minute === null || !isMinuteOpen(minute, column.openRanges))
+			return null;
 
 		return minute;
 	};
