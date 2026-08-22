@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
 	blockGeometry,
@@ -60,6 +60,11 @@ export interface CalendarColumn {
 	content?: React.ReactNode;
 	/** Solo la columna del día en curso lleva la línea de ahora y el resaltado. */
 	isToday?: boolean;
+	/**
+	 * Nombre de la acción de su cabecera, para quien la escucha en vez de verla:
+	 * "lun 17" no dice que sea un botón ni a dónde lleva.
+	 */
+	selectLabel?: string;
 }
 
 interface Props {
@@ -74,6 +79,13 @@ interface Props {
 	scrollToMinute?: number | null;
 	/** Un hueco libre. No se llama en las horas cerradas. */
 	onSlotClick?: (columnKey: string, minute: number) => void;
+	/**
+	 * La cabecera de una columna es clickeable.
+	 *
+	 * En la vista semanal lleva al día de esa columna: mirar la semana y querer
+	 * entrar a un día es el gesto natural, y el nombre del día ya está ahí.
+	 */
+	onColumnSelect?: (columnKey: string) => void;
 }
 
 /**
@@ -94,9 +106,23 @@ const CalendarGrid: React.FC<Props> = ({
 	nowMinute = null,
 	scrollToMinute = null,
 	onSlotClick,
+	onColumnSelect,
 }) => {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const lastScrolled = useRef<number | null>(null);
+
+	/**
+	 * La celda de 15 minutos bajo el cursor.
+	 *
+	 * Se resalta una sola, dibujada donde está el cursor, en lugar de tener 96
+	 * celdas por columna con `:hover`: serían más de 600 elementos existiendo solo
+	 * para poder iluminarse. El estado cambia únicamente al pasar de una celda a
+	 * la siguiente, no en cada píxel del movimiento.
+	 */
+	const [hovered, setHovered] = useState<{
+		columnKey: string;
+		minute: number;
+	} | null>(null);
 
 	useEffect(() => {
 		if (scrollToMinute === null) return;
@@ -117,20 +143,57 @@ const CalendarGrid: React.FC<Props> = ({
 		});
 	}, [scrollToMinute]);
 
+	/**
+	 * El hueco que hay bajo el cursor, o `null` si ahí no se puede agendar.
+	 *
+	 * Fuera del lienzo o en una hora cerrada no hay nada que crear. El bloque de
+	 * cerrado ya se come el click; esto cubre el borde exacto y, sobre todo, evita
+	 * iluminar una celda que no se puede elegir.
+	 */
+	const slotAt = (
+		column: CalendarColumn,
+		event: React.MouseEvent<HTMLDivElement>,
+	): number | null => {
+		const bounds = event.currentTarget.getBoundingClientRect();
+		const minute = slotMinuteAt(event.clientY - bounds.top);
+
+		if (minute === null || !isMinuteOpen(minute, column.openRanges)) return null;
+
+		return minute;
+	};
+
 	const handleClick = (
 		column: CalendarColumn,
 		event: React.MouseEvent<HTMLDivElement>,
 	) => {
 		if (!onSlotClick) return;
 
-		const bounds = event.currentTarget.getBoundingClientRect();
-		const minute = slotMinuteAt(event.clientY - bounds.top);
-
-		// Fuera del lienzo o en una hora cerrada no hay nada que crear. El bloque
-		// de cerrado ya se come el click; esto cubre el borde exacto.
-		if (minute === null || !isMinuteOpen(minute, column.openRanges)) return;
+		const minute = slotAt(column, event);
+		if (minute === null) return;
 
 		onSlotClick(column.key, minute);
+	};
+
+	const handleMove = (
+		column: CalendarColumn,
+		event: React.MouseEvent<HTMLDivElement>,
+	) => {
+		if (!onSlotClick) return;
+
+		const minute = slotAt(column, event);
+
+		setHovered((previous) => {
+			if (minute === null) {
+				return previous?.columnKey === column.key ? null : previous;
+			}
+
+			// Sin esta comparación, cada píxel de movimiento sería un render.
+			if (previous?.columnKey === column.key && previous.minute === minute) {
+				return previous;
+			}
+
+			return { columnKey: column.key, minute };
+		});
 	};
 
 	return (
@@ -149,11 +212,23 @@ const CalendarGrid: React.FC<Props> = ({
 						<div
 							key={column.key}
 							className={cn(
-								'flex-1 border-r border-border px-2 py-2 text-center last:border-r-0',
+								'flex-1 border-r border-border text-center last:border-r-0',
 								column.isToday && 'bg-muted/40',
 							)}
 						>
-							{column.header}
+							{onColumnSelect ? (
+								<button
+									type="button"
+									className="w-full cursor-pointer px-2 py-2 transition-colors hover:bg-muted/60"
+									aria-label={column.selectLabel}
+									title={column.selectLabel}
+									onClick={() => onColumnSelect(column.key)}
+								>
+									{column.header}
+								</button>
+							) : (
+								<div className="px-2 py-2">{column.header}</div>
+							)}
 						</div>
 					))}
 				</div>
@@ -186,7 +261,32 @@ const CalendarGrid: React.FC<Props> = ({
 							)}
 							style={GRID_LINES}
 							onClick={(event) => handleClick(column, event)}
+							onMouseMove={(event) => handleMove(column, event)}
+							onMouseLeave={() =>
+								setHovered((previous) =>
+									previous?.columnKey === column.key ? null : previous,
+								)
+							}
 						>
+							{/*
+							 * Debajo de las citas: ilumina el hueco, no la cita que hay
+							 * encima. Y sin eventos, para no robarle el cursor a la columna.
+							 */}
+							{hovered?.columnKey === column.key && (
+								<div
+									className="pointer-events-none absolute inset-x-0 flex items-start bg-sky-500/10 ring-1 ring-sky-500/30 ring-inset"
+									style={{
+										top: hovered.minute * PX_PER_MINUTE,
+										height: SLOT_MINUTES * PX_PER_MINUTE,
+									}}
+									aria-hidden="true"
+								>
+									<span className="px-1 font-mono text-[9px] leading-none text-sky-700 dark:text-sky-400">
+										{formatMinute(hovered.minute)}
+									</span>
+								</div>
+							)}
+
 							{/* Horario cerrado. Se come el click: ahí no hay nada que agendar. */}
 							{closedRangesOf(column.openRanges).map((range) => {
 								const geometry = blockGeometry(range);

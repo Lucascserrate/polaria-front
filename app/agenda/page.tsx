@@ -15,7 +15,11 @@ import {
 	groupBlocksByDay,
 	UNASSIGNED_COLUMN,
 } from '@/modules/agenda/utils/calendarBlocks';
-import { dayNumber, weekdayLabel } from '@/modules/agenda/utils/calendarLabels';
+import {
+	dayNumber,
+	describeDay,
+	weekdayLabel,
+} from '@/modules/agenda/utils/calendarLabels';
 import {
 	nowMinuteInTimeZone,
 	openRangesForWeekday,
@@ -124,6 +128,7 @@ const AgendaPage = () => {
 				return {
 					key: day,
 					isToday,
+					selectLabel: `Ver ${describeDay(day).toLowerCase()}`,
 					openRanges: openRangesForWeekday(
 						settings?.businessHours,
 						weekdayOf(day),
@@ -269,6 +274,17 @@ const AgendaPage = () => {
 		[todayKey],
 	);
 
+	/**
+	 * La cabecera de un día lleva a su vista diaria.
+	 *
+	 * Solo en la semanal: en la diaria las columnas son personas, y clickear a un
+	 * profesional no significa "ir a" ninguna parte.
+	 */
+	const handleColumnSelect = useCallback((day: string) => {
+		setPicked(day);
+		setView('day');
+	}, []);
+
 	const handleSlotClick = useCallback(
 		(columnKey: string, minute: number) => {
 			const date = view === 'week' ? columnKey : selectedDate;
@@ -345,6 +361,7 @@ const AgendaPage = () => {
 					nowMinute={nowMinute}
 					scrollToMinute={scrollToMinute}
 					onSlotClick={handleSlotClick}
+					onColumnSelect={view === 'week' ? handleColumnSelect : undefined}
 				/>
 			</div>
 
