@@ -27,11 +27,15 @@ const RemindersSection: React.FC = () => {
 	const [enabled, setEnabled] = useState<boolean | null>(null);
 	const [leadMinutes, setLeadMinutes] = useState<number | null>(null);
 
-	const currentEnabled = enabled ?? settings?.reminders.enabled ?? true;
+	/*
+	 * El backend guarda una lista de anticipaciones; esta pantalla todavía maneja
+	 * una sola. Se traduce acá hasta que la reemplacen los dos interruptores
+	 * independientes, que es el próximo paso.
+	 */
+	const savedOffsets = settings?.reminders.offsets ?? [];
+	const currentEnabled = enabled ?? savedOffsets.length > 0;
 	const currentLead =
-		leadMinutes ??
-		settings?.reminders.leadMinutes ??
-		DEFAULT_REMINDER_LEAD_MINUTES;
+		leadMinutes ?? savedOffsets[0] ?? DEFAULT_REMINDER_LEAD_MINUTES;
 
 	if (isLoading) {
 		return <p className="text-sm text-muted-foreground">Cargando...</p>;
@@ -60,8 +64,7 @@ const RemindersSection: React.FC = () => {
 				disabled={isPending}
 				onClick={() =>
 					void save({
-						remindersEnabled: currentEnabled,
-						reminderLeadMinutes: currentLead,
+						reminderOffsets: currentEnabled ? [currentLead] : [],
 					})
 				}
 			>

@@ -95,7 +95,7 @@ const SettingsIndex: React.FC = () => {
 		).size,
 		whatsappConnected: data?.whatsappConnection.connected ?? false,
 		whatsappNumber: data?.whatsappConnection.phoneNumber ?? null,
-		remindersEnabled: data?.reminders.enabled ?? false,
+		remindersEnabled: (data?.reminders.offsets.length ?? 0) > 0,
 	};
 
 	return (

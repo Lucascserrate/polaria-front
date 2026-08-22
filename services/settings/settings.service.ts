@@ -43,8 +43,10 @@ export type SettingsResponse = {
 	 * capacidad del negocio y no del canal.
 	 */
 	reminders: {
-		enabled: boolean;
-		leadMinutes: number;
+		/** Anticipaciones activas, en minutos. Lista vacía = desactivados. */
+		offsets: number[];
+		/** El mensaje real con datos de ejemplo, armado por el backend. */
+		previewText: string;
 	};
 };
 
@@ -57,9 +59,8 @@ export type UpdateSettingsPayload = {
 	businessHours?: WeeklyRange[];
 	/** Apagado, Polaria deja de responder por WhatsApp en todo el negocio. */
 	aiEnabled?: boolean;
-	remindersEnabled?: boolean;
-	/** Minutos de anticipación; solo los valores que ofrece el panel. */
-	reminderLeadMinutes?: number;
+	/** Anticipaciones a activar, en minutos. Lista vacía apaga los recordatorios. */
+	reminderOffsets?: number[];
 };
 
 export const getSettings = async (): Promise<SettingsResponse> => {
@@ -77,8 +78,7 @@ export const updateSettings = async (
 		location: payload.location,
 		businessHours: payload.businessHours,
 		aiEnabled: payload.aiEnabled,
-		remindersEnabled: payload.remindersEnabled,
-		reminderLeadMinutes: payload.reminderLeadMinutes,
+		reminderOffsets: payload.reminderOffsets,
 	});
 
 	return data;
