@@ -6,7 +6,6 @@ import AppointmentModal from '@/modules/agenda/AppointmentModal';
 import { SummaryCard } from '@/modules/agenda/SummaryCard';
 import MonthCalendar from '@/components/MonthCalendar';
 import HumanAttentionCard from '@/modules/agenda/HumanAttentionCard';
-import PolariaSetupCard from '@/modules/onboarding/PolariaSetupCard';
 import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
 import { EMPTY_COUNTS } from '@/modules/staff/constants';
 import useGetDayAppointments from '@/services/appointments/useGetDayAppointments';
@@ -113,13 +112,7 @@ const AgendaPage = () => {
 			</section>
 
 			<aside className="flex flex-col gap-4 shrink-0 lg:w-80 lg:overflow-y-auto lg:min-h-0 pr-2">
-				{/*
-				  * Primero mientras falte configurar algo: un negocio sin servicios o sin
-				  * WhatsApp no puede recibir reservas, así que es lo más urgente que
-				  * puede haber en esta pantalla. Desaparece al completarse.
-				  */}
-				<PolariaSetupCard />
-
+				{/* Primero porque hay alguien esperando del otro lado. */}
 				<HumanAttentionCard />
 
 				<MonthCalendar value={selectedDate} onChange={setSelectedDate} />

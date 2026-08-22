@@ -55,19 +55,37 @@ const ORDER: OnboardingStep[] = [
 ];
 
 /**
+ * Cuántos pasos son. Lo exporta esta lista y no una constante aparte para que el
+ * contador del menú no pueda decir "2 de 4" si acá se agrega un paso.
+ */
+export const SETUP_STEP_COUNT = ORDER.length;
+
+/**
  * Progreso de la configuración de Polaria.
  *
  * Lee `GET /onboarding/status`, que deriva el estado de las entidades. Por eso no
  * hace falta avisarle nada cuando el negocio carga un servicio o desconecta
  * WhatsApp: la próxima consulta ya dice la verdad.
  *
- * Desaparece cuando no falta nada. Un panel de progreso permanente al 100% es
- * ruido en la pantalla que el negocio mira todos los días.
+ * Tiene su propia pantalla y una entrada temporal en el menú, en lugar de vivir
+ * en la agenda: la agenda es la pantalla del día a día y esto se hace una vez.
  */
-const PolariaSetupCard: React.FC = () => {
+const PolariaSetupChecklist: React.FC = () => {
 	const { data } = useGetOnboardingStatus();
 
-	if (!data || data.nextStep === null) return null;
+	if (!data) return null;
+
+	if (data.nextStep === null) {
+		return (
+			<div className="rounded-lg border border-border bg-card p-6 text-center">
+				<Check className="mx-auto h-6 w-6 text-green-600 dark:text-green-400" />
+				<p className="mt-2 text-sm font-medium">Polaria está lista</p>
+				<p className="mt-1 text-sm text-muted-foreground">
+					Ya podés recibir reservas por WhatsApp.
+				</p>
+			</div>
+		);
+	}
 
 	const done = ORDER.filter((step) => data.steps[step]).length;
 	const trialPending = data.subscription.state === 'NOT_STARTED';
@@ -143,4 +161,4 @@ const PolariaSetupCard: React.FC = () => {
 	);
 };
 
-export default PolariaSetupCard;
+export default PolariaSetupChecklist;

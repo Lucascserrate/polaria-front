@@ -11,6 +11,7 @@ import {
 	Menu,
 	X,
 	BookIcon,
+	Rocket,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,8 @@ import { useLogout } from '@/modules/auth/hooks/useLogout';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/app/logo';
 import { ROUTES } from '@/constants/routes';
+import useGetOnboardingStatus from '@/services/onboarding/useGetOnboardingStatus';
+import { SETUP_STEP_COUNT } from '@/modules/onboarding/PolariaSetupChecklist';
 
 const navItems = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
@@ -35,6 +38,19 @@ export function Sidebar() {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const { mutate } = useLogout();
+
+	/*
+	 * "Empezar" solo existe mientras falte configurar algo.
+	 *
+	 * Es una entrada temporal, no una sección del producto: cuando el negocio
+	 * termina, desaparece del menú en lugar de quedar como un ítem que siempre
+	 * dice lo mismo. El estado lo decide el backend, así que se va sola.
+	 */
+	const { data: onboarding } = useGetOnboardingStatus();
+	const setupPending = Boolean(onboarding && onboarding.nextStep !== null);
+	const completedSteps = onboarding
+		? Object.values(onboarding.steps).filter(Boolean).length
+		: 0;
 
 	return (
 		<>
@@ -73,6 +89,25 @@ export function Sidebar() {
 
 					{/* Navigation */}
 					<nav className="flex-1 p-4 space-y-1">
+						{setupPending && (
+							<Link
+								href={ROUTES.setup}
+								onClick={() => setIsOpen(false)}
+								className={cn(
+									'flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
+									pathname === ROUTES.setup
+										? 'bg-neutral-100 text-neutral-900 border border-neutral-300'
+										: 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50',
+								)}
+							>
+								<Rocket className="w-4 h-4 shrink-0" />
+								<span className="text-sm font-medium">Empezar</span>
+								<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-700 dark:text-amber-500">
+									{completedSteps} de {SETUP_STEP_COUNT}
+								</span>
+							</Link>
+						)}
+
 						{navItems.map((item) => {
 							const Icon = item.icon;
 							const isActive = pathname === item.href;
