@@ -9,6 +9,13 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuSeparator,
+	ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import {
 	AlertDialog,
 	AlertDialogAction,
 	AlertDialogCancel,
@@ -70,6 +77,10 @@ interface Props {
  * agenda con la vista. El servicio es información de segundo orden y el detalle
  * completo vive en el popover, que además es la única forma de llegar a él desde
  * una pantalla táctil.
+ *
+ * Las acciones viven en el menú del click derecho y no en el detalle: son dos
+ * gestos distintos —"quiero saber" y "quiero hacer"— y mezclarlos obligaba a
+ * abrir el detalle para resolver algo que ya se sabía al ver la card.
  */
 const TimelineAppointmentCard: React.FC<Props> = ({
 	appointment,
@@ -94,12 +105,13 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 	const timeRange = `${formatMinute(startMinute)}–${formatMinute(endMinute)}`;
 
 	return (
-		<div
-			className={cn(
-				'group relative h-full overflow-hidden rounded-md border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
-				colors.surface,
-			)}
-		>
+		<ContextMenu>
+			<ContextMenuTrigger
+				className={cn(
+					'group relative block h-full overflow-hidden rounded-md border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
+					colors.surface,
+				)}
+			>
 			{/* Franja de color: identifica el estado sin ocupar ancho de texto. */}
 			<span
 				aria-hidden="true"
@@ -208,28 +220,11 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 						</p>
 					)}
 
-					{isOpen && (
-						<div className="flex justify-end gap-2 border-t border-border pt-3">
-							<Button
-								size="sm"
-								variant="ghost"
-								className="text-muted-foreground"
-								disabled={isUpdating}
-								onClick={() => setConfirmingCancel(true)}
-							>
-								<X className="mr-1 h-4 w-4" />
-								Cancelar
-							</Button>
-							<Button
-								size="sm"
-								disabled={isUpdating}
-								onClick={() => onMarkAttended(appointment.id)}
-							>
-								<Check className="mr-1 h-4 w-4" />
-								Atender
-							</Button>
-						</div>
-					)}
+					{/*
+					 * Acá había dos botones —Atender y Cancelar—. Se fueron al menú del
+					 * click derecho: el detalle responde "qué es esta cita" y no tiene por
+					 * qué ser también el lugar donde se la resuelve.
+					 */}
 				</PopoverContent>
 			</Popover>
 
@@ -265,6 +260,42 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 				</div>
 			)}
 
+			</ContextMenuTrigger>
+
+			<ContextMenuContent>
+				{isOpen ? (
+					<>
+						<ContextMenuItem
+							disabled={isUpdating}
+							onSelect={() => onMarkAttended(appointment.id)}
+						>
+							<Check />
+							Marcar como atendida
+						</ContextMenuItem>
+
+						<ContextMenuSeparator />
+
+						<ContextMenuItem
+							variant="destructive"
+							disabled={isUpdating}
+							onSelect={() => setConfirmingCancel(true)}
+						>
+							<X />
+							Cancelar reserva...
+						</ContextMenuItem>
+					</>
+				) : (
+					/*
+					 * Una cita ya atendida o cancelada no se toca desde acá: se corrige
+					 * en la pantalla de citas. El menú dice en qué estado quedó en lugar
+					 * de abrirse vacío.
+					 */
+					<ContextMenuItem disabled>
+						{getAppointmentStatusText(appointment.status)}
+					</ContextMenuItem>
+				)}
+			</ContextMenuContent>
+
 			<AlertDialog open={confirmingCancel} onOpenChange={setConfirmingCancel}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
@@ -284,7 +315,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 					</div>
 				</AlertDialogContent>
 			</AlertDialog>
-		</div>
+		</ContextMenu>
 	);
 };
 

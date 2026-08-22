@@ -181,7 +181,16 @@ const CalendarGrid: React.FC<Props> = ({
 	) => {
 		if (!onSlotClick) return;
 
-		const minute = slotAt(column, event);
+		/*
+		 * Sobre una cita no se ilumina nada. El evento igual llega hasta acá —no se
+		 * corta la propagación, porque al salir de la cita hay que volver a
+		 * iluminar—, así que se pregunta de dónde viene.
+		 */
+		const overAppointment = (event.target as HTMLElement).closest(
+			'[data-appointment]',
+		);
+
+		const minute = overAppointment ? null : slotAt(column, event);
 
 		setHovered((previous) => {
 			if (minute === null) {

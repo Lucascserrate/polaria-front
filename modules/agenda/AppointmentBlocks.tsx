@@ -42,6 +42,12 @@ const AppointmentBlocks: React.FC<Props> = ({
 					// El click no baja a la grilla: sobre una cita, la intención es abrir
 					// esa cita y no crear otra en su horario.
 					onClick={(event) => event.stopPropagation()}
+					/*
+					 * La grilla lo usa para apagar el resaltado del hueco: sobre una cita
+					 * no hay hueco que ofrecer, y ver los dos a la vez sugería que el
+					 * click iba a crear algo.
+					 */
+					data-appointment=""
 					className="absolute z-10 cursor-default"
 					style={{
 						top: geometry.top,
