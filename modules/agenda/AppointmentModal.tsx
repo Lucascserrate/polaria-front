@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import { Check, Plus } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import WizardShell from '@/modules/appointment-wizard/WizardShell';
 import ClientStep from '@/modules/appointment-wizard/steps/ClientStep';
@@ -16,7 +16,12 @@ import useGetBookingSlots from '@/services/availability/useGetBookingSlots';
 import useGetServices from '@/services/services/useGetServices';
 import useGetStaff from '@/services/staff/useGetStaff';
 import { findOrCreateClient } from '@/services/clients';
-import { formatLongDate, todayKey } from '@/lib/date';
+import useGetSettings from '@/services/settings/useGetSettings';
+import {
+	formatMinute,
+	minutesInTimeZone,
+} from '@/modules/agenda/utils/calendarLayout';
+import { describeDay } from '@/modules/agenda/utils/calendarLabels';
 
 /** Los cuatro pasos, en el orden en que cada uno depende del anterior. */
 const STEPS = ['cliente', 'servicio', 'profesional', 'hora'] as const;
@@ -30,8 +35,20 @@ const STEP_TITLES: Record<Step, string> = {
 };
 
 interface Props {
-	/** Día que se está viendo en la agenda. Es la única fuente de la fecha. */
-	selectedDate: string;
+	open: boolean;
+	onClose: () => void;
+	/** Día para el que se crea la cita, `YYYY-MM-DD`. */
+	date: string;
+	/**
+	 * Hora pedida al hacer click en un hueco de la grilla, en minutos del día.
+	 *
+	 * Es una preferencia y no un dato: el horario tiene que existir entre los que
+	 * la disponibilidad ofrece para ese servicio y ese profesional. Si no existe,
+	 * se dice y se elige de la lista.
+	 */
+	minute?: number | null;
+	/** Profesional pedido, cuando el click salió de su columna. */
+	staffId?: string | null;
 }
 
 /**
@@ -48,9 +65,19 @@ interface Props {
  *
  * Los pasos de cliente, servicio y profesional viven en `appointment-wizard`,
  * donde no dependen de este contexto; acá queda el armado y el paso de horarios.
+ *
+ * La apertura la maneja la agenda porque hay dos formas de llegar —el botón de
+ * la barra y un click en un hueco de la grilla— y la segunda trae hora y
+ * profesional. La regla de no agendar en el pasado también vive allá, para que
+ * valga igual para las dos.
  */
-const AppointmentModal: React.FC<Props> = ({ selectedDate }) => {
-	const [open, setOpen] = useState(false);
+const AppointmentModal: React.FC<Props> = ({
+	open,
+	onClose,
+	date,
+	minute = null,
+	staffId: requestedStaffId = null,
+}) => {
 	const [step, setStep] = useState<Step>('cliente');
 	const [submitting, setSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
@@ -64,8 +91,7 @@ const AppointmentModal: React.FC<Props> = ({ selectedDate }) => {
 		reset,
 	} = useAppointmentDraft();
 
-	const isPastDay = selectedDate < todayKey();
-
+	const { data: settings } = useGetSettings();
 	const { mutateAsync: createAppointment } = useCreateAppointment();
 	const { data: services = [] } = useGetServices();
 	const { data: staff = [] } = useGetStaff();
@@ -73,7 +99,7 @@ const AppointmentModal: React.FC<Props> = ({ selectedDate }) => {
 		data: slots = [],
 		isFetching: loadingSlots,
 		isError: slotsError,
-	} = useGetBookingSlots(selectedDate, draft.serviceId, draft.staffId);
+	} = useGetBookingSlots(date, draft.serviceId, draft.staffId);
 
 	const activeServices = useMemo(
 		() => services.filter((service) => service.isActive),
@@ -94,16 +120,37 @@ const AppointmentModal: React.FC<Props> = ({ selectedDate }) => {
 	const selectedSlot = slots.find((slot) => slot.startTime === draft.startTime);
 
 	const handleOpenChange = (next: boolean) => {
-		setOpen(next);
-		if (!next) {
-			setStep('cliente');
-			setSubmitError(null);
-			reset();
-		}
+		if (next) return;
+
+		setStep('cliente');
+		setSubmitError(null);
+		reset();
+		onClose();
 	};
 
+	/**
+	 * Elegido el servicio, se salta el paso del profesional si el click ya lo
+	 * dijo: en la vista diaria cada columna es una persona, así que preguntarlo
+	 * otra vez sería pedir un dato que ya se dio.
+	 *
+	 * Solo si puede hacer ese servicio. Un profesional que no lo ofrece no está
+	 * entre los elegibles, y arrastrarlo llevaría a un paso sin horarios.
+	 */
 	const chooseService = (id: string) => {
 		setServiceId(id);
+
+		const preferred = requestedStaffId
+			? eligibleStaffFor(staff, id).find(
+					(member) => member.id === requestedStaffId,
+				)
+			: undefined;
+
+		if (preferred) {
+			setStaffId(preferred.id);
+			setStep('hora');
+			return;
+		}
+
 		setStep('profesional');
 	};
 
@@ -150,6 +197,48 @@ const AppointmentModal: React.FC<Props> = ({ selectedDate }) => {
 		}
 	};
 
+	/**
+	 * El horario pedido, si la disponibilidad lo ofrece.
+	 *
+	 * Se busca entre los horarios reales en lugar de construir el instante a mano:
+	 * el que decide qué se puede reservar es el motor, el mismo que usa WhatsApp, y
+	 * fabricar acá una hora "equivalente" sería una segunda cuenta que puede no
+	 * coincidir con la suya.
+	 */
+	const requestedSlot = useMemo(() => {
+		if (minute === null) return null;
+
+		const zone = settings?.timezone;
+		return (
+			slots.find((slot) => minutesInTimeZone(slot.startTime, zone) === minute) ??
+			null
+		);
+	}, [minute, slots, settings?.timezone]);
+
+	/*
+	 * Se aplica una sola vez por apertura: si alguien eligió otro horario y la
+	 * lista se recarga, la elección tiene que ganarle a la preselección.
+	 */
+	const appliedRequest = useRef(false);
+
+	useEffect(() => {
+		if (!open) {
+			appliedRequest.current = false;
+			return;
+		}
+
+		if (appliedRequest.current || !requestedSlot) return;
+
+		appliedRequest.current = true;
+		setStartTime(requestedSlot.startTime);
+	}, [open, requestedSlot, setStartTime]);
+
+	/** Se pidió una hora y no está libre: hay que decirlo, no elegir otra en silencio. */
+	const slotNotice =
+		minute !== null && !loadingSlots && !requestedSlot
+			? `Las ${formatMinute(minute)} no están disponibles para esta combinación. Elegí otro horario.`
+			: undefined;
+
 	const summary =
 		stepIndex > 0
 			? [draft.clientName, selectedService?.name, selectedStaff?.name]
@@ -159,25 +248,11 @@ const AppointmentModal: React.FC<Props> = ({ selectedDate }) => {
 
 	return (
 		<>
-			<Button
-				onClick={() => setOpen(true)}
-				className="gap-2"
-				disabled={isPastDay}
-				title={
-					isPastDay
-						? 'No se pueden agendar citas en días que ya pasaron'
-						: undefined
-				}
-			>
-				<Plus className="h-4 w-4" />
-				Agregar cita
-			</Button>
-
 			<WizardShell
 				open={open}
 				onOpenChange={handleOpenChange}
 				title={STEP_TITLES[step]}
-				description={formatLongDate(selectedDate)}
+				description={describeDay(date)}
 				summary={summary}
 				onBack={stepIndex === 0 ? undefined : goBack}
 				action={
@@ -232,6 +307,7 @@ const AppointmentModal: React.FC<Props> = ({ selectedDate }) => {
 						onSelect={setStartTime}
 						isLoading={loadingSlots}
 						isError={slotsError}
+						notice={slotNotice}
 					/>
 				)}
 

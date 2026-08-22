@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import AgendaToolbar, { type AgendaView } from '@/modules/agenda/AgendaToolbar';
 import AppointmentModal from '@/modules/agenda/AppointmentModal';
 import CalendarGrid, {
@@ -11,6 +13,7 @@ import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
 import {
 	buildStaffColumns,
 	groupBlocksByDay,
+	UNASSIGNED_COLUMN,
 } from '@/modules/agenda/utils/calendarBlocks';
 import { dayNumber, weekdayLabel } from '@/modules/agenda/utils/calendarLabels';
 import {
@@ -27,7 +30,6 @@ import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
 import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useGetSettings from '@/services/settings/useGetSettings';
 
-const weekdayFormatter = new Intl.DateTimeFormat('es', { weekday: 'short' });
 /** Iniciales del profesional, para la cabecera angosta de su columna. */
 const initialsOf = (name: string) =>
 	name
@@ -51,6 +53,19 @@ const initialsOf = (name: string) =>
 const AgendaPage = () => {
 	const [view, setView] = useState<AgendaView>('week');
 	const [picked, setPicked] = useState<string | null>(null);
+
+	/**
+	 * El hueco desde el que se está creando una cita.
+	 *
+	 * Guarda de dónde salió el click —día, minuto y columna— porque eso es lo que
+	 * el asistente puede dar por respondido. El botón de la barra abre el mismo
+	 * asistente sin hora ni profesional.
+	 */
+	const [draftSlot, setDraftSlot] = useState<{
+		date: string;
+		minute: number | null;
+		staffId: string | null;
+	} | null>(null);
 
 	const { data: settings } = useGetSettings();
 	const timezone = settings?.timezone;
@@ -241,6 +256,34 @@ const AgendaPage = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [columns, days, todayKey, settings]);
 
+	/**
+	 * Un hueco libre abre el asistente con lo que el click ya dijo.
+	 *
+	 * En la vista semanal la columna es el día; en la diaria es el profesional, y
+	 * ahí también viaja quién atiende. Los días pasados no abren nada: no hay
+	 * disponibilidad que consultar hacia atrás, y registrar una atención que ya
+	 * ocurrió es otra pregunta.
+	 */
+	const canCreateOn = useCallback(
+		(date: string) => date >= todayKey,
+		[todayKey],
+	);
+
+	const handleSlotClick = useCallback(
+		(columnKey: string, minute: number) => {
+			const date = view === 'week' ? columnKey : selectedDate;
+			if (!canCreateOn(date)) return;
+
+			setDraftSlot({
+				date,
+				minute,
+				staffId:
+					view === 'day' && columnKey !== UNASSIGNED_COLUMN ? columnKey : null,
+			});
+		},
+		[view, selectedDate, canCreateOn],
+	);
+
 	/*
 	 * Hasta que monta el reloj no se dibuja nada.
 	 *
@@ -265,7 +308,27 @@ const AgendaPage = () => {
 					)
 				}
 				busy={isFetching}
-				action={<AppointmentModal selectedDate={selectedDate} />}
+				action={
+					<Button
+						className="gap-2"
+						disabled={!canCreateOn(selectedDate)}
+						title={
+							canCreateOn(selectedDate)
+								? undefined
+								: 'No se pueden agendar citas en días que ya pasaron'
+						}
+						onClick={() =>
+							setDraftSlot({
+								date: selectedDate,
+								minute: null,
+								staffId: null,
+							})
+						}
+					>
+						<Plus className="h-4 w-4" />
+						Agregar cita
+					</Button>
+				}
 			/>
 
 			{(isError || statusError) && (
@@ -281,8 +344,17 @@ const AgendaPage = () => {
 					columns={columns}
 					nowMinute={nowMinute}
 					scrollToMinute={scrollToMinute}
+					onSlotClick={handleSlotClick}
 				/>
 			</div>
+
+			<AppointmentModal
+				open={draftSlot !== null}
+				onClose={() => setDraftSlot(null)}
+				date={draftSlot?.date ?? selectedDate}
+				minute={draftSlot?.minute ?? null}
+				staffId={draftSlot?.staffId ?? null}
+			/>
 
 			<FloatingAttention />
 		</>

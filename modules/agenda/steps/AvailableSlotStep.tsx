@@ -10,6 +10,8 @@ interface Props {
 	onSelect: (startTime: string) => void;
 	isLoading: boolean;
 	isError: boolean;
+	/** Aviso sobre la selección, cuando hay algo que aclarar antes de elegir. */
+	notice?: string;
 }
 
 const formatSlot = (iso: string) =>
@@ -34,6 +36,7 @@ const AvailableSlotStep: React.FC<Props> = ({
 	onSelect,
 	isLoading,
 	isError,
+	notice,
 }) => {
 	if (isLoading) {
 		return (
@@ -61,19 +64,27 @@ const AvailableSlotStep: React.FC<Props> = ({
 	}
 
 	return (
-		<div className="grid grid-cols-4 gap-2">
-			{slots.map((slot) => (
-				<Button
-					key={slot.startTime}
-					type="button"
-					size="sm"
-					variant={slot.startTime === selectedStart ? 'default' : 'outline'}
-					className="tabular-nums"
-					onClick={() => onSelect(slot.startTime)}
-				>
-					{formatSlot(slot.startTime)}
-				</Button>
-			))}
+		<div className="space-y-3">
+			{notice && (
+				<p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs">
+					{notice}
+				</p>
+			)}
+
+			<div className="grid grid-cols-4 gap-2">
+				{slots.map((slot) => (
+					<Button
+						key={slot.startTime}
+						type="button"
+						size="sm"
+						variant={slot.startTime === selectedStart ? 'default' : 'outline'}
+						className="tabular-nums"
+						onClick={() => onSelect(slot.startTime)}
+					>
+						{formatSlot(slot.startTime)}
+					</Button>
+				))}
+			</div>
 		</div>
 	);
 };
