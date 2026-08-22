@@ -47,6 +47,8 @@ export type SettingsResponse = {
 		offsets: number[];
 		/** El mensaje real con datos de ejemplo, armado por el backend. */
 		previewText: string;
+		/** Los botones de la plantilla, en orden: parte de lo que ve el cliente. */
+		previewButtons: string[];
 	};
 };
 

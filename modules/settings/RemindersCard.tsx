@@ -1,119 +1,151 @@
 'use client';
 
-import { BellRing } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@/components/ui/card';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
-import {
 	describeReminderReadiness,
-	REMINDER_LEAD_OPTIONS,
+	REMINDER_TOGGLES,
 } from './utils/reminders';
 
 interface Props {
-	enabled: boolean;
-	leadMinutes: number;
-	onEnabledChange: (enabled: boolean) => void;
-	onLeadMinutesChange: (leadMinutes: number) => void;
-	disabled?: boolean;
+	/** Anticipaciones activas, en minutos. */
+	offsets: number[];
+	onChange: (offsets: number[]) => void;
+	previewText: string;
+	previewButtons: string[];
 	whatsappConnected: boolean;
 	templateStatus?: string;
+	disabled?: boolean;
 }
 
 /**
- * Configuración de recordatorios del negocio.
+ * Qué recordatorios recibe el cliente.
  *
- * Se llama "Recordatorios" y no "Recordatorios de WhatsApp" a propósito: es una
- * capacidad del negocio y el canal es un detalle de entrega. La descripción sí
- * menciona WhatsApp, porque hoy es por dónde llegan y el dueño necesita saberlo.
+ * Dos interruptores independientes en lugar de un selector de horas: el negocio
+ * no elige *cuándo* avisar entre varias opciones, elige *qué avisos* quiere. Con
+ * un desplegable, tener los dos era imposible de expresar.
+ *
+ * Ninguno activo es una configuración válida y se dice así, sin tratarla como un
+ * campo sin completar.
  */
 const RemindersCard: React.FC<Props> = ({
-	enabled,
-	leadMinutes,
-	onEnabledChange,
-	onLeadMinutesChange,
-	disabled = false,
+	offsets,
+	onChange,
+	previewText,
+	previewButtons,
 	whatsappConnected,
 	templateStatus,
+	disabled = false,
 }) => {
-	const readiness = describeReminderReadiness(
-		whatsappConnected,
-		templateStatus,
-	);
+	const [previewOpen, setPreviewOpen] = useState(false);
+
+	const anyActive = offsets.length > 0;
+	const readiness = describeReminderReadiness(whatsappConnected, templateStatus);
+
+	const toggle = (minutes: number, next: boolean) => {
+		// Se mantiene el orden del más lejano al más cercano, igual que el backend.
+		const updated = next
+			? [...offsets, minutes]
+			: offsets.filter((value) => value !== minutes);
+
+		onChange([...new Set(updated)].sort((a, b) => b - a));
+	};
 
 	return (
-		<Card>
-			<CardHeader>
-				<div className="flex items-start justify-between gap-4">
-					<div className="space-y-1.5">
-						<CardTitle className="flex items-center gap-2">
-							<BellRing className="h-4 w-4 text-muted-foreground" />
-							Recordatorios
-						</CardTitle>
-						<CardDescription>
-							Avisa por WhatsApp a tus clientes antes de su cita, con botones
-							para reagendarla o cancelarla.
-						</CardDescription>
-					</div>
+		<div className="space-y-6">
+			<div className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+				{REMINDER_TOGGLES.map((option) => {
+					const id = `reminder-${option.minutes}`;
+					const active = offsets.includes(option.minutes);
 
-					<Switch
-						id="reminders-enabled"
-						checked={enabled}
-						disabled={disabled}
-						onCheckedChange={onEnabledChange}
-						aria-label="Activar recordatorios"
-					/>
-				</div>
-			</CardHeader>
-
-			<CardContent className="space-y-3">
-				<div>
-					<Label htmlFor="reminder-lead">Enviar recordatorio</Label>
-					{/*
-					 * Con los recordatorios apagados la anticipación no significa nada, así
-					 * que se deshabilita en lugar de quedar editable y sin efecto.
-					 */}
-					<Select
-						value={String(leadMinutes)}
-						disabled={disabled || !enabled}
-						onValueChange={(value) => onLeadMinutesChange(Number(value))}
-					>
-						<SelectTrigger id="reminder-lead">
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent>
-							{REMINDER_LEAD_OPTIONS.map((option) => (
-								<SelectItem key={option.minutes} value={String(option.minutes)}>
+					return (
+						<div
+							key={option.minutes}
+							className="flex items-start justify-between gap-4 p-4"
+						>
+							<div className="space-y-0.5">
+								<Label htmlFor={id} className="text-sm font-medium">
 									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-					<p className="mt-2 text-sm text-muted-foreground">
-						Una cita agendada con menos anticipación que esta no recibe
-						recordatorio.
-					</p>
-				</div>
+								</Label>
+								<p className="text-sm text-muted-foreground">
+									{option.description}
+								</p>
+							</div>
+							<Switch
+								id={id}
+								checked={active}
+								disabled={disabled}
+								onCheckedChange={(next) => toggle(option.minutes, next === true)}
+							/>
+						</div>
+					);
+				})}
+			</div>
 
-				{enabled && readiness && (
-					<p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
-						{readiness}
-					</p>
+			{!anyActive && (
+				<p className="text-sm text-muted-foreground">
+					Los recordatorios están desactivados. Tus clientes no reciben ningún
+					aviso antes de su cita.
+				</p>
+			)}
+
+			{anyActive && readiness && (
+				<p className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+					{readiness}
+				</p>
+			)}
+
+			<div className="space-y-3">
+				<button
+					type="button"
+					onClick={() => setPreviewOpen((open) => !open)}
+					className="flex items-center gap-1.5 text-sm font-medium text-foreground"
+					aria-expanded={previewOpen}
+				>
+					{previewOpen ? (
+						<ChevronUp className="h-4 w-4" />
+					) : (
+						<ChevronDown className="h-4 w-4" />
+					)}
+					Cómo lo verá tu cliente
+				</button>
+
+				{previewOpen && (
+					<div className="space-y-2">
+						{/*
+						 * El texto lo arma el backend con la misma plantilla que usa el
+						 * envío real, así que esto no puede mostrar algo distinto a lo que
+						 * llega. Los nombres y la hora sí son inventados.
+						 */}
+						<div className="rounded-lg bg-[#dcf8c6] p-3 dark:bg-emerald-950/40">
+							<p className="whitespace-pre-line text-sm text-neutral-900 dark:text-neutral-100">
+								{previewText}
+							</p>
+
+							{previewButtons.length > 0 && (
+								<div className="mt-3 space-y-1 border-t border-black/10 pt-2 dark:border-white/10">
+									{previewButtons.map((button) => (
+										<p
+											key={button}
+											className="text-center text-sm font-medium text-sky-700 dark:text-sky-400"
+										>
+											{button}
+										</p>
+									))}
+								</div>
+							)}
+						</div>
+
+						<p className="text-xs text-muted-foreground">
+							Es un ejemplo: el nombre, el servicio, el profesional y la hora
+							salen de cada cita.
+						</p>
+					</div>
 				)}
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 };
 

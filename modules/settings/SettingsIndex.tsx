@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import BotSwitchCard from '@/modules/settings/BotSwitchCard';
 import { ROUTES } from '@/constants/routes';
+import { describeReminderOffsets } from '@/modules/settings/utils/reminders';
 import useGetSettings from '@/services/settings/useGetSettings';
 
 type Section = {
@@ -27,7 +28,7 @@ type SettingsSummary = {
 	businessHoursDays: number;
 	whatsappConnected: boolean;
 	whatsappNumber: string | null;
-	remindersEnabled: boolean;
+	reminderOffsets: number[];
 };
 
 /**
@@ -69,8 +70,7 @@ const SECTIONS: Section[] = [
 		label: 'Recordatorios',
 		description: 'El aviso automático antes de cada cita.',
 		icon: BellRing,
-		status: (settings) =>
-			settings.remindersEnabled ? 'Activados' : 'Desactivados',
+		status: (settings) => describeReminderOffsets(settings.reminderOffsets),
 	},
 ];
 
@@ -95,7 +95,7 @@ const SettingsIndex: React.FC = () => {
 		).size,
 		whatsappConnected: data?.whatsappConnection.connected ?? false,
 		whatsappNumber: data?.whatsappConnection.phoneNumber ?? null,
-		remindersEnabled: (data?.reminders.offsets.length ?? 0) > 0,
+		reminderOffsets: data?.reminders.offsets ?? [],
 	};
 
 	return (

@@ -1,18 +1,25 @@
 /**
- * Anticipaciones que ofrece el panel, en minutos.
+ * Las anticipaciones que expone el panel.
  *
- * La lista es cerrada y coincide con la que valida el backend. Un valor libre
- * habilitaría "2 minutos antes", que produce un aviso inútil.
+ * El backend acepta más —ver `SUPPORTED_REMINDER_OFFSETS`—, pero acá se ofrecen
+ * solo estas dos: son las que cubren los dos motivos reales de avisar. El día
+ * anterior sirve para que el cliente reorganice su día; un rato antes, para que
+ * no se olvide de salir.
+ *
+ * Cada una es independiente: pueden estar las dos, una sola o ninguna.
  */
-export const REMINDER_LEAD_OPTIONS = [
-	{ minutes: 60, label: '1 hora antes' },
-	{ minutes: 180, label: '3 horas antes' },
-	{ minutes: 360, label: '6 horas antes' },
-	{ minutes: 720, label: '12 horas antes' },
-	{ minutes: 1440, label: '24 horas antes' },
+export const REMINDER_TOGGLES = [
+	{
+		minutes: 1440,
+		label: '24 horas antes',
+		description: 'Recibir un recordatorio el día anterior.',
+	},
+	{
+		minutes: 60,
+		label: '1 hora antes',
+		description: 'Recibir un recordatorio poco antes de la cita.',
+	},
 ] as const;
-
-export const DEFAULT_REMINDER_LEAD_MINUTES = 1440;
 
 /**
  * Por qué los recordatorios todavía no pueden salir, o `null` si pueden.
@@ -40,4 +47,21 @@ export const describeReminderReadiness = (
 		default:
 			return 'La plantilla del recordatorio todavía no se creó. Se genera sola al conectar WhatsApp.';
 	}
+};
+
+/**
+ * Los recordatorios activos en una línea, para el índice de Configuración.
+ *
+ * Dice cuáles están activos y no solo que hay alguno: ahora que son dos
+ * independientes, "Activados" dejaría sin resolver la pregunta que trae a
+ * alguien a esta pantalla, que es cuándo se avisa.
+ */
+export const describeReminderOffsets = (offsets: number[]): string => {
+	const labels = REMINDER_TOGGLES.filter((option) =>
+		offsets.includes(option.minutes),
+	).map((option) => option.label.toLowerCase());
+
+	if (labels.length === 0) return 'Desactivados';
+
+	return labels.join(' y ');
 };
