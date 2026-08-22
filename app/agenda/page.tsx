@@ -380,6 +380,7 @@ const AgendaPage = () => {
 
 			<BookingDrawer
 				appointmentId={editingId}
+				todayKey={todayKey}
 				onClose={() => setEditingId(null)}
 			/>
 

@@ -17,6 +17,13 @@ export const getBookingSlots = async (params: {
 	date: string;
 	serviceId: string;
 	staffId: string;
+	/**
+	 * Reserva que se está editando: sus minutos no cuentan como ocupados.
+	 *
+	 * Sin esto, editar una cita de 09:00 no podría ofrecer las 09:15 porque la
+	 * propia cita estaría bloqueando ese rato.
+	 */
+	excludeAppointmentId?: string;
 }): Promise<BookingSlot[]> => {
 	const { data } = await axiosInstance.get<BookingSlot[]>(
 		'/availability/booking-slots',

@@ -15,14 +15,23 @@ const useGetBookingSlots = (
 	date: string,
 	serviceId: string | null,
 	staffId: string | null,
+	excludeAppointmentId?: string,
 ) => {
 	return useQuery({
-		queryKey: ['availability', 'booking-slots', date, serviceId, staffId],
+		queryKey: [
+			'availability',
+			'booking-slots',
+			date,
+			serviceId,
+			staffId,
+			excludeAppointmentId ?? null,
+		],
 		queryFn: () =>
 			getBookingSlots({
 				date,
 				serviceId: serviceId as string,
 				staffId: staffId as string,
+				excludeAppointmentId,
 			}),
 		enabled: Boolean(date && serviceId && staffId),
 		// Un horario puede ocuparse desde WhatsApp mientras el formulario está

@@ -83,6 +83,23 @@ export const getAppointmentDetail = async (
 	return data;
 };
 
+/** Estado deseado de lo editable: cuándo empieza y qué servicios tiene. */
+export interface EditBookingPayload {
+	startTime: string;
+	items: Array<{ serviceId: string; staffId: string }>;
+}
+
+export const editBooking = async (
+	id: string,
+	payload: EditBookingPayload,
+): Promise<AppointmentDetailApi> => {
+	const { data } = await axiosInstance.patch(
+		`/appointments/${id}/booking`,
+		payload,
+	);
+	return data;
+};
+
 export const deleteAppointment = async (id: string) => {
 	await axiosInstance.delete(`/appointments/${id}`);
 };
