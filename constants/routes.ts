@@ -8,5 +8,9 @@ export const ROUTES = {
 	reports: '/reports',
 	services: '/services',
 	settings: '/settings',
+	settingsBusiness: '/settings/business',
+	settingsHours: '/settings/hours',
+	settingsWhatsapp: '/settings/whatsapp',
+	settingsReminders: '/settings/reminders',
 	staff: '/staff',
 };

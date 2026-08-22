@@ -109,6 +109,11 @@ export function Sidebar() {
 							</Link>
 						)}
 
+						{/* "Empezar" no es una sección del producto: el separador lo dice. */}
+						{setupPending && (
+							<div className="my-2 border-t border-neutral-200" aria-hidden="true" />
+						)}
+
 						{navItems.map((item) => {
 							const Icon = item.icon;
 							const isActive = pathname === item.href;

@@ -1,18 +1,16 @@
-import SettingsForm from '@/modules/settings/SettingsForm';
+import SettingsIndex from '@/modules/settings/SettingsIndex';
 
 export default function SettingsPage() {
 	return (
-		<div className="space-y-6 pb-5">
-			{/* Header */}
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
-				<p className="text-muted-foreground mt-1">
-					Configura los ajustes y preferencias de tu negocio
+		<div className="mx-auto w-full max-w-2xl space-y-6 pb-6">
+			<div className="space-y-1">
+				<h1 className="text-2xl font-semibold tracking-tight">Configuración</h1>
+				<p className="text-sm text-muted-foreground">
+					Los ajustes de tu negocio, por sección.
 				</p>
 			</div>
 
-			{/* Settings Form */}
-			<SettingsForm />
+			<SettingsIndex />
 		</div>
 	);
 }

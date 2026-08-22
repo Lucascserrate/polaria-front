@@ -1,11 +1,12 @@
 export const SETTINGS_KEY = ['settings'] as const;
 
-export const DEFAULT_SLOT_DURATION = 30;
-
-export const DEFAULT_SETTINGS = {
-	polariaName: 'PolariaName',
-	appointmentSlotDuration: DEFAULT_SLOT_DURATION,
-};
+/*
+ * Acá vivían `DEFAULT_SLOT_DURATION` y el formato de hora, que Configuración
+ * ofrecía como dos desplegables. Ninguno viajaba al backend ni cambiaba nada:
+ * eran configuración aparente. Se quitaron junto con esa sección, y vuelven
+ * cuando exista el comportamiento que tienen que controlar —el paso de la grilla
+ * de horarios vive hoy en `DEFAULT_SLOT_STEP_MINUTES` del servidor—.
+ */
 
 /**
  * Semana con la que arranca un negocio que todavía no cargó horarios: de lunes
