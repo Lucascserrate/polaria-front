@@ -26,6 +26,7 @@ import { toggleSidebarPreference } from '@/components/sidebar-preference';
 import useGetOnboardingStatus from '@/services/onboarding/useGetOnboardingStatus';
 import { SETUP_STEP_COUNT } from '@/modules/onboarding/PolariaSetupChecklist';
 import TrialStatus from '@/modules/onboarding/TrialStatus';
+import AccountBadge from '@/modules/account/AccountBadge';
 
 const navItems = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
@@ -179,7 +180,9 @@ export function Sidebar() {
 					</nav>
 
 					{/* Footer */}
-					<div className="space-y-4 px-4 py-6 border-t border-neutral-200 collapsed:px-2">
+					<div className="space-y-3 px-4 py-6 border-t border-neutral-200 collapsed:px-2">
+						<AccountBadge />
+
 						{/* Solo dice algo durante la prueba y cuando venció. */}
 						{/*
 						 * `contents` para no dejar un hueco cuando no hay prueba de la que

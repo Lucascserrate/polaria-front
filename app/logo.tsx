@@ -26,7 +26,7 @@ export function Logo({
 			<StarGlyph
 				className={cn(
 					'size-[1.1em] shrink-0',
-					tone === 'dark' ? 'text-cyan-700' : 'text-[#82b4ff]',
+					tone === 'dark' ? 'text-[#222]' : 'text-[#82b4ff]',
 				)}
 			/>
 			{showWordmark && <span className="leading-none">Polaria</span>}
