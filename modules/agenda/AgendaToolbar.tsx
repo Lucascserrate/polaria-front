@@ -8,6 +8,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from '@/components/ui/popover';
+import { Spinner } from '@/components/ui/spinner';
 import MonthCalendar from '@/components/MonthCalendar';
 import { cn } from '@/lib/utils';
 import { weekDaysOf } from './utils/calendarLayout';
@@ -87,6 +88,8 @@ interface Props {
 	onDateChange: (date: string) => void;
 	/** Un día o una semana, según la vista. */
 	onShift: (direction: -1 | 1) => void;
+	/** Hay una consulta en vuelo. Se dice al lado de la fecha, que es lo que cambió. */
+	busy?: boolean;
 	/** El botón de crear cita, que vive afuera para no duplicar su flujo. */
 	action?: React.ReactNode;
 }
@@ -105,6 +108,7 @@ const AgendaToolbar: React.FC<Props> = ({
 	todayKey,
 	onDateChange,
 	onShift,
+	busy = false,
 	action,
 }) => {
 	const [pickerOpen, setPickerOpen] = useState(false);
@@ -146,7 +150,11 @@ const AgendaToolbar: React.FC<Props> = ({
 						<span className="text-sm font-medium">
 							{describePeriod(view, selectedDate)}
 						</span>
-						<ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+						{busy ? (
+							<Spinner className="size-3.5 text-muted-foreground" />
+						) : (
+							<ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+						)}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent align="center" className="w-auto p-3">

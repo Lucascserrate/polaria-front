@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import AgendaToolbar, { type AgendaView } from '@/modules/agenda/AgendaToolbar';
 import AppointmentModal from '@/modules/agenda/AppointmentModal';
 import CalendarGrid, {
 	type CalendarColumn,
 } from '@/modules/agenda/CalendarGrid';
 import FloatingAttention from '@/modules/agenda/FloatingAttention';
+import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
+import { groupBlocksByDay } from '@/modules/agenda/utils/calendarBlocks';
 import {
 	nowMinuteInTimeZone,
 	openRangesForWeekday,
@@ -16,6 +18,8 @@ import {
 	weekdayOf,
 } from '@/modules/agenda/utils/calendarLayout';
 import useNow from '@/lib/useNow';
+import useGetAppointmentsRange from '@/services/appointments/useGetAppointmentsRange';
+import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useGetSettings from '@/services/settings/useGetSettings';
 
 const weekdayFormatter = new Intl.DateTimeFormat('es', { weekday: 'short' });
@@ -60,6 +64,37 @@ const AgendaPage = () => {
 		[view, selectedDate],
 	);
 
+	const {
+		data: range,
+		isFetching,
+		isError,
+	} = useGetAppointmentsRange(days[0], days[days.length - 1]);
+
+	const {
+		mutate: updateStatus,
+		isPending: isUpdatingStatus,
+		variables: statusVariables,
+		isError: statusError,
+	} = useUpdateAppointmentStatus();
+
+	const handleMarkAttended = useCallback(
+		(id: string) => updateStatus({ id, status: 'completed' }),
+		[updateStatus],
+	);
+
+	const handleCancel = useCallback(
+		(id: string) => updateStatus({ id, status: 'cancelled' }),
+		[updateStatus],
+	);
+
+	// La cita en curso sale de la mutación, así que no hace falta un estado aparte.
+	const updatingId = isUpdatingStatus ? (statusVariables?.id ?? null) : null;
+
+	const blocksByDay = useMemo(
+		() => groupBlocksByDay(range?.items ?? [], timezone),
+		[range?.items, timezone],
+	);
+
 	const columns = useMemo<CalendarColumn[]>(
 		() =>
 			days.map((day) => {
@@ -72,6 +107,14 @@ const AgendaPage = () => {
 					openRanges: openRangesForWeekday(
 						settings?.businessHours,
 						weekdayOf(day),
+					),
+					content: (
+						<AppointmentBlocks
+							blocks={blocksByDay.get(day) ?? []}
+							onMarkAttended={handleMarkAttended}
+							onCancel={handleCancel}
+							updatingId={updatingId}
+						/>
 					),
 					header:
 						view === 'week' ? (
@@ -96,7 +139,16 @@ const AgendaPage = () => {
 						),
 				};
 			}),
-		[days, todayKey, settings?.businessHours, view],
+		[
+			days,
+			todayKey,
+			settings?.businessHours,
+			view,
+			blocksByDay,
+			handleMarkAttended,
+			handleCancel,
+			updatingId,
+		],
 	);
 
 	const nowMinute =
@@ -151,8 +203,17 @@ const AgendaPage = () => {
 						shiftDateKey(selectedDate, direction * (view === 'week' ? 7 : 1)),
 					)
 				}
+				busy={isFetching}
 				action={<AppointmentModal selectedDate={selectedDate} />}
 			/>
+
+			{(isError || statusError) && (
+				<p className="shrink-0 border-b border-border bg-red-50 px-3 py-1.5 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-400">
+					{isError
+						? 'No se pudieron cargar las citas. Se vuelve a intentar solo.'
+						: 'No se pudo actualizar la cita. Intentá de nuevo.'}
+				</p>
+			)}
 
 			<div className="min-h-0 flex-1">
 				<CalendarGrid
