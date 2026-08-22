@@ -3,6 +3,10 @@ import type { WeeklyRange } from '@/modules/schedule/utils/weeklySchedule';
 
 export type SettingsResponse = {
 	polariaName: string;
+	/** Ver `BUSINESS_TYPES`. `null` hasta que la configuración inicial lo carga. */
+	businessType: string | null;
+	timezone: string;
+	location: { latitude: number; longitude: number } | null;
 	/**
 	 * Horario semanal del negocio, una entrada por franja. Un día sin entradas
 	 * está cerrado; varias entradas en un mismo día son un turno partido.
@@ -46,6 +50,10 @@ export type SettingsResponse = {
 
 export type UpdateSettingsPayload = {
 	polariaName?: string;
+	businessType?: string;
+	timezone?: string;
+	/** `null` borra la ubicación; ausente la deja como está. */
+	location?: { latitude: number; longitude: number } | null;
 	businessHours?: WeeklyRange[];
 	/** Apagado, Polaria deja de responder por WhatsApp en todo el negocio. */
 	aiEnabled?: boolean;
@@ -64,6 +72,9 @@ export const updateSettings = async (
 ): Promise<SettingsResponse> => {
 	const { data } = await axiosInstance.patch<SettingsResponse>('/settings', {
 		polariaName: payload.polariaName,
+		businessType: payload.businessType,
+		timezone: payload.timezone,
+		location: payload.location,
 		businessHours: payload.businessHours,
 		aiEnabled: payload.aiEnabled,
 		remindersEnabled: payload.remindersEnabled,
