@@ -6,7 +6,7 @@ import {
 	Settings,
 	Users,
 	Scissors,
-	Wallet,
+	ChartLine,
 	Menu,
 	X,
 	BookIcon,
@@ -31,7 +31,7 @@ const navItems = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
 	{ href: ROUTES.staff, label: 'Personal', icon: Users },
 	{ href: ROUTES.services, label: 'Servicios', icon: Scissors },
-	{ href: ROUTES.reports, label: 'Contabilidad', icon: Wallet },
+	{ href: ROUTES.analytics, label: 'Analíticas', icon: ChartLine },
 	// { href: ROUTES.chat, label: 'Chat', icon: MessageCircle },
 	{ href: ROUTES.settings, label: 'Configuración', icon: Settings },
 ];

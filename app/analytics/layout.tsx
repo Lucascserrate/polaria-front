@@ -4,7 +4,7 @@ interface Props {
 	children: React.ReactNode;
 }
 
-const ReportsLayout: React.FC<Props> = ({ children }) => {
+const AnalyticsLayout: React.FC<Props> = ({ children }) => {
 	return (
 		<div className="flex min-h-screen bg-background">
 			<Sidebar />
@@ -15,4 +15,4 @@ const ReportsLayout: React.FC<Props> = ({ children }) => {
 	);
 };
 
-export default ReportsLayout;
+export default AnalyticsLayout;

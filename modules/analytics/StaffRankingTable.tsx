@@ -9,7 +9,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { formatMoney } from '@/modules/reports/utils/format';
+import { formatMoney } from '@/modules/analytics/utils/format';
 import type { StaffRankingEntry } from '@/types/reports.types';
 
 interface Props {

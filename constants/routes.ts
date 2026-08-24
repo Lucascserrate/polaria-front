@@ -4,7 +4,7 @@ export const ROUTES = {
 	onboarding: '/onboarding',
 	setup: '/setup',
 	chat: '/chat',
-	reports: '/reports',
+	analytics: '/analytics',
 	services: '/services',
 	settings: '/settings',
 	settingsBusiness: '/settings/business',
