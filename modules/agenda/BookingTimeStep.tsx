@@ -28,8 +28,8 @@ interface Props {
 	timezone?: string;
 	/** Los tramos de la reserva, con su desplazamiento. */
 	items: BookingSlotItem[];
-	/** Reserva que se edita: sus minutos no cuentan como ocupados. */
-	excludeAppointmentId: string;
+	/** Reserva que se edita: sus minutos no cuentan como ocupados. Ausente al crear. */
+	excludeAppointmentId?: string;
 	/** Inicio elegido, en ISO. */
 	selected: string | null;
 	onSelect: (startTime: string) => void;

@@ -36,7 +36,15 @@ export interface UseBookingDraftInput {
 	timezone?: string;
 }
 
+/** El cliente de la reserva. Sin `id` es alguien que todavía no existe. */
+export interface DraftClient {
+	id: string | null;
+	name: string;
+	phone?: string | null;
+}
+
 export interface BookingDraftState {
+	client: DraftClient;
 	items: DraftItem[];
 	/** Inicio elegido, en ISO. `null` mientras no haya ninguno. */
 	startTime: string | null;
@@ -57,6 +65,7 @@ export interface BookingDraftState {
 	 * datos, así que esa reserva se muestra pero no se toca.
 	 */
 	canEdit: boolean;
+	setClient: (client: DraftClient) => void;
 	setItems: (items: DraftItem[]) => void;
 	setStartTime: (startTime: string) => void;
 	/** Vuelve todo a lo guardado. */
@@ -71,6 +80,7 @@ const useBookingDraft = ({
 	/** `null` significa "como está guardado", que en creación es vacío. */
 	const [draftItems, setDraftItems] = useState<DraftItem[] | null>(null);
 	const [draftStart, setDraftStart] = useState<string | null>(null);
+	const [draftClient, setDraftClient] = useState<DraftClient | null>(null);
 
 	// Memoizado porque alimenta el resto de los cálculos: `?? []` crearía un
 	// array nuevo en cada render y recalcularía todo sin que nada cambie.
@@ -117,7 +127,14 @@ const useBookingDraft = ({
 		[items, offsets],
 	);
 
+	const savedClient: DraftClient = {
+		id: booking?.client?.id ?? null,
+		name: booking?.client?.name ?? booking?.clientName ?? '',
+		phone: booking?.client?.phone ?? null,
+	};
+
 	return {
+		client: draftClient ?? savedClient,
 		items,
 		startTime,
 		dayKey: startTime ? dateKeyInTimeZone(startTime, timezone) : null,
@@ -128,11 +145,13 @@ const useBookingDraft = ({
 		servicesChanged,
 		hasChanges: timeChanged || servicesChanged,
 		canEdit: segments.length === 0 || savedItems.length === segments.length,
+		setClient: setDraftClient,
 		setItems: setDraftItems,
 		setStartTime: setDraftStart,
 		discard: () => {
 			setDraftItems(null);
 			setDraftStart(null);
+			setDraftClient(null);
 		},
 	};
 };

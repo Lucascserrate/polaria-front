@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { ChevronLeft } from 'lucide-react';
 import {
@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import useGetAppointmentDetail from '@/services/appointments/useGetAppointmentDetail';
 import useEditBooking from '@/services/appointments/useEditBooking';
+import useCreateBooking from '@/services/appointments/useCreateBooking';
+import useGetSettings from '@/services/settings/useGetSettings';
+import { findOrCreateClient } from '@/services/clients';
 import useGetServices from '@/services/services/useGetServices';
 import useGetStaff from '@/services/staff/useGetStaff';
 import useGetSlotsForBooking from '@/services/availability/useGetSlotsForBooking';
@@ -29,16 +32,31 @@ import useBookingDraft from './useBookingDraft';
 import { describeReminder } from './utils/reminderStatus';
 import { formatMinute, minutesInTimeZone } from './utils/calendarLayout';
 
+/**
+ * Lo que el click en la agenda ya dijo, cuando la reserva nace de un hueco.
+ *
+ * No es una reserva a medio hacer: es el punto de partida. El día siempre; la
+ * hora y el profesional cuando el click salió de una celda concreta.
+ */
+export interface BookingSeed {
+	date: string;
+	minute: number | null;
+	staffId: string | null;
+}
+
 interface Props {
-	/** Reserva abierta. `null` mantiene el drawer montado y cerrado. */
+	/** Reserva a editar. `null` con `seed` presente abre el modo creación. */
 	appointmentId: string | null;
+	/** Presente abre el drawer para crear. */
+	seed?: BookingSeed | null;
 	/** Hoy en la zona del negocio. */
 	todayKey: string;
 	onClose: () => void;
 }
 
 interface EditorProps {
-	appointmentId: string;
+	appointmentId: string | null;
+	seed?: BookingSeed | null;
 	todayKey: string;
 	onClose: () => void;
 }
@@ -63,54 +81,121 @@ const timeIn = (iso: string, timezone?: string): string => {
  */
 const BookingEditor: React.FC<EditorProps> = ({
 	appointmentId,
+	seed,
 	todayKey,
 	onClose,
 }) => {
+	const isCreating = appointmentId === null;
+
 	const [view, setView] = useState<'detail' | 'time'>('detail');
 	/** Día que se está mirando en el paso de horarios. */
-	const [pickerDate, setPickerDate] = useState<string | null>(null);
+	const [pickerDate, setPickerDate] = useState<string | null>(
+		seed?.date ?? null,
+	);
 	const [saveError, setSaveError] = useState<string | null>(null);
 
 	const { data: booking, isLoading } = useGetAppointmentDetail(appointmentId);
 	const { data: services = [] } = useGetServices();
 	const { data: staff = [] } = useGetStaff();
+	const { data: settings } = useGetSettings();
 	const { mutateAsync: save, isPending: isSaving } = useEditBooking();
+	const { mutateAsync: create, isPending: isCreatingBooking } =
+		useCreateBooking();
 
-	const timezone = booking?.timezone;
+	// Creando no hay reserva de la que sacar la zona: la trae la configuración.
+	const timezone = booking?.timezone ?? settings?.timezone;
 	const reminder = describeReminder(booking?.reminder ?? null);
 	const segments = booking?.segments ?? [];
 
 	const draft = useBookingDraft({ booking, services, timezone });
+	const busy = isSaving || isCreatingBooking;
 
 	/*
 	 * Con los servicios cambiados hay que revisar que la hora siga en pie: media
 	 * hora más de trabajo puede no entrar antes del cierre o pisar la cita
 	 * siguiente. Se pregunta al motor por el día que se está mirando.
+	 *
+	 * Creando se pregunta siempre: la hora se elige de esa misma lista, así que es
+	 * la que además preselecciona el hueco que se clickeó en la agenda.
 	 */
+	const slotsDate = draft.dayKey ?? seed?.date ?? todayKey;
+
 	const { startTimes } = useGetSlotsForBooking({
-		date: draft.dayKey ?? todayKey,
+		date: slotsDate,
 		items: draft.slotItems,
-		excludeAppointmentId: appointmentId,
-		enabled: draft.servicesChanged && draft.canEdit,
+		excludeAppointmentId: appointmentId ?? undefined,
+		enabled:
+			draft.slotItems.length > 0 &&
+			(isCreating || (draft.servicesChanged && draft.canEdit)),
 	});
 
+	/*
+	 * El hueco que se clickeó en la agenda, si el motor lo ofrece.
+	 *
+	 * Se aplica cuando aparecen los horarios —o sea, recién cuando hay un
+	 * servicio elegido— y una sola vez: después manda lo que la persona elija.
+	 */
+	const seedApplied = useRef(false);
+
+	useEffect(() => {
+		if (!isCreating || seedApplied.current) return;
+		if (seed?.minute === null || seed?.minute === undefined) return;
+		if (startTimes.length === 0) return;
+
+		const match = startTimes.find(
+			(startTime) => minutesInTimeZone(startTime, timezone) === seed.minute,
+		);
+		if (!match) return;
+
+		seedApplied.current = true;
+		draft.setStartTime(match);
+	}, [isCreating, seed?.minute, startTimes, timezone, draft]);
+
 	const timeStillFits =
+		isCreating ||
 		!draft.servicesChanged ||
 		(draft.startTime !== null && startTimes.includes(draft.startTime));
 
+	/** Creando hace falta todo; editando, que haya algo que guardar. */
+	const isComplete = isCreating
+		? draft.client.name.trim().length > 0 &&
+			draft.items.length > 0 &&
+			draft.startTime !== null
+		: draft.hasChanges;
+
 	const canSave =
-		!isSaving && timeStillFits && draft.summary.unknownServiceIds.length === 0;
+		!busy &&
+		isComplete &&
+		timeStillFits &&
+		draft.summary.unknownServiceIds.length === 0;
 
 	const handleSave = async () => {
-		if (!booking || !draft.startTime || !draft.hasChanges) return;
+		if (!draft.startTime || !canSave) return;
 
 		setSaveError(null);
 
 		try {
-			await save({
-				id: appointmentId,
-				payload: { startTime: draft.startTime, items: draft.items },
-			});
+			if (isCreating) {
+				/*
+				 * El cliente se resuelve recién ahora: si se creara al escribir el
+				 * nombre, abandonar el formulario dejaría clientes fantasma.
+				 */
+				const clientId =
+					draft.client.id ??
+					(await findOrCreateClient({ name: draft.client.name.trim() })).id;
+
+				await create({
+					clientId,
+					startTime: draft.startTime,
+					items: draft.items,
+				});
+			} else {
+				await save({
+					id: appointmentId as string,
+					payload: { startTime: draft.startTime, items: draft.items },
+				});
+			}
+
 			onClose();
 		} catch (error) {
 			// El 409 trae el motivo real —ocupado, cerrado, recién tomado— y es lo
@@ -149,12 +234,14 @@ const BookingEditor: React.FC<EditorProps> = ({
 						<DrawerDescription className="font-mono text-[10px] tracking-widest uppercase">
 							Reserva
 						</DrawerDescription>
-						<DrawerTitle className="text-lg">Editar reserva</DrawerTitle>
+						<DrawerTitle className="text-lg">
+							{isCreating ? 'Nueva reserva' : 'Editar reserva'}
+						</DrawerTitle>
 					</>
 				)}
 			</DrawerHeader>
 
-			{isLoading || !booking ? (
+			{!isCreating && (isLoading || !booking) ? (
 				<div className="flex flex-1 items-center justify-center">
 					<Spinner />
 				</div>
@@ -166,7 +253,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 						todayKey={todayKey}
 						timezone={timezone}
 						items={draft.slotItems}
-						excludeAppointmentId={booking.id}
+						excludeAppointmentId={appointmentId ?? undefined}
 						selected={draft.startTime}
 						onSelect={(next) => {
 							draft.setStartTime(next);
@@ -181,20 +268,28 @@ const BookingEditor: React.FC<EditorProps> = ({
 						dayKey={draft.dayKey}
 						time={timeIn(draft.startTime ?? '', timezone)}
 						detail={
-							draft.hasChanges
-								? 'Sin guardar'
-								: `Termina ${timeIn(booking.endTime ?? '', timezone)} · ${booking.totalDuration} min en total`
+							isCreating
+								? draft.items.length === 0
+									? 'Primero elegí un servicio.'
+									: draft.startTime
+										? `${draft.summary.totalMinutes} min en total`
+										: 'Elegí un horario disponible.'
+								: draft.hasChanges
+									? 'Sin guardar'
+									: `Termina ${timeIn(booking?.endTime ?? '', timezone)} · ${booking?.totalDuration ?? 0} min en total`
 						}
-						editable={draft.canEdit}
+						// Sin servicios no hay disponibilidad que preguntar: la duración es
+						// justamente lo que define qué horarios entran.
+						editable={draft.canEdit && (!isCreating || draft.items.length > 0)}
 						onOpen={() => {
-							setPickerDate(draft.dayKey);
+							setPickerDate(draft.dayKey ?? seed?.date ?? todayKey);
 							setView('time');
 						}}
 					/>
 
 					<BookingClientField
-						name={booking.client?.name ?? booking.clientName ?? null}
-						phone={booking.client?.phone ?? null}
+						client={draft.client}
+						onChange={isCreating ? draft.setClient : undefined}
 					/>
 
 					<BookingServicesField
@@ -208,14 +303,17 @@ const BookingEditor: React.FC<EditorProps> = ({
 						offsets={draft.offsets}
 						startTime={draft.startTime}
 						timezone={timezone}
+						preferredStaffId={seed?.staffId ?? null}
 						editable={draft.canEdit}
 						segments={segments}
-						disabled={isSaving}
+						disabled={busy}
 						notices={
 							<BookingNotices
 								hasInactiveService={draft.summary.unknownServiceIds.length > 0}
 								timeNoLongerFits={draft.servicesChanged && !timeStillFits}
-								pendingChanges={draft.hasChanges && timeStillFits}
+								pendingChanges={
+									!isCreating && draft.hasChanges && timeStillFits
+								}
 								locked={!draft.canEdit && segments.length > 0}
 							/>
 						}
@@ -248,28 +346,32 @@ const BookingEditor: React.FC<EditorProps> = ({
 				<DrawerFooter className="flex-row items-center justify-between border-t border-border">
 					<BookingSummary
 						totalMinutes={
-							draft.hasChanges
+							isCreating || draft.hasChanges
 								? draft.summary.totalMinutes
 								: (booking?.totalDuration ?? 0)
 						}
 						totalPrice={
-							draft.hasChanges
+							isCreating || draft.hasChanges
 								? draft.summary.totalPrice
 								: (booking?.totalPrice ?? 0)
 						}
 					/>
 
-					{draft.hasChanges ? (
+					{isCreating || draft.hasChanges ? (
 						<div className="flex items-center gap-2">
 							<Button
 								variant="ghost"
-								disabled={isSaving}
+								disabled={busy}
 								onClick={() => {
+									if (isCreating) {
+										onClose();
+										return;
+									}
 									draft.discard();
 									setSaveError(null);
 								}}
 							>
-								Descartar
+								{isCreating ? 'Cancelar' : 'Descartar'}
 							</Button>
 							<Button
 								/*
@@ -280,7 +382,11 @@ const BookingEditor: React.FC<EditorProps> = ({
 								disabled={!canSave}
 								onClick={() => void handleSave()}
 							>
-								{isSaving ? 'Guardando...' : 'Guardar cambios'}
+								{busy
+									? 'Guardando...'
+									: isCreating
+										? 'Crear reserva'
+										: 'Guardar cambios'}
 							</Button>
 						</div>
 					) : (
@@ -303,27 +409,38 @@ const BookingEditor: React.FC<EditorProps> = ({
  */
 const BookingDrawer: React.FC<Props> = ({
 	appointmentId,
+	seed,
 	todayKey,
 	onClose,
-}) => (
-	<Drawer
-		direction="right"
-		open={appointmentId !== null}
-		onOpenChange={(next) => {
-			if (!next) onClose();
-		}}
-	>
-		<DrawerContent className="sm:max-w-md">
-			{appointmentId !== null && (
-				<BookingEditor
-					key={appointmentId}
-					appointmentId={appointmentId}
-					todayKey={todayKey}
-					onClose={onClose}
-				/>
-			)}
-		</DrawerContent>
-	</Drawer>
-);
+}) => {
+	const open = appointmentId !== null || Boolean(seed);
+
+	return (
+		<Drawer
+			direction="right"
+			open={open}
+			onOpenChange={(next) => {
+				if (!next) onClose();
+			}}
+		>
+			<DrawerContent className="sm:max-w-md">
+				{open && (
+					<BookingEditor
+						/*
+						 * La clave incluye el punto de partida: lo que quedó a medio elegir
+						 * pertenece a *esa* reserva —o a *ese* hueco— y muere con ella, sin
+						 * necesidad de limpiarlo a mano al cerrar ni al abrir otra.
+						 */
+						key={appointmentId ?? `new:${seed?.date}:${seed?.minute}`}
+						appointmentId={appointmentId}
+						seed={seed}
+						todayKey={todayKey}
+						onClose={onClose}
+					/>
+				)}
+			</DrawerContent>
+		</Drawer>
+	);
+};
 
 export default BookingDrawer;

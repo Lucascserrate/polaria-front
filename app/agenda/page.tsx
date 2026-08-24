@@ -4,13 +4,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgendaToolbar, { type AgendaView } from '@/modules/agenda/AgendaToolbar';
-import AppointmentModal from '@/modules/agenda/AppointmentModal';
 import CalendarGrid, {
 	type CalendarColumn,
 } from '@/modules/agenda/CalendarGrid';
 import FloatingAttention from '@/modules/agenda/FloatingAttention';
 import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
-import BookingDrawer from '@/modules/agenda/BookingDrawer';
+import BookingDrawer, {
+	type BookingSeed,
+} from '@/modules/agenda/BookingDrawer';
 import {
 	buildStaffColumns,
 	groupBlocksByDay,
@@ -66,11 +67,7 @@ const AgendaPage = () => {
 	 * el asistente puede dar por respondido. El botón de la barra abre el mismo
 	 * asistente sin hora ni profesional.
 	 */
-	const [draftSlot, setDraftSlot] = useState<{
-		date: string;
-		minute: number | null;
-		staffId: string | null;
-	} | null>(null);
+	const [draftSlot, setDraftSlot] = useState<BookingSeed | null>(null);
 
 	/** Reserva abierta en el panel lateral. */
 	const [editingId, setEditingId] = useState<string | null>(null);
@@ -202,6 +199,7 @@ const AgendaPage = () => {
 					blocks={column.blocks}
 					onMarkAttended={handleMarkAttended}
 					onCancel={handleCancel}
+					onEdit={setEditingId}
 					updatingId={updatingId}
 				/>
 			),
@@ -370,18 +368,18 @@ const AgendaPage = () => {
 				/>
 			</div>
 
-			<AppointmentModal
-				open={draftSlot !== null}
-				onClose={() => setDraftSlot(null)}
-				date={draftSlot?.date ?? selectedDate}
-				minute={draftSlot?.minute ?? null}
-				staffId={draftSlot?.staffId ?? null}
-			/>
-
+			{/*
+			 * El mismo panel para las dos cosas: crear y editar son la misma
+			 * operación con distinto punto de partida.
+			 */}
 			<BookingDrawer
 				appointmentId={editingId}
+				seed={editingId === null ? draftSlot : null}
 				todayKey={todayKey}
-				onClose={() => setEditingId(null)}
+				onClose={() => {
+					setEditingId(null);
+					setDraftSlot(null);
+				}}
 			/>
 
 			<FloatingAttention />

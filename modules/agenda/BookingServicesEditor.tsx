@@ -39,6 +39,13 @@ interface Props {
 	offsets: number[];
 	/** Minuto del día en que arranca la reserva, o `null` si no se sabe. */
 	startMinute: number | null;
+	/**
+	 * Profesional a proponer para el primer servicio.
+	 *
+	 * Al crear desde la columna de alguien en la agenda diaria, el click ya dijo
+	 * quién atiende: preguntarlo otra vez sería pedir un dato que ya se dio.
+	 */
+	preferredStaffId?: string | null;
 	disabled?: boolean;
 }
 
@@ -61,6 +68,7 @@ const BookingServicesEditor: React.FC<Props> = ({
 	staff,
 	offsets,
 	startMinute,
+	preferredStaffId,
 	disabled = false,
 }) => {
 	const [adding, setAdding] = useState(false);
@@ -94,7 +102,9 @@ const BookingServicesEditor: React.FC<Props> = ({
 		const preferred =
 			eligible.find((member) =>
 				items.some((item) => item.staffId === member.id),
-			) ?? eligible[0];
+			) ??
+			eligible.find((member) => member.id === preferredStaffId) ??
+			eligible[0];
 
 		onChange([...items, { serviceId, staffId: preferred.id }]);
 		setAdding(false);

@@ -18,6 +18,8 @@ interface Props {
 	/** Inicio de la reserva en ISO, para calcular la hora de cada tramo. */
 	startTime: string | null;
 	timezone?: string;
+	/** Profesional a proponer para el primer servicio, si el click ya lo dijo. */
+	preferredStaffId?: string | null;
 	/** Con `false` la reserva se muestra como está guardada, sin editar. */
 	editable: boolean;
 	/** Tramos guardados: es lo que se muestra cuando no se puede editar. */
@@ -49,6 +51,7 @@ const BookingServicesField: React.FC<Props> = ({
 	offsets,
 	startTime,
 	timezone,
+	preferredStaffId,
 	editable,
 	segments,
 	notices,
@@ -70,6 +73,7 @@ const BookingServicesField: React.FC<Props> = ({
 				startMinute={
 					startTime ? minutesInTimeZone(startTime, timezone) : null
 				}
+				preferredStaffId={preferredStaffId}
 				disabled={disabled}
 			/>
 		) : (
