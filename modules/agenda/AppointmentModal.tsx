@@ -174,13 +174,10 @@ const AppointmentModal: React.FC<Props> = ({
 
 			await createAppointment({
 				clientId: client.id,
-				staffId: draft.staffId,
-				serviceIds: [draft.serviceId],
-				// Los dos instantes salen del slot: la duración ya la resolvió quien
-				// calculó la disponibilidad, y recalcularla acá sería una segunda
-				// cuenta que puede no coincidir.
+				// El inicio sale del slot; el fin y el estado los deriva el backend de
+				// las duraciones vigentes, así que no se recalculan acá.
 				startTime: selectedSlot.startTime,
-				endTime: selectedSlot.endTime,
+				items: [{ serviceId: draft.serviceId, staffId: draft.staffId }],
 			});
 
 			handleOpenChange(false);

@@ -37,17 +37,42 @@ export const updateAppointmentStatus = async (
 	return data;
 };
 
-export const createAppointment = async (input: {
-	clientId: string;
-	staffId: string;
-	serviceIds: string[];
-	startTime: string;
-	endTime: string;
-	tenantId?: string;
-}): Promise<AppointmentApi> => {
-	const { data } = await axiosInstance.post('/appointments', input);
+/**
+ * Crea una reserva desde el panel.
+ *
+ * Mismo estado deseado que la edición: cuándo empieza y qué servicios tiene, cada
+ * uno con su profesional. El fin lo deriva el backend de las duraciones vigentes,
+ * y el estado también —una fecha pasada nace atendida—, así que nada de eso viaja
+ * desde acá.
+ */
+export const createAppointment = async (
+	payload: CreateBookingPayload,
+): Promise<CreateBookingResponse> => {
+	const { data } = await axiosInstance.post('/appointments', payload);
 	return data;
 };
+
+export interface CreateBookingPayload {
+	clientId: string;
+	startTime: string;
+	items: Array<{ serviceId: string; staffId: string }>;
+}
+
+/** Lo que el panel debe advertir después de crear: pasado, cerrado, fuera de turno. */
+export interface BookingWarning {
+	code:
+		| 'PAST_TIME'
+		| 'CLOSED_DAY'
+		| 'OUTSIDE_BUSINESS_HOURS'
+		| 'STAFF_OFF_SHIFT';
+	message: string;
+	staffId?: string;
+}
+
+export interface CreateBookingResponse {
+	appointment: AppointmentDetailApi;
+	warnings: BookingWarning[];
+}
 
 /** Sin `date` devuelve hoy en la zona horaria del negocio. */
 export const getDayAppointments = async (
