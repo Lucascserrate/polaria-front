@@ -9,6 +9,7 @@ import StaffRanking from '@/modules/analytics/StaffRanking';
 import ServiceRanking from '@/modules/analytics/ServiceRanking';
 import { formatRange } from '@/modules/analytics/utils/format';
 import { getReport } from '@/services/reports';
+import type { DateRange } from '@/lib/dateRange';
 import type { ReportPreset, TenantReport } from '@/types/reports.types';
 
 const todayIso = (): string => {
@@ -30,28 +31,40 @@ const todayIso = (): string => {
  */
 const AnalyticsPage = () => {
 	const [preset, setPreset] = useState<ReportPreset>('month');
-	const [from, setFrom] = useState(todayIso);
-	const [to, setTo] = useState(todayIso);
+	const [range, setRange] = useState<DateRange>(() => {
+		const today = todayIso();
+		return { from: today, to: today };
+	});
 
-	// El rango invertido se ataja acá para no disparar una consulta que el
-	// backend va a rechazar igual.
-	const rangeError =
-		preset === 'custom' && from && to && from > to
-			? 'La fecha inicial no puede ser posterior a la final.'
-			: null;
-
-	const isCustomReady = preset !== 'custom' || (!!from && !!to && !rangeError);
+	const isCustom = preset === 'custom';
 
 	const { data, isLoading, isError } = useQuery<TenantReport>({
 		queryKey: [
 			'report',
 			preset,
-			preset === 'custom' ? from : '',
-			preset === 'custom' ? to : '',
+			isCustom ? range.from : '',
+			isCustom ? range.to : '',
 		],
-		queryFn: () => getReport({ preset, from, to }),
-		enabled: isCustomReady,
+		queryFn: () =>
+			getReport({ preset, from: range.from, to: range.to ?? range.from }),
+		// Con el rango a medias no hay nada que consultar todavía; el resultado
+		// anterior se queda en pantalla mientras se elige el segundo día.
+		enabled: !isCustom || range.to !== null,
 	});
+
+	/**
+	 * Pasar a "Personalizado" arranca desde el período que se está mirando.
+	 *
+	 * Además de ser lo esperable —se ajusta lo que ya está en pantalla—, esas
+	 * fechas vienen resueltas por el backend en la zona del negocio, mientras que
+	 * el reloj del navegador puede estar un día corrido.
+	 */
+	const changePreset = (next: ReportPreset) => {
+		if (next === 'custom' && !isCustom && data) {
+			setRange({ from: data.range.from, to: data.range.to });
+		}
+		setPreset(next);
+	};
 
 	const rangeLabel = useMemo(
 		() => (data ? formatRange(data.range.from, data.range.to) : null),
@@ -69,12 +82,9 @@ const AnalyticsPage = () => {
 
 			<PeriodSelector
 				preset={preset}
-				from={from}
-				to={to}
-				onPresetChange={setPreset}
-				onFromChange={setFrom}
-				onToChange={setTo}
-				error={rangeError}
+				range={range}
+				onPresetChange={changePreset}
+				onRangeChange={setRange}
 			/>
 
 			{isLoading && (

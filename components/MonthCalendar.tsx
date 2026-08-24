@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { parseDateKey, toDateKey, todayKey } from '@/lib/date';
+import { isBetweenRange } from '@/lib/dateRange';
 
 /**
  * La semana arranca el lunes, igual que la grilla de horarios de Configuración.
@@ -32,6 +33,15 @@ interface Props {
 	 * calendario resaltaría el día de mañana.
 	 */
 	today?: string;
+	/**
+	 * Otro extremo del rango, `YYYY-MM-DD`. Pasarlo —aunque sea `null`— pone al
+	 * calendario en modo rango: pinta lo que queda en el medio y deja de ofrecer
+	 * "Volver a hoy", que ahí significaría mover el inicio del período.
+	 *
+	 * El componente no sabe armar rangos: avisa el día clickeado y quien lo usa
+	 * decide si es el principio o el final.
+	 */
+	rangeEnd?: string | null;
 }
 
 /**
@@ -45,7 +55,10 @@ const MonthCalendar: React.FC<Props> = ({
 	value,
 	onChange,
 	today = todayKey(),
+	rangeEnd,
 }) => {
+	const isRangeMode = rangeEnd !== undefined;
+
 	const [visibleMonth, setVisibleMonth] = useState(() => {
 		const selected = parseDateKey(value);
 		return new Date(selected.getFullYear(), selected.getMonth(), 1);
@@ -118,7 +131,8 @@ const MonthCalendar: React.FC<Props> = ({
 				{Array.from({ length: daysInMonth }, (_, index) => {
 					const date = new Date(year, month, index + 1);
 					const key = toDateKey(date);
-					const isSelected = key === value;
+					const isSelected = key === value || key === rangeEnd;
+					const isBetween = isBetweenRange(key, value, rangeEnd);
 					const isToday = key === today;
 
 					return (
@@ -132,9 +146,11 @@ const MonthCalendar: React.FC<Props> = ({
 							className={`h-8 w-8 rounded-full text-sm flex items-center justify-center transition-colors ${
 								isSelected
 									? 'bg-primary text-primary-foreground font-semibold'
-									: isToday
-										? 'text-primary font-semibold hover:bg-accent'
-										: 'hover:bg-accent'
+									: isBetween
+										? 'bg-accent hover:bg-accent/70'
+										: isToday
+											? 'text-primary font-semibold hover:bg-accent'
+											: 'hover:bg-accent'
 							}`}
 						>
 							{index + 1}
@@ -143,7 +159,7 @@ const MonthCalendar: React.FC<Props> = ({
 				})}
 			</div>
 
-			{value !== today && (
+			{!isRangeMode && value !== today && (
 				<Button
 					type="button"
 					variant="ghost"
