@@ -5,14 +5,29 @@ import type {
 	UpdateServiceDto,
 } from '@/types/services.types';
 
+/**
+ * Normaliza el precio a número.
+ *
+ * La columna es `decimal(10,2)`, y MySQL devuelve los decimales como **string**
+ * aunque la entidad los declare `number`. Sumar sobre eso no falla: concatena.
+ * Un total de 100 se veía como `0100.00`, porque `0 + '100.00'` es una cadena.
+ *
+ * Se arregla en el borde y no en cada pantalla: así el tipo `Service` dice la
+ * verdad y quien lo consume puede sumar sin desconfiar.
+ */
+const toService = (service: Service): Service => ({
+	...service,
+	price: Number(service.price),
+});
+
 export const getServices = async (): Promise<Service[]> => {
 	const response = await axiosInstance.get<Service[]>('/services');
-	return response.data;
+	return response.data.map(toService);
 };
 
 export const getService = async (id: string): Promise<Service> => {
 	const response = await axiosInstance.get<Service>(`/services/${id}`);
-	return response.data;
+	return toService(response.data);
 };
 
 export const createService = async (

@@ -6,6 +6,8 @@ export type SettingsResponse = {
 	/** Ver `BUSINESS_TYPES`. `null` hasta que la configuración inicial lo carga. */
 	businessType: string | null;
 	timezone: string;
+	/** Moneda del negocio, en ISO 4217. La necesita cualquier pantalla con precios. */
+	currency: string;
 	location: { latitude: number; longitude: number } | null;
 	/**
 	 * Horario semanal del negocio, una entrada por franja. Un día sin entradas

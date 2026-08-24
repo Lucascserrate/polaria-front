@@ -115,6 +115,8 @@ const BookingEditor: React.FC<EditorProps> = ({
 
 	// Creando no hay reserva de la que sacar la zona: la trae la configuración.
 	const timezone = booking?.timezone ?? settings?.timezone;
+	// Sin configuración todavía, el código ISO es el del negocio por defecto.
+	const currency = settings?.currency ?? 'BOB';
 	const reminder = describeReminder(booking?.reminder ?? null);
 	const segments = booking?.segments ?? [];
 
@@ -315,6 +317,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 						}}
 						services={services}
 						staff={staff}
+						currency={currency}
 						offsets={draft.offsets}
 						startTime={draft.startTime}
 						timezone={timezone}
@@ -360,6 +363,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 			{view === 'detail' && (
 				<DrawerFooter className="flex-row items-center justify-between border-t border-border">
 					<BookingSummary
+						currency={currency}
 						totalMinutes={
 							isCreating || draft.hasChanges
 								? draft.summary.totalMinutes

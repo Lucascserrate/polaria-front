@@ -13,6 +13,7 @@ import {
 import { eligibleStaffFor } from './utils/eligibleStaff';
 import type { StaffMember } from '@/types/staff.types';
 import type { DraftItem } from './utils/bookingDraft';
+import { formatMoney } from '@/lib/money';
 import { formatMinute } from './utils/calendarLayout';
 
 /**
@@ -35,6 +36,7 @@ interface Props {
 	onChange: (items: DraftItem[]) => void;
 	services: EditableService[];
 	staff: StaffMember[];
+	currency: string;
 	/** Minutos en que arranca cada tramo, para mostrar su hora. */
 	offsets: number[];
 	/** Minuto del día en que arranca la reserva, o `null` si no se sabe. */
@@ -66,6 +68,7 @@ const BookingServicesEditor: React.FC<Props> = ({
 	onChange,
 	services,
 	staff,
+	currency,
 	offsets,
 	startMinute,
 	preferredStaffId,
@@ -133,7 +136,7 @@ const BookingServicesEditor: React.FC<Props> = ({
 									</p>
 									<div className="flex shrink-0 items-center gap-2">
 										<p className="text-sm tabular-nums">
-											{service?.price ?? 0}
+											{formatMoney(service?.price ?? 0, currency)}
 										</p>
 										<Button
 											variant="ghost"

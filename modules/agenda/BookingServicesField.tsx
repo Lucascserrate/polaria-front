@@ -7,6 +7,7 @@ import BookingServicesEditor, {
 	type EditableService,
 } from './BookingServicesEditor';
 import type { DraftItem } from './utils/bookingDraft';
+import { formatMoney } from '@/lib/money';
 import { formatMinute, minutesInTimeZone } from './utils/calendarLayout';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 	onChange: (items: DraftItem[]) => void;
 	services: EditableService[];
 	staff: StaffMember[];
+	currency: string;
 	offsets: number[];
 	/** Inicio de la reserva en ISO, para calcular la hora de cada tramo. */
 	startTime: string | null;
@@ -48,6 +50,7 @@ const BookingServicesField: React.FC<Props> = ({
 	onChange,
 	services,
 	staff,
+	currency,
 	offsets,
 	startTime,
 	timezone,
@@ -69,10 +72,9 @@ const BookingServicesField: React.FC<Props> = ({
 				onChange={onChange}
 				services={services}
 				staff={staff}
+				currency={currency}
 				offsets={offsets}
-				startMinute={
-					startTime ? minutesInTimeZone(startTime, timezone) : null
-				}
+				startMinute={startTime ? minutesInTimeZone(startTime, timezone) : null}
 				preferredStaffId={preferredStaffId}
 				disabled={disabled}
 			/>
@@ -87,9 +89,14 @@ const BookingServicesField: React.FC<Props> = ({
 							{timeIn(segment.startTime, timezone)}
 						</span>
 						<div className="min-w-0 flex-1 rounded-lg border border-border bg-card p-3">
-							<p className="truncate text-sm font-medium">
-								{segment.serviceName ?? 'Servicio'}
-							</p>
+							<div className="flex items-baseline justify-between gap-2">
+								<p className="truncate text-sm font-medium">
+									{segment.serviceName ?? 'Servicio'}
+								</p>
+								<p className="shrink-0 text-sm tabular-nums">
+									{formatMoney(segment.price, currency)}
+								</p>
+							</div>
 							<p className="truncate text-xs text-muted-foreground">
 								{segment.durationMinutes} min ·{' '}
 								{segment.staffName ?? 'Sin profesional'}
