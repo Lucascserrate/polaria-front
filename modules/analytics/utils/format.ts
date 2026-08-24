@@ -1,5 +1,3 @@
-export { formatMoney } from '@/lib/money';
-
 /** `2026-08-09` → `9 ago 2026`, para el encabezado del período. */
 export const formatDay = (isoDate: string): string => {
 	const [year, month, day] = isoDate.split('-').map(Number);

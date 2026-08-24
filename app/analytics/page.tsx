@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PeriodSelector from '@/modules/analytics/PeriodSelector';
 import AnalyticsSummary from '@/modules/analytics/AnalyticsSummary';
-import StaffRankingTable from '@/modules/analytics/StaffRankingTable';
-import ServiceRankingTable from '@/modules/analytics/ServiceRankingTable';
+import StaffRanking from '@/modules/analytics/StaffRanking';
+import ServiceRanking from '@/modules/analytics/ServiceRanking';
 import { formatRange } from '@/modules/analytics/utils/format';
 import { getReport } from '@/services/reports';
 import type { ReportPreset, TenantReport } from '@/types/reports.types';
@@ -96,20 +96,31 @@ const AnalyticsPage = () => {
 						rangeLabel={rangeLabel}
 					/>
 
-					<div className="rounded-lg border border-border bg-card p-6">
-						<h2 className="mb-4 text-xl font-semibold">Por profesional</h2>
-						<StaffRankingTable
-							entries={data.staffRanking}
-							currency={data.currency}
-						/>
-					</div>
+					{/*
+					 * Lado a lado en pantalla ancha: son dos respuestas a la misma
+					 * pregunta —de dónde viene lo facturado— y compararlas de un vistazo
+					 * dice más que leerlas una debajo de la otra.
+					 */}
+					<div className="grid gap-6 lg:grid-cols-2">
+						<section className="rounded-xl border border-border bg-card p-6">
+							<h2 className="mb-4 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+								Profesionales
+							</h2>
+							<StaffRanking
+								entries={data.staffRanking}
+								currency={data.currency}
+							/>
+						</section>
 
-					<div className="rounded-lg border border-border bg-card p-6">
-						<h2 className="mb-4 text-xl font-semibold">Por servicio</h2>
-						<ServiceRankingTable
-							entries={data.serviceRanking}
-							currency={data.currency}
-						/>
+						<section className="rounded-xl border border-border bg-card p-6">
+							<h2 className="mb-4 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+								Servicios
+							</h2>
+							<ServiceRanking
+								entries={data.serviceRanking}
+								currency={data.currency}
+							/>
+						</section>
 					</div>
 				</div>
 			)}
