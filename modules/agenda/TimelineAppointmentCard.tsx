@@ -32,7 +32,7 @@ import type {
 	Appointment,
 	AppointmentStatus,
 } from '@/types/appointments.types';
-import { formatMinute } from './utils/dayTimeline';
+import { formatMinute } from './utils/calendarLayout';
 import { describeReminder } from './utils/reminderStatus';
 import { cn } from '@/lib/utils';
 import {

@@ -1,6 +1,5 @@
 export const ROUTES = {
 	agenda: '/agenda',
-	appointments: '/appointments',
 	auth: '/auth',
 	onboarding: '/onboarding',
 	setup: '/setup',

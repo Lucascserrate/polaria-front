@@ -1,33 +1,10 @@
 import { axiosInstance } from '@/lib/axios';
 import type {
 	AppointmentApi,
-	AppointmentApiPage,
-	AppointmentStatus,
-	AppointmentApiToday,
 	AppointmentApiRange,
 	AppointmentDetailApi,
+	AppointmentStatus,
 } from '@/types/appointments.types';
-
-export const getAppointments = async (
-	page = 1,
-	limit = 20,
-	filters?: {
-		search?: string;
-		status?: string;
-		sortBy?: 'date-asc' | 'date-desc';
-	},
-): Promise<AppointmentApiPage> => {
-	const { data } = await axiosInstance.get('/appointments', {
-		params: { 
-			page, 
-			limit,
-			...(filters?.search && { search: filters.search }),
-			...(filters?.status && { status: filters.status }),
-			...(filters?.sortBy && { sortBy: filters.sortBy }),
-		},
-	});
-	return data;
-};
 
 export const updateAppointmentStatus = async (
 	id: string,
@@ -74,18 +51,8 @@ export interface CreateBookingResponse {
 	warnings: BookingWarning[];
 }
 
-/** Sin `date` devuelve hoy en la zona horaria del negocio. */
-export const getDayAppointments = async (
-	date?: string,
-): Promise<AppointmentApiToday> => {
-	const { data } = await axiosInstance.get('/appointments/day', {
-		params: date ? { date } : undefined,
-	});
-	return data;
-};
-
 /**
- * Las citas de varios días, para la agenda semanal.
+ * Las citas de varios días, para la agenda.
  *
  * @param from `YYYY-MM-DD` en la zona del negocio.
  * @param to Igual, inclusive: pedir de lunes a domingo trae el domingo entero.
@@ -123,8 +90,4 @@ export const editBooking = async (
 		payload,
 	);
 	return data;
-};
-
-export const deleteAppointment = async (id: string) => {
-	await axiosInstance.delete(`/appointments/${id}`);
 };

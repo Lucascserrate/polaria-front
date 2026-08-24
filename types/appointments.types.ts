@@ -48,20 +48,6 @@ export interface AppointmentApi {
 	reminder?: AppointmentReminderApi | null;
 }
 
-export interface AppointmentApiPage {
-	items: AppointmentApi[];
-	total: number;
-	counts: {
-		pending: number;
-		confirmed: number;
-		completed: number;
-		cancelled: number;
-	};
-	page: number;
-	limit: number;
-	hasMore: boolean;
-}
-
 /**
  * La reserva completa, para verla y editarla.
  *
@@ -82,18 +68,6 @@ export interface AppointmentApiRange {
 	to: string;
 	/** Zona del negocio. La grilla se dibuja en esta y no en la del navegador. */
 	timezone: string;
-}
-
-export interface AppointmentApiToday {
-	items: AppointmentApi[];
-	total: number;
-	counts: {
-		pending: number;
-		confirmed: number;
-		completed: number;
-		cancelled: number;
-	};
-	revenueTotal: number;
 }
 
 export interface Appointment {

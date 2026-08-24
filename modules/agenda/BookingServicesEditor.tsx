@@ -10,7 +10,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { eligibleStaffFor } from '@/modules/appointment-wizard/options';
+import { eligibleStaffFor } from './utils/eligibleStaff';
 import type { StaffMember } from '@/types/staff.types';
 import type { DraftItem } from './utils/bookingDraft';
 import { formatMinute } from './utils/calendarLayout';
