@@ -35,6 +35,7 @@ import useNow from '@/lib/useNow';
 import useGetAppointmentsRange from '@/services/appointments/useGetAppointmentsRange';
 import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
 import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
+import useDeleteBooking from '@/services/appointments/useDeleteBooking';
 import useGetSettings from '@/services/settings/useGetSettings';
 
 /** Iniciales del profesional, para la cabecera angosta de su columna. */
@@ -120,8 +121,28 @@ const AgendaPage = () => {
 		[updateStatus],
 	);
 
-	// La cita en curso sale de la mutación, así que no hace falta un estado aparte.
-	const updatingId = isUpdatingStatus ? (statusVariables?.id ?? null) : null;
+	const {
+		mutate: deleteBooking,
+		isPending: isDeleting,
+		variables: deletingId,
+		isError: deleteError,
+	} = useDeleteBooking();
+
+	const handleDelete = useCallback(
+		(id: string) => deleteBooking(id),
+		[deleteBooking],
+	);
+
+	/*
+	 * La cita en curso sale de la mutación, así que no hace falta un estado
+	 * aparte. Borrar también cuenta: mientras la petición viaja, sus acciones se
+	 * apagan igual que al cambiar de estado.
+	 */
+	const updatingId = isUpdatingStatus
+		? (statusVariables?.id ?? null)
+		: isDeleting
+			? (deletingId ?? null)
+			: null;
 
 	// Solo en la vista diaria: en la semanal sería un pedido que nadie mira.
 	const { data: working } = useGetWorkingStaff(selectedDate, view === 'day');
@@ -150,6 +171,7 @@ const AgendaPage = () => {
 							onMarkAttended={handleMarkAttended}
 							onCancel={handleCancel}
 							onEdit={setEditingId}
+							onDelete={handleDelete}
 							updatingId={updatingId}
 						/>
 					),
@@ -178,6 +200,7 @@ const AgendaPage = () => {
 			blocksByDay,
 			handleMarkAttended,
 			handleCancel,
+			handleDelete,
 			updatingId,
 		],
 	);
@@ -210,6 +233,7 @@ const AgendaPage = () => {
 					onMarkAttended={handleMarkAttended}
 					onCancel={handleCancel}
 					onEdit={setEditingId}
+					onDelete={handleDelete}
 					updatingId={updatingId}
 				/>
 			),
@@ -240,6 +264,7 @@ const AgendaPage = () => {
 		timezone,
 		handleMarkAttended,
 		handleCancel,
+		handleDelete,
 		updatingId,
 	]);
 
@@ -372,11 +397,13 @@ const AgendaPage = () => {
 				</div>
 			)}
 
-			{(isError || statusError) && (
+			{(isError || statusError || deleteError) && (
 				<p className="shrink-0 border-b border-border bg-red-50 px-3 py-1.5 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-400">
 					{isError
 						? 'No se pudieron cargar las citas. Se vuelve a intentar solo.'
-						: 'No se pudo actualizar la cita. Intentá de nuevo.'}
+						: deleteError
+							? 'No se pudo eliminar la reserva. Intentá de nuevo.'
+							: 'No se pudo actualizar la cita. Intentá de nuevo.'}
 				</p>
 			)}
 

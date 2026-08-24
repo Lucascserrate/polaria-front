@@ -91,3 +91,14 @@ export const editBooking = async (
 	);
 	return data;
 };
+
+/**
+ * Borra una reserva de verdad.
+ *
+ * No es cancelar: cancelar la deja en la historia con su horario liberado. Esto
+ * es para lo que nunca debió existir —una prueba, una carga duplicada— y no se
+ * puede deshacer.
+ */
+export const deleteAppointment = async (id: string): Promise<void> => {
+	await axiosInstance.delete(`/appointments/${id}`);
+};
