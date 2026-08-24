@@ -24,6 +24,13 @@ export const getBookingSlots = async (params: {
 	 * propia cita estaría bloqueando ese rato.
 	 */
 	excludeAppointmentId?: string;
+	/**
+	 * Quién pregunta.
+	 *
+	 * `panel` no aplica la anticipación mínima del cliente: el administrador
+	 * registra, no avisa. El backend es el que traduce eso a un piso concreto.
+	 */
+	scope?: 'client' | 'panel';
 }): Promise<BookingSlot[]> => {
 	const { data } = await axiosInstance.get<BookingSlot[]>(
 		'/availability/booking-slots',

@@ -18,6 +18,7 @@ import useEditBooking from '@/services/appointments/useEditBooking';
 import useCreateBooking from '@/services/appointments/useCreateBooking';
 import useGetSettings from '@/services/settings/useGetSettings';
 import { findOrCreateClient } from '@/services/clients';
+import type { BookingWarning } from '@/services/appointments/appointments.service';
 import useGetServices from '@/services/services/useGetServices';
 import useGetStaff from '@/services/staff/useGetStaff';
 import useGetSlotsForBooking from '@/services/availability/useGetSlotsForBooking';
@@ -52,6 +53,14 @@ interface Props {
 	/** Hoy en la zona del negocio. */
 	todayKey: string;
 	onClose: () => void;
+	/**
+	 * Se llama con lo que el backend advirtió al crear.
+	 *
+	 * Las advertencias llegan con la reserva ya creada —el panel permite registrar
+	 * excepciones— así que se muestran afuera, donde queda la agenda, y no en un
+	 * panel que se está cerrando.
+	 */
+	onCreated?: (warnings: BookingWarning[]) => void;
 }
 
 interface EditorProps {
@@ -59,6 +68,7 @@ interface EditorProps {
 	seed?: BookingSeed | null;
 	todayKey: string;
 	onClose: () => void;
+	onCreated?: (warnings: BookingWarning[]) => void;
 }
 
 /** La hora de un instante, en la zona del negocio. */
@@ -84,6 +94,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 	seed,
 	todayKey,
 	onClose,
+	onCreated,
 }) => {
 	const isCreating = appointmentId === null;
 
@@ -124,6 +135,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 		date: slotsDate,
 		items: draft.slotItems,
 		excludeAppointmentId: appointmentId ?? undefined,
+		scope: 'panel',
 		enabled:
 			draft.slotItems.length > 0 &&
 			(isCreating || (draft.servicesChanged && draft.canEdit)),
@@ -184,11 +196,13 @@ const BookingEditor: React.FC<EditorProps> = ({
 					draft.client.id ??
 					(await findOrCreateClient({ name: draft.client.name.trim() })).id;
 
-				await create({
+				const created = await create({
 					clientId,
 					startTime: draft.startTime,
 					items: draft.items,
 				});
+
+				onCreated?.(created.warnings);
 			} else {
 				await save({
 					id: appointmentId as string,
@@ -253,6 +267,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 						todayKey={todayKey}
 						timezone={timezone}
 						items={draft.slotItems}
+						totalMinutes={draft.summary.totalMinutes}
 						excludeAppointmentId={appointmentId ?? undefined}
 						selected={draft.startTime}
 						onSelect={(next) => {
@@ -412,6 +427,7 @@ const BookingDrawer: React.FC<Props> = ({
 	seed,
 	todayKey,
 	onClose,
+	onCreated,
 }) => {
 	const open = appointmentId !== null || Boolean(seed);
 
@@ -436,6 +452,7 @@ const BookingDrawer: React.FC<Props> = ({
 						seed={seed}
 						todayKey={todayKey}
 						onClose={onClose}
+						onCreated={onCreated}
 					/>
 				)}
 			</DrawerContent>

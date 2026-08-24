@@ -8,6 +8,7 @@ import {
 	dayMinutesOf,
 	formatMinute,
 	HOUR_MARKS,
+	instantAtMinute,
 	isMinuteOpen,
 	minutesInTimeZone,
 	MIN_BLOCK_HEIGHT,
@@ -545,5 +546,44 @@ describe('HOUR_MARKS', () => {
 		expect(HOUR_MARKS).toHaveLength(24);
 		expect(HOUR_MARKS[0]).toBe(0);
 		expect(HOUR_MARKS[23]).toBe(23 * 60);
+	});
+});
+
+describe('instantAtMinute', () => {
+	it('es la inversa de minutesInTimeZone', () => {
+		const iso = instantAtMinute('2026-08-22', 14 * 60, LA_PAZ);
+
+		expect(minutesInTimeZone(iso, LA_PAZ)).toBe(14 * 60);
+		expect(dateKeyInTimeZone(iso, LA_PAZ)).toBe('2026-08-22');
+	});
+
+	it('convierte la hora del negocio al instante correcto', () => {
+		// Las 14:00 en Bolivia (UTC-4) son las 18:00 UTC.
+		expect(instantAtMinute('2026-08-22', 14 * 60, LA_PAZ)).toBe(
+			'2026-08-22T18:00:00.000Z',
+		);
+	});
+
+	it('la medianoche del negocio no cae en el día anterior', () => {
+		expect(instantAtMinute('2026-08-22', 0, LA_PAZ)).toBe(
+			'2026-08-22T04:00:00.000Z',
+		);
+	});
+
+	it('usa el desvío de la fecha pedida y no el de hoy', () => {
+		// Santiago cambia de hora: enero es UTC-3 y julio UTC-4.
+		expect(instantAtMinute('2026-01-15', 12 * 60, SANTIAGO)).toBe(
+			'2026-01-15T15:00:00.000Z',
+		);
+		expect(instantAtMinute('2026-07-15', 12 * 60, SANTIAGO)).toBe(
+			'2026-07-15T16:00:00.000Z',
+		);
+	});
+
+	it('el último tramo del día sigue siendo de ese día', () => {
+		const iso = instantAtMinute('2026-08-22', 23 * 60 + 45, LA_PAZ);
+
+		expect(dateKeyInTimeZone(iso, LA_PAZ)).toBe('2026-08-22');
+		expect(minutesInTimeZone(iso, LA_PAZ)).toBe(23 * 60 + 45);
 	});
 });

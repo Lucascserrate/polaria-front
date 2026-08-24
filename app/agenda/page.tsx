@@ -12,6 +12,7 @@ import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
 import BookingDrawer, {
 	type BookingSeed,
 } from '@/modules/agenda/BookingDrawer';
+import type { BookingWarning } from '@/services/appointments/appointments.service';
 import {
 	buildStaffColumns,
 	groupBlocksByDay,
@@ -71,6 +72,15 @@ const AgendaPage = () => {
 
 	/** Reserva abierta en el panel lateral. */
 	const [editingId, setEditingId] = useState<string | null>(null);
+
+	/**
+	 * Lo que el backend advirtió de la última reserva creada.
+	 *
+	 * La cita ya existe: esto no es un error, es lo que hay que saber sobre ella.
+	 * Se muestra en la agenda y no en el panel porque el panel se cierra al
+	 * guardar, y lo que quedó raro sigue importando después.
+	 */
+	const [createWarnings, setCreateWarnings] = useState<BookingWarning[]>([]);
 
 	const { data: settings } = useGetSettings();
 	const timezone = settings?.timezone;
@@ -265,19 +275,6 @@ const AgendaPage = () => {
 	}, [columns, days, todayKey, settings]);
 
 	/**
-	 * Un hueco libre abre el asistente con lo que el click ya dijo.
-	 *
-	 * En la vista semanal la columna es el día; en la diaria es el profesional, y
-	 * ahí también viaja quién atiende. Los días pasados no abren nada: no hay
-	 * disponibilidad que consultar hacia atrás, y registrar una atención que ya
-	 * ocurrió es otra pregunta.
-	 */
-	const canCreateOn = useCallback(
-		(date: string) => date >= todayKey,
-		[todayKey],
-	);
-
-	/**
 	 * La cabecera de un día lleva a su vista diaria.
 	 *
 	 * Solo en la semanal: en la diaria las columnas son personas, y clickear a un
@@ -288,10 +285,19 @@ const AgendaPage = () => {
 		setView('day');
 	}, []);
 
+	/**
+	 * Un hueco abre el panel de reserva con lo que el click ya dijo.
+	 *
+	 * En la vista semanal la columna es el día; en la diaria es el profesional, y
+	 * ahí también viaja quién atiende.
+	 *
+	 * Los días pasados también abren: la agenda del panel no sirve solo para
+	 * agendar, también para registrar lo que ocurrió y no se cargó. Lo que era raro
+	 * —una hora que ya pasó, un día cerrado— se advierte, no se impide.
+	 */
 	const handleSlotClick = useCallback(
 		(columnKey: string, minute: number) => {
 			const date = view === 'week' ? columnKey : selectedDate;
-			if (!canCreateOn(date)) return;
 
 			setDraftSlot({
 				date,
@@ -300,7 +306,7 @@ const AgendaPage = () => {
 					view === 'day' && columnKey !== UNASSIGNED_COLUMN ? columnKey : null,
 			});
 		},
-		[view, selectedDate, canCreateOn],
+		[view, selectedDate],
 	);
 
 	/*
@@ -330,12 +336,6 @@ const AgendaPage = () => {
 				action={
 					<Button
 						className="gap-2"
-						disabled={!canCreateOn(selectedDate)}
-						title={
-							canCreateOn(selectedDate)
-								? undefined
-								: 'No se pueden agendar citas en días que ya pasaron'
-						}
 						onClick={() =>
 							setDraftSlot({
 								date: selectedDate,
@@ -349,6 +349,28 @@ const AgendaPage = () => {
 					</Button>
 				}
 			/>
+
+			{createWarnings.length > 0 && (
+				<div className="shrink-0 border-b border-amber-500/50 bg-amber-500/10 px-3 py-1.5">
+					<div className="flex items-start justify-between gap-3">
+						<div className="space-y-0.5">
+							<p className="text-xs font-medium">Cita registrada.</p>
+							{createWarnings.map((warning) => (
+								<p key={warning.code} className="text-xs">
+									{warning.message}
+								</p>
+							))}
+						</div>
+						<button
+							type="button"
+							className="shrink-0 text-xs text-muted-foreground underline"
+							onClick={() => setCreateWarnings([])}
+						>
+							Entendido
+						</button>
+					</div>
+				</div>
+			)}
 
 			{(isError || statusError) && (
 				<p className="shrink-0 border-b border-border bg-red-50 px-3 py-1.5 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-400">
@@ -380,6 +402,7 @@ const AgendaPage = () => {
 					setEditingId(null);
 					setDraftSlot(null);
 				}}
+				onCreated={setCreateWarnings}
 			/>
 
 			<FloatingAttention />

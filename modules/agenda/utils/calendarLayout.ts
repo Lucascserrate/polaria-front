@@ -117,6 +117,68 @@ export const nowMinuteInTimeZone = (
 	timeZone?: string,
 ): number | null => minutesInTimeZone(now.toISOString(), timeZone);
 
+/**
+ * Cuántos minutos se desvía una zona de UTC en un instante dado.
+ *
+ * Se mide reconstruyendo la hora local con `Intl` y comparándola con el instante:
+ * es la única forma de obtener el desvío real de una fecha concreta, incluido el
+ * horario de verano, sin una tabla de zonas propia.
+ */
+const zoneOffsetMinutes = (instant: Date, timeZone?: string): number => {
+	const parts = new Intl.DateTimeFormat('en-CA', {
+		timeZone,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false,
+	}).formatToParts(instant);
+
+	const value = (type: string) =>
+		Number(parts.find((part) => part.type === type)?.value ?? 0);
+
+	const asUtc = Date.UTC(
+		value('year'),
+		value('month') - 1,
+		value('day'),
+		value('hour') % 24,
+		value('minute'),
+		value('second'),
+	);
+
+	return (asUtc - instant.getTime()) / 60_000;
+};
+
+/**
+ * El instante en que ocurre un minuto de un día, en la zona del negocio.
+ *
+ * Es la inversa de `minutesInTimeZone`, y hace falta para poder **proponer** un
+ * horario: registrar una atención de las 14:00 del 20 de agosto exige convertir
+ * eso a un instante, y esa cuenta no se puede hacer con el reloj del navegador
+ * —quien mira desde otro huso guardaría otra hora—.
+ *
+ * El desvío se mide sobre la fecha pedida y no sobre hoy: entre las dos puede
+ * haber un cambio de horario de verano.
+ */
+export const instantAtMinute = (
+	dateKey: string,
+	minute: number,
+	timeZone?: string,
+): string => {
+	const [year, month, day] = dateKey.split('-').map(Number);
+	const hours = Math.floor(minute / 60);
+	const minutes = minute % 60;
+
+	// Primero se trata la hora local como si fuera UTC y después se corrige por
+	// el desvío que la zona tiene en ese momento.
+	const guess = Date.UTC(year, month - 1, day, hours, minutes);
+	const offset = zoneOffsetMinutes(new Date(guess), timeZone);
+
+	return new Date(guess - offset * 60_000).toISOString();
+};
+
 /** Corre una fecha `YYYY-MM-DD` una cantidad de días, sin pasar por zona horaria. */
 export const shiftDateKey = (key: string, days: number): string => {
 	const [year, month, day] = key.split('-').map(Number);

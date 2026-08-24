@@ -27,9 +27,17 @@ const useGetSlotsForBooking = (params: {
 	date: string;
 	items: BookingSlotItem[];
 	excludeAppointmentId?: string;
+	/** El panel no aplica la anticipación mínima del cliente. */
+	scope?: 'client' | 'panel';
 	enabled?: boolean;
 }) => {
-	const { date, items, excludeAppointmentId, enabled = true } = params;
+	const {
+		date,
+		items,
+		excludeAppointmentId,
+		scope = 'client',
+		enabled = true,
+	} = params;
 
 	const queries = useQueries({
 		queries: items.map((item) => ({
@@ -40,6 +48,7 @@ const useGetSlotsForBooking = (params: {
 				item.serviceId,
 				item.staffId,
 				excludeAppointmentId ?? null,
+				scope,
 			],
 			queryFn: () =>
 				getBookingSlots({
@@ -47,6 +56,7 @@ const useGetSlotsForBooking = (params: {
 					serviceId: item.serviceId,
 					staffId: item.staffId,
 					excludeAppointmentId,
+					scope,
 				}),
 			enabled: enabled && Boolean(date),
 			staleTime: 30_000,
