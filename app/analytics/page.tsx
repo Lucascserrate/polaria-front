@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PeriodSelector from '@/modules/analytics/PeriodSelector';
 import AnalyticsSummary from '@/modules/analytics/AnalyticsSummary';
+import AnalyticsTimeline from '@/modules/analytics/AnalyticsTimeline';
 import StaffRanking from '@/modules/analytics/StaffRanking';
 import ServiceRanking from '@/modules/analytics/ServiceRanking';
 import { formatRange } from '@/modules/analytics/utils/format';
@@ -95,6 +96,22 @@ const AnalyticsPage = () => {
 						currency={data.currency}
 						rangeLabel={rangeLabel}
 					/>
+
+					{/*
+					 * Sin evolución cuando el rango es de un solo día: una sola barra no
+					 * compara nada, y el titular ya dice ese número.
+					 */}
+					{data.timeline && (
+						<section className="rounded-xl border border-border bg-card p-6">
+							<h2 className="mb-4 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+								Evolución
+							</h2>
+							<AnalyticsTimeline
+								timeline={data.timeline}
+								currency={data.currency}
+							/>
+						</section>
+					)}
 
 					{/*
 					 * Lado a lado en pantalla ancha: son dos respuestas a la misma
