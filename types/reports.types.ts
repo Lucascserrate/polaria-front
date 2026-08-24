@@ -32,6 +32,21 @@ export interface ServiceRankingEntry {
 	revenue: number;
 }
 
+export type TimelineGranularity = 'day' | 'month';
+
+export interface TimelineBucket {
+	/** `YYYY-MM-DD` por día, `YYYY-MM` por mes. */
+	key: string;
+	revenue: number;
+	/** Citas distintas atendidas en el tramo, no servicios prestados. */
+	completed: number;
+}
+
+export interface ReportTimeline {
+	granularity: TimelineGranularity;
+	buckets: TimelineBucket[];
+}
+
 export interface TenantReport {
 	range: {
 		preset: ReportPreset;
@@ -42,6 +57,12 @@ export interface TenantReport {
 	/** ISO 4217, para formatear los montos. */
 	currency: string;
 	summary: ReportSummary;
+	/**
+	 * Cómo evolucionó la facturación dentro del período.
+	 *
+	 * `null` cuando el rango es de un solo día: una sola barra no compara nada.
+	 */
+	timeline: ReportTimeline | null;
 	staffRanking: StaffRankingEntry[];
 	serviceRanking: ServiceRankingEntry[];
 }
