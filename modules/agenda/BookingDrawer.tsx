@@ -60,7 +60,7 @@ interface Props {
 	 * excepciones— así que se muestran afuera, donde queda la agenda, y no en un
 	 * panel que se está cerrando.
 	 */
-	onCreated?: (warnings: BookingWarning[]) => void;
+	onSaved?: (warnings: BookingWarning[]) => void;
 }
 
 interface EditorProps {
@@ -68,7 +68,7 @@ interface EditorProps {
 	seed?: BookingSeed | null;
 	todayKey: string;
 	onClose: () => void;
-	onCreated?: (warnings: BookingWarning[]) => void;
+	onSaved?: (warnings: BookingWarning[]) => void;
 }
 
 /** La hora de un instante, en la zona del negocio. */
@@ -94,7 +94,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 	seed,
 	todayKey,
 	onClose,
-	onCreated,
+	onSaved,
 }) => {
 	const isCreating = appointmentId === null;
 
@@ -177,11 +177,16 @@ const BookingEditor: React.FC<EditorProps> = ({
 			draft.startTime !== null
 		: draft.hasChanges;
 
+	/*
+	 * `timeStillFits` no entra acá a propósito.
+	 *
+	 * Que el motor ya no ofrezca ese horario con los servicios nuevos no lo hace
+	 * imposible: el panel puede registrar excepciones —fuera de horario, fuera de
+	 * jornada, pisado— y el backend las devuelve como advertencias. Bloquear el
+	 * botón obligaba a mover a un cliente que ya estaba sentado en la silla.
+	 */
 	const canSave =
-		!busy &&
-		isComplete &&
-		timeStillFits &&
-		draft.summary.unknownServiceIds.length === 0;
+		!busy && isComplete && draft.summary.unknownServiceIds.length === 0;
 
 	const handleSave = async () => {
 		if (!draft.startTime || !canSave) return;
@@ -204,12 +209,14 @@ const BookingEditor: React.FC<EditorProps> = ({
 					items: draft.items,
 				});
 
-				onCreated?.(created.warnings);
+				onSaved?.(created.warnings);
 			} else {
-				await save({
+				const edited = await save({
 					id: appointmentId as string,
 					payload: { startTime: draft.startTime, items: draft.items },
 				});
+
+				onSaved?.(edited.warnings);
 			}
 
 			onClose();
@@ -393,11 +400,6 @@ const BookingEditor: React.FC<EditorProps> = ({
 								{isCreating ? 'Cancelar' : 'Descartar'}
 							</Button>
 							<Button
-								/*
-								 * No se ofrece guardar lo que el backend va a rechazar: si con
-								 * los servicios nuevos la hora ya no entra, primero hay que
-								 * elegir otra.
-								 */
 								disabled={!canSave}
 								onClick={() => void handleSave()}
 							>
@@ -431,7 +433,7 @@ const BookingDrawer: React.FC<Props> = ({
 	seed,
 	todayKey,
 	onClose,
-	onCreated,
+	onSaved,
 }) => {
 	const open = appointmentId !== null || Boolean(seed);
 
@@ -456,7 +458,7 @@ const BookingDrawer: React.FC<Props> = ({
 						seed={seed}
 						todayKey={todayKey}
 						onClose={onClose}
-						onCreated={onCreated}
+						onSaved={onSaved}
 					/>
 				)}
 			</DrawerContent>

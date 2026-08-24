@@ -75,13 +75,13 @@ const AgendaPage = () => {
 	const [editingId, setEditingId] = useState<string | null>(null);
 
 	/**
-	 * Lo que el backend advirtió de la última reserva creada.
+	 * Lo que el backend advirtió de la última reserva guardada, creada o editada.
 	 *
 	 * La cita ya existe: esto no es un error, es lo que hay que saber sobre ella.
 	 * Se muestra en la agenda y no en el panel porque el panel se cierra al
 	 * guardar, y lo que quedó raro sigue importando después.
 	 */
-	const [createWarnings, setCreateWarnings] = useState<BookingWarning[]>([]);
+	const [saveWarnings, setSaveWarnings] = useState<BookingWarning[]>([]);
 
 	const { data: settings } = useGetSettings();
 	const timezone = settings?.timezone;
@@ -375,12 +375,12 @@ const AgendaPage = () => {
 				}
 			/>
 
-			{createWarnings.length > 0 && (
+			{saveWarnings.length > 0 && (
 				<div className="shrink-0 border-b border-amber-500/50 bg-amber-500/10 px-3 py-1.5">
 					<div className="flex items-start justify-between gap-3">
 						<div className="space-y-0.5">
-							<p className="text-xs font-medium">Cita registrada.</p>
-							{createWarnings.map((warning) => (
+							<p className="text-xs font-medium">Cita guardada.</p>
+							{saveWarnings.map((warning) => (
 								<p key={warning.code} className="text-xs">
 									{warning.message}
 								</p>
@@ -389,7 +389,7 @@ const AgendaPage = () => {
 						<button
 							type="button"
 							className="shrink-0 text-xs text-muted-foreground underline"
-							onClick={() => setCreateWarnings([])}
+							onClick={() => setSaveWarnings([])}
 						>
 							Entendido
 						</button>
@@ -429,7 +429,7 @@ const AgendaPage = () => {
 					setEditingId(null);
 					setDraftSlot(null);
 				}}
-				onCreated={setCreateWarnings}
+				onSaved={setSaveWarnings}
 			/>
 
 			<FloatingAttention />

@@ -24,7 +24,7 @@ export const updateAppointmentStatus = async (
  */
 export const createAppointment = async (
 	payload: CreateBookingPayload,
-): Promise<CreateBookingResponse> => {
+): Promise<SaveBookingResponse> => {
 	const { data } = await axiosInstance.post('/appointments', payload);
 	return data;
 };
@@ -35,21 +35,29 @@ export interface CreateBookingPayload {
 	items: Array<{ serviceId: string; staffId: string }>;
 }
 
-/** Lo que el panel debe advertir después de crear: pasado, cerrado, fuera de turno. */
+/**
+ * Lo que el panel debe advertir después de guardar.
+ *
+ * Vale igual al crear y al editar: son las dos caras de la misma política —el
+ * panel registra lo que el negocio pide y avisa qué tiene de raro— y por eso
+ * comparten forma.
+ */
 export interface BookingWarning {
 	code:
 		| 'PAST_TIME'
 		| 'CLOSED_DAY'
 		| 'OUTSIDE_BUSINESS_HOURS'
-		| 'STAFF_OFF_SHIFT';
+		| 'STAFF_OFF_SHIFT'
+		| 'STAFF_BUSY';
 	message: string;
 	staffId?: string;
 }
 
-export interface CreateBookingResponse {
+export interface SaveBookingResponse {
 	appointment: AppointmentDetailApi;
 	warnings: BookingWarning[];
 }
+
 
 /**
  * Las citas de varios días, para la agenda.
@@ -84,7 +92,7 @@ export interface EditBookingPayload {
 export const editBooking = async (
 	id: string,
 	payload: EditBookingPayload,
-): Promise<AppointmentDetailApi> => {
+): Promise<SaveBookingResponse> => {
 	const { data } = await axiosInstance.patch(
 		`/appointments/${id}/booking`,
 		payload,

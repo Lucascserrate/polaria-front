@@ -3,7 +3,7 @@
 interface Props {
 	/** El borrador tiene un servicio que ya no está activo. */
 	hasInactiveService: boolean;
-	/** Con los servicios elegidos, el horario ya no entra. */
+	/** Con los servicios elegidos, el horario dejó de estar disponible. */
 	timeNoLongerFits: boolean;
 	/** Hay cambios sin guardar y el horario sigue siendo válido. */
 	pendingChanges: boolean;
@@ -33,10 +33,17 @@ const BookingNotices: React.FC<Props> = ({
 			</p>
 		)}
 
+		{/*
+		 * Avisa, no impide. Alargar la reserva de alguien que ya está en la silla
+		 * hasta pasarse de la hora de cierre es algo que un negocio hace, y el panel
+		 * es la herramienta de quien puede decidirlo. Al guardar, el backend
+		 * responde qué tiene de raro exactamente —fuera de horario, fuera de
+		 * jornada, pisado con otra cita— y eso se muestra en la agenda.
+		 */}
 		{timeNoLongerFits && (
 			<p className="text-xs text-amber-600 dark:text-amber-500">
-				Con estos servicios ese horario ya no entra. Elegí otra hora para poder
-				guardar.
+				Con estos servicios ese horario deja de estar disponible. Se puede
+				guardar igual: al hacerlo te decimos qué queda fuera.
 			</p>
 		)}
 
