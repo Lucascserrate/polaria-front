@@ -13,53 +13,53 @@
  * UTC y se formatean en UTC. Lo que no se puede es mezclar.
  */
 
-const UTC = 'UTC';
+const UTC = "UTC";
 
-const longDay = new Intl.DateTimeFormat('es', {
-	weekday: 'long',
-	day: 'numeric',
-	month: 'long',
-	timeZone: UTC,
+const longDay = new Intl.DateTimeFormat("es", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: UTC,
 });
 
-const shortWeekday = new Intl.DateTimeFormat('es', {
-	weekday: 'short',
-	timeZone: UTC,
+const shortWeekday = new Intl.DateTimeFormat("es", {
+  weekday: "short",
+  timeZone: UTC,
 });
 
-const dayMonth = new Intl.DateTimeFormat('es', {
-	day: 'numeric',
-	month: 'long',
-	timeZone: UTC,
+const dayMonth = new Intl.DateTimeFormat("es", {
+  day: "numeric",
+  month: "long",
+  timeZone: UTC,
 });
 
-const dayOnly = new Intl.DateTimeFormat('es', {
-	day: 'numeric',
-	timeZone: UTC,
+const dayOnly = new Intl.DateTimeFormat("es", {
+  day: "numeric",
+  timeZone: UTC,
 });
 
-const monthYear = new Intl.DateTimeFormat('es', {
-	month: 'long',
-	year: 'numeric',
-	timeZone: UTC,
+const monthYear = new Intl.DateTimeFormat("es", {
+  month: "long",
+  year: "numeric",
+  timeZone: UTC,
 });
 
 /** La medianoche UTC de una fecha `YYYY-MM-DD`. */
 export const utcDateOf = (key: string): Date => {
-	const [year, month, day] = key.split('-').map(Number);
-	return new Date(Date.UTC(year, month - 1, day));
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
 };
 
 const capitalize = (value: string) =>
-	value.charAt(0).toUpperCase() + value.slice(1);
+  value.charAt(0).toUpperCase() + value.slice(1);
 
 /** `Sábado 22 de agosto`, para la barra en vista diaria. */
 export const describeDay = (key: string): string =>
-	capitalize(longDay.format(utcDateOf(key)));
+  capitalize(longDay.format(utcDateOf(key)));
 
 /** `sáb`, sin el punto que agrega el locale. */
 export const weekdayLabel = (key: string): string =>
-	shortWeekday.format(utcDateOf(key)).replace('.', '');
+  shortWeekday.format(utcDateOf(key)).replace(".", "");
 
 /** El número del día, para la cabecera de la columna. */
 export const dayNumber = (key: string): number => utcDateOf(key).getUTCDate();
@@ -72,17 +72,52 @@ export const dayNumber = (key: string): number => utcDateOf(key).getUTCDate();
  * entre dos meses —o entre dos años— hay que decirlo igual.
  */
 export const describeWeek = (days: string[]): string => {
-	const first = utcDateOf(days[0]);
-	const last = utcDateOf(days[days.length - 1]);
+  const first = utcDateOf(days[0]);
+  const last = utcDateOf(days[days.length - 1]);
 
-	const sameYear = first.getUTCFullYear() === last.getUTCFullYear();
-	const sameMonth = sameYear && first.getUTCMonth() === last.getUTCMonth();
+  const sameYear = first.getUTCFullYear() === last.getUTCFullYear();
+  const sameMonth = sameYear && first.getUTCMonth() === last.getUTCMonth();
 
-	if (sameMonth) {
-		return `${dayOnly.format(first)} – ${dayOnly.format(last)} de ${monthYear.format(first)}`;
-	}
+  if (sameMonth) {
+    return `${dayOnly.format(first)} – ${dayOnly.format(last)} de ${monthYear.format(first)}`;
+  }
 
-	return sameYear
-		? `${dayMonth.format(first)} – ${dayMonth.format(last)} de ${first.getUTCFullYear()}`
-		: `${dayMonth.format(first)} de ${first.getUTCFullYear()} – ${dayMonth.format(last)} de ${last.getUTCFullYear()}`;
+  return sameYear
+    ? `${dayMonth.format(first)} – ${dayMonth.format(last)} de ${first.getUTCFullYear()}`
+    : `${dayMonth.format(first)} de ${first.getUTCFullYear()} – ${dayMonth.format(last)} de ${last.getUTCFullYear()}`;
+};
+
+const shortMonth = new Intl.DateTimeFormat("es", {
+  month: "short",
+  timeZone: UTC,
+});
+
+/** `ago`, sin el punto que agrega el locale. */
+const monthLabel = (date: Date) => shortMonth.format(date).replace(".", "");
+
+/**
+ * Las mismas fechas, abreviadas para la pantalla angosta.
+ *
+ * En móvil la barra tiene que entrar en una sola fila junto al menú y al
+ * selector de vista, y "24 – 30 de agosto de 2026" no deja lugar para nada más.
+ * Se cae el año a propósito: al abrir el calendario está escrito ahí, y quien
+ * mira su agenda de esta semana no necesita que se lo recuerden.
+ */
+export const describeDayShort = (key: string): string => {
+  const date = utcDateOf(key);
+  return `${capitalize(weekdayLabel(key))} ${date.getUTCDate()} ${monthLabel(date)}`;
+};
+
+/** `24 – 30 ago`, y con el mes de cada punta cuando la semana está partida. */
+export const describeWeekShort = (days: string[]): string => {
+  const first = utcDateOf(days[0]);
+  const last = utcDateOf(days[days.length - 1]);
+
+  const sameMonth =
+    first.getUTCFullYear() === last.getUTCFullYear() &&
+    first.getUTCMonth() === last.getUTCMonth();
+
+  return sameMonth
+    ? `${first.getUTCDate()} – ${last.getUTCDate()} ${monthLabel(first)}`
+    : `${first.getUTCDate()} ${monthLabel(first)} – ${last.getUTCDate()} ${monthLabel(last)}`;
 };
