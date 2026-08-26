@@ -13,10 +13,13 @@ import {
 	Rocket,
 	PanelLeftClose,
 	PanelLeftOpen,
+	type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LuLogOut } from 'react-icons/lu';
 import { useLogout } from '@/modules/auth/hooks/useLogout';
+import { useSessionActor } from '@/modules/auth/hooks/useAuth';
+import { isAdminRole } from '@/modules/auth/session';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/app/logo';
 import { ROUTES } from '@/constants/routes';
@@ -31,13 +34,34 @@ import { SETUP_STEP_COUNT } from '@/modules/onboarding/PolariaSetupChecklist';
 import TrialStatus from '@/modules/onboarding/TrialStatus';
 import AccountBadge from '@/modules/account/AccountBadge';
 
-const navItems = [
+interface NavItem {
+	href: string;
+	label: string;
+	icon: LucideIcon;
+}
+
+/** El panel del negocio: lo que ve quien administra. */
+const adminNavItems: NavItem[] = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
-	{ href: ROUTES.team, label: 'Personal', icon: Users },
+	{ href: ROUTES.team, label: 'Equipo', icon: Users },
 	{ href: ROUTES.services, label: 'Servicios', icon: Scissors },
 	{ href: ROUTES.analytics, label: 'Analíticas', icon: ChartLine },
 	// { href: ROUTES.chat, label: 'Chat', icon: MessageCircle },
 	{ href: ROUTES.settings, label: 'Configuración', icon: Settings },
+];
+
+/**
+ * Lo que ve un profesional: su trabajo, y nada del negocio.
+ *
+ * No es el menú de administración con ítems escondidos. Es otro menú, y la
+ * diferencia importa: los ítems que faltan no son permisos que le falten, son
+ * secciones que no tienen que ver con lo que esa persona vino a hacer.
+ *
+ * Esconder no protege nada —eso lo hace el backend, que responde 403— así que
+ * mostrar el menú correcto es una decisión de producto y no de seguridad.
+ */
+const professionalNavItems: NavItem[] = [
+	{ href: ROUTES.myAgenda, label: 'Mi agenda', icon: BookIcon },
 ];
 
 /** Una fila del menú, colapsada o no. El `title` es el nombre cuando no se ve. */
@@ -68,13 +92,28 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 	const { mutate } = useLogout();
 
 	/*
+	 * Qué menú se dibuja depende de quién entró.
+	 *
+	 * Mientras la sesión no llegó, `actor` es `null` y se cae al menú del
+	 * profesional, que es el más corto. Es a propósito: suponer el de
+	 * administración mostraría el panel completo durante un cuadro y después lo
+	 * recortaría, que se ve como algo que se le escapó al sistema.
+	 */
+	const { actor } = useSessionActor();
+	const isAdmin = isAdminRole(actor?.role);
+	const navItems = isAdmin ? adminNavItems : professionalNavItems;
+
+	/*
 	 * "Empezar" solo existe mientras falte configurar algo.
 	 *
 	 * Es una entrada temporal, no una sección del producto: cuando el negocio
 	 * termina, desaparece del menú en lugar de quedar como un ítem que siempre
 	 * dice lo mismo. El estado lo decide el backend, así que se va sola.
+	 *
+	 * Es del negocio, no de la persona: un profesional no tiene nada que
+	 * configurar, y el endpoint le responde 403.
 	 */
-	const { data: onboarding } = useGetOnboardingStatus();
+	const { data: onboarding } = useGetOnboardingStatus(isAdmin);
 	const setupPending = Boolean(onboarding && onboarding.nextStep !== null);
 	const completedSteps = onboarding
 		? Object.values(onboarding.steps).filter(Boolean).length

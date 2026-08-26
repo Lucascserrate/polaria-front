@@ -10,11 +10,7 @@ import { axiosInstance } from '@/lib/axios';
 export const ONBOARDING_KEY = ['onboarding', 'status'] as const;
 
 export type OnboardingStep =
-	| 'BUSINESS_INFO'
-	| 'BUSINESS_HOURS'
-	| 'SERVICES'
-	| 'STAFF'
-	| 'WHATSAPP';
+	'BUSINESS_INFO' | 'BUSINESS_HOURS' | 'SERVICES' | 'STAFF' | 'WHATSAPP';
 
 export interface OnboardingStatus {
 	steps: Record<OnboardingStep, boolean>;
@@ -37,8 +33,7 @@ export interface OnboardingStatus {
 }
 
 export const getOnboardingStatus = async (): Promise<OnboardingStatus> => {
-	const { data } = await axiosInstance.get<OnboardingStatus>(
-		'/onboarding/status',
-	);
+	const { data } =
+		await axiosInstance.get<OnboardingStatus>('/onboarding/status');
 	return data;
 };

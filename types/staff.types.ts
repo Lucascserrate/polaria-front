@@ -35,6 +35,16 @@ export interface StaffMember {
 	accessRole?: StaffAccessRole;
 	/** Junto con `isActive`, lo único que lo hace reservable. */
 	providesServices?: boolean;
+	/**
+	 * Con qué correo entra a Polaria. `null` significa que no tiene acceso.
+	 *
+	 * Distinto de `email`, que es de contacto: corregir un typo en el correo de
+	 * contacto no puede cambiar con qué cuenta inicia sesión.
+	 */
+	accessEmail?: string | null;
+	/** Presente cuando ya entró al menos una vez. Sin esto, la invitación está pendiente. */
+	accessGoogleId?: string | null;
+	accessGrantedAt?: string | null;
 	email?: string;
 	phone?: string | null;
 	isActive: boolean;

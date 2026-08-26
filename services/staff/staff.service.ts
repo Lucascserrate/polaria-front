@@ -60,3 +60,24 @@ export const getWorkingStaff = async (
 	});
 	return data;
 };
+
+/**
+ * Habilita el acceso de un miembro del equipo con un correo.
+ *
+ * Responde 409 si el correo ya es de otra cuenta de Polaria —de un negocio o de
+ * otra ficha—, que es la información que el panel necesita para explicar por qué
+ * no se pudo.
+ */
+export const grantStaffAccess = async (
+	id: string,
+	email: string,
+): Promise<StaffMember> => {
+	const { data } = await axiosInstance.post(`/staff/${id}/access`, { email });
+	return data;
+};
+
+/** Quita el acceso. La ficha y su historial quedan intactos. */
+export const revokeStaffAccess = async (id: string): Promise<StaffMember> => {
+	const { data } = await axiosInstance.delete(`/staff/${id}/access`);
+	return data;
+};

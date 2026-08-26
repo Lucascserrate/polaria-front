@@ -9,8 +9,9 @@ const LANE_GAP = 2;
 
 interface Props {
 	blocks: AppointmentBlock[];
-	onMarkAttended: (id: string) => void;
-	onCancel: (id: string) => void;
+	/** Sin acciones, las cards quedan de solo lectura. Ver `TimelineAppointmentCard`. */
+	onMarkAttended?: (id: string) => void;
+	onCancel?: (id: string) => void;
 	onEdit?: (id: string) => void;
 	onDelete?: (id: string) => void;
 	updatingId?: string | null;

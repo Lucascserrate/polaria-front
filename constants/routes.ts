@@ -13,4 +13,6 @@ export const ROUTES = {
 	settingsReminders: '/settings/reminders',
 	team: '/team',
 	teamNew: '/team/new',
+	/** La agenda de un profesional, acotada a sus propias citas. */
+	myAgenda: '/mi-agenda',
 };

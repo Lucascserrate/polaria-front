@@ -53,8 +53,17 @@ interface Props {
 	startMinute: number;
 	endMinute: number;
 	height: number;
-	onMarkAttended: (id: string) => void;
-	onCancel: (id: string) => void;
+	/**
+	 * Las acciones son opcionales, y su ausencia es lo que hace la card de solo
+	 * lectura.
+	 *
+	 * La usa así la agenda de un profesional, que muestra su día pero no lo edita:
+	 * resolver o cancelar una cita sigue siendo del negocio. Pasar funciones vacías
+	 * habría dibujado los mismos botones sin que hicieran nada, que es peor que no
+	 * tenerlos —ofrece algo y después no responde—.
+	 */
+	onMarkAttended?: (id: string) => void;
+	onCancel?: (id: string) => void;
 	onEdit?: (id: string) => void;
 	onDelete?: (id: string) => void;
 	isUpdating?: boolean;
@@ -222,7 +231,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 				 * de teclado, así que no queda fuera del alcance de quien no usa mouse; en
 				 * táctil, el camino es el popover.
 				 */}
-				{isOpen && showQuickActions && (
+				{isOpen && showQuickActions && onMarkAttended && onCancel && (
 					<div className="absolute top-1 right-1 hidden gap-0.5 group-hover:flex group-focus-within:flex">
 						<Button
 							type="button"
@@ -251,7 +260,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 			</ContextMenuTrigger>
 
 			<ContextMenuContent>
-				{isOpen ? (
+				{isOpen && onMarkAttended && onCancel ? (
 					<>
 						<ContextMenuItem
 							disabled={isUpdating}
@@ -281,8 +290,12 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 					</>
 				) : (
 					/*
-					 * Una cita ya atendida o cancelada no se resuelve desde acá: eso ya
-					 * pasó. El menú dice en qué estado quedó en lugar de abrirse vacío.
+					 * Sin acciones el menú no queda vacío: dice el estado.
+					 *
+					 * Cubre dos casos que llegan al mismo lugar. Una cita ya atendida o
+					 * cancelada no se resuelve desde acá porque eso ya pasó; y en la agenda
+					 * de un profesional no hay nada que resolver porque no es su decisión.
+					 * En los dos, lo útil es el estado.
 					 */
 					<ContextMenuItem disabled>
 						{getAppointmentStatusText(appointment.status)}
@@ -347,7 +360,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 							<div className="flex justify-end gap-2">
 								<AlertDialogCancel>Volver</AlertDialogCancel>
 								<AlertDialogAction
-									onClick={() => onCancel(appointment.id)}
+									onClick={() => onCancel?.(appointment.id)}
 									className="bg-destructive hover:bg-destructive/90"
 								>
 									Cancelar cita

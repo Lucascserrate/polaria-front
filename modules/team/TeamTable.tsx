@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Trash2 } from 'lucide-react';
+import { Clock, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	Table,
@@ -18,6 +18,7 @@ import type { StaffMember } from '@/types/staff.types';
 import { formatCommissionRate } from '@/modules/staff/utils/commission';
 import TeamAvatar from './TeamAvatar';
 import { ROLE_LABELS } from './utils/roles';
+import { accessStateOf } from './utils/access';
 
 interface Props {
 	members: StaffMember[];
@@ -71,17 +72,30 @@ const TeamTable: React.FC<Props> = ({ members, onToggleActive, onDelete }) => {
 								<TableCell>
 									<Link
 										href={`${ROUTES.team}/${member.id}`}
-										className="flex items-center gap-3 hover:underline"
+										className="flex items-center gap-3 group"
 									>
 										<TeamAvatar member={member} />
-										<span className="min-w-0">
+										<span className="min-w-0 group-hover:underline">
 											<span className="block truncate font-medium">
 												{member.name}
 											</span>
-											{member.jobTitle && (
-												<span className="block truncate text-xs text-muted-foreground">
-													{member.jobTitle}
+											{/*
+											 * La invitación pendiente se dice acá, bajo el nombre, y no
+											 * en una columna propia: es un estado de la persona
+											 * —"todavía no entró"— y una columna que casi siempre está
+											 * vacía deja de leerse justo cuando importa.
+											 */}
+											{accessStateOf(member) === 'INVITED' ? (
+												<span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500">
+													<Clock className="size-3 shrink-0" />
+													Invitación pendiente
 												</span>
+											) : (
+												member.jobTitle && (
+													<span className="block truncate text-xs text-muted-foreground">
+														{member.jobTitle}
+													</span>
+												)
 											)}
 										</span>
 									</Link>

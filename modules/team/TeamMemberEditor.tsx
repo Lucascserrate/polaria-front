@@ -10,10 +10,12 @@ import { cn } from '@/lib/utils';
 import type { StaffMember, TeamMemberPayload } from '@/types/staff.types';
 import { formatCommissionRate } from '@/modules/staff/utils/commission';
 import useTeamMemberDraft, { type SectionKey } from './useTeamMemberDraft';
+import { accessStateOf } from './utils/access';
 import ProfileSection from './sections/ProfileSection';
 import ServicesSection from './sections/ServicesSection';
 import ScheduleSection from './sections/ScheduleSection';
 import CommissionSection from './sections/CommissionSection';
+import AccessSection from './sections/AccessSection';
 
 interface Props {
 	/** Ausente al crear. */
@@ -49,7 +51,20 @@ const NAV: NavGroup[] = [
 			{ key: 'commission', label: 'Comisiones' },
 		],
 	},
+	{
+		label: 'Sistema',
+		items: [{ key: 'access', label: 'Acceso' }],
+	},
 ];
+
+/**
+ * El acceso solo existe cuando la ficha ya existe.
+ *
+ * No se puede habilitar la entrada de alguien que todavía no está guardado, y
+ * ofrecerlo al crear sería una sección que solo puede decir "primero guardá".
+ */
+const navFor = (isNew: boolean): NavGroup[] =>
+	isNew ? NAV.filter((group) => group.label !== 'Sistema') : NAV;
 
 /**
  * La ficha completa de un miembro del equipo.
@@ -90,6 +105,14 @@ const TeamMemberEditor: React.FC<Props> = ({
 			return draft.commission.trim() === ''
 				? null
 				: formatCommissionRate(draft.commission);
+		}
+		if (key === 'access' && member) {
+			const state = accessStateOf(member);
+			return state === 'ACTIVE'
+				? 'Sí'
+				: state === 'INVITED'
+					? 'Pendiente'
+					: null;
 		}
 		return null;
 	};
@@ -140,7 +163,7 @@ const TeamMemberEditor: React.FC<Props> = ({
 				 */}
 				<nav className="shrink-0 lg:w-60">
 					<div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:space-y-1 lg:overflow-visible lg:rounded-xl lg:border lg:border-border lg:p-3">
-						{NAV.map((group) => (
+						{navFor(!member).map((group) => (
 							<div key={group.label} className="contents lg:block lg:space-y-1">
 								<p className="hidden px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase lg:block">
 									{group.label}
@@ -223,6 +246,8 @@ const TeamMemberEditor: React.FC<Props> = ({
 							error={issues.errors.commission}
 						/>
 					)}
+
+					{section === 'access' && member && <AccessSection member={member} />}
 				</div>
 			</div>
 		</div>

@@ -5,4 +5,3 @@ export const staffKeys = {
 	working: (date?: string) =>
 		[...staffKeys.all, 'working', date ?? 'today'] as const,
 };
-

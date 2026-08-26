@@ -84,7 +84,15 @@ const draftFrom = (member: StaffMember): TeamMemberDraft => ({
 	scheduleDraft: toScheduleDraft(member.schedules),
 });
 
-export type SectionKey = 'profile' | 'services' | 'schedule' | 'commission';
+/**
+ * Las secciones del editor.
+ *
+ * `access` está en la lista aunque su sección no pase por este borrador: no edita
+ * campos del formulario, actúa de inmediato. Está acá porque el nav necesita
+ * nombrarla como a las demás.
+ */
+export type SectionKey =
+	'profile' | 'services' | 'schedule' | 'commission' | 'access';
 
 export interface DraftIssues {
 	/** Impiden guardar. */
