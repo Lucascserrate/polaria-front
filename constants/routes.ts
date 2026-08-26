@@ -11,5 +11,6 @@ export const ROUTES = {
 	settingsHours: '/settings/hours',
 	settingsWhatsapp: '/settings/whatsapp',
 	settingsReminders: '/settings/reminders',
-	staff: '/staff',
+	team: '/team',
+	teamNew: '/team/new',
 };

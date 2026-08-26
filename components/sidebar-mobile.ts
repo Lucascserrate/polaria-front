@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore } from 'react';
 
 /**
  * Si el menú está abierto en móvil.
@@ -18,25 +18,25 @@ let open = false;
 const listeners = new Set<() => void>();
 
 const subscribe = (listener: () => void) => {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
+	listeners.add(listener);
+	return () => {
+		listeners.delete(listener);
+	};
 };
 
 export const setMobileSidebar = (next: boolean) => {
-  if (open === next) return;
+	if (open === next) return;
 
-  open = next;
-  listeners.forEach((listener) => listener());
+	open = next;
+	listeners.forEach((listener) => listener());
 };
 
 export const toggleMobileSidebar = () => setMobileSidebar(!open);
 
 /** El menú arranca cerrado en el servidor: abierto solo se llega tocando. */
 export const useMobileSidebar = (): boolean =>
-  useSyncExternalStore(
-    subscribe,
-    () => open,
-    () => false,
-  );
+	useSyncExternalStore(
+		subscribe,
+		() => open,
+		() => false,
+	);

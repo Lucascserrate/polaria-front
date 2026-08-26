@@ -15,10 +15,28 @@ export interface StaffScheduleInput {
 	endTime: string;
 }
 
+/**
+ * Qué puede hacer un miembro del equipo dentro de Polaria.
+ *
+ * No dice si atiende clientes: eso es `providesServices`, y son dos preguntas
+ * distintas a propósito. Un dueño que además corta pelo es `OWNER` con
+ * `providesServices` en `true`.
+ */
+export type StaffAccessRole = 'OWNER' | 'ADMIN' | 'PROFESSIONAL';
+
 export interface StaffMember {
 	id: string;
+	/** Nombre para mostrar. Lo deriva el backend de `firstName` y `lastName`. */
 	name: string;
+	firstName: string;
+	lastName?: string | null;
+	jobTitle?: string | null;
+	calendarColor?: string | null;
+	accessRole?: StaffAccessRole;
+	/** Junto con `isActive`, lo único que lo hace reservable. */
+	providesServices?: boolean;
 	email?: string;
+	phone?: string | null;
 	isActive: boolean;
 	/**
 	 * Porcentaje sobre lo que factura (0-100). `null` cuando el negocio no
@@ -42,8 +60,14 @@ export interface StaffMember {
 }
 
 export interface CreateStaffDto {
-	name: string;
+	firstName: string;
+	lastName?: string;
+	jobTitle?: string;
+	calendarColor?: string;
+	accessRole?: StaffAccessRole;
+	providesServices?: boolean;
 	email?: string;
+	phone?: string;
 	isActive?: boolean;
 	calendarId?: string;
 	commissionRate?: number | null;
@@ -52,20 +76,24 @@ export interface CreateStaffDto {
 	schedules?: StaffScheduleInput[];
 }
 
-export interface UpdateStaffDto {
-	name?: string;
-	email?: string;
-	isActive?: boolean;
-	calendarId?: string;
-	commissionRate?: number | null;
-	usesCustomSchedule?: boolean;
-	serviceIds?: string[];
-	schedules?: StaffScheduleInput[];
-}
+export type UpdateStaffDto = Partial<CreateStaffDto>;
 
-/** Lo que produce `StaffForm`: siempre completo, nunca parcial. */
-export interface StaffFormPayload {
-	name: string;
+/**
+ * Lo que produce el editor de equipo: siempre completo, nunca parcial.
+ *
+ * Completo y no parcial porque el editor es una pantalla, no un patch: al guardar
+ * se manda el estado entero de lo que se estaba viendo. Un parcial obligaría a
+ * rastrear qué campo se tocó, que es contabilidad sin lector.
+ */
+export interface TeamMemberPayload {
+	firstName: string;
+	lastName?: string;
+	jobTitle?: string;
+	email?: string;
+	phone?: string;
+	calendarColor?: string;
+	accessRole: StaffAccessRole;
+	providesServices: boolean;
 	serviceIds: string[];
 	commissionRate: number | null;
 	usesCustomSchedule: boolean;

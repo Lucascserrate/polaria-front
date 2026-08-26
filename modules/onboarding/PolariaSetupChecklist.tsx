@@ -35,7 +35,7 @@ const STEP_DETAILS: Record<
 	},
 	STAFF: {
 		label: 'Profesionales',
-		href: ROUTES.staff,
+		href: ROUTES.team,
 		pending: 'Agregá quién atiende y qué servicios hace cada uno.',
 	},
 	WHATSAPP: {

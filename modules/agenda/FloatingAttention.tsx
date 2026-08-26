@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import HumanAttentionCard from "./HumanAttentionCard";
+import HumanAttentionCard from './HumanAttentionCard';
 
 /**
  * El aviso de atención humana, flotando sobre el calendario.
@@ -18,11 +18,11 @@ import HumanAttentionCard from "./HumanAttentionCard";
  * semana con un rectángulo invisible.
  */
 const FloatingAttention: React.FC = () => (
-  <div className="pointer-events-none fixed right-4 bottom-24 z-40 w-[min(20rem,calc(100vw-2rem))] md:bottom-4">
-    <div className="pointer-events-auto shadow-lg">
-      <HumanAttentionCard />
-    </div>
-  </div>
+	<div className="pointer-events-none fixed right-4 bottom-24 z-40 w-[min(20rem,calc(100vw-2rem))] md:bottom-4">
+		<div className="pointer-events-auto shadow-lg">
+			<HumanAttentionCard />
+		</div>
+	</div>
 );
 
 export default FloatingAttention;
