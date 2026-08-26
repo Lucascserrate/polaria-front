@@ -119,3 +119,23 @@ export const disconnectWhatsapp = async (): Promise<SettingsResponse> => {
 	);
 	return data;
 };
+
+/**
+ * El marco del negocio: zona horaria, moneda y horario.
+ *
+ * Lo puede leer cualquier rol, a diferencia de `getSettings`, que es de
+ * administración. Lo usan las pantallas que solo necesitan dibujarse —la agenda de
+ * un profesional— y no configurar nada.
+ */
+export type BusinessContextResponse = {
+	polariaName: string;
+	timezone: string;
+	currency: string;
+	businessHours: WeeklyRange[];
+};
+
+export const getBusinessContext =
+	async (): Promise<BusinessContextResponse> => {
+		const { data } = await axiosInstance.get('/settings/context');
+		return data;
+	};

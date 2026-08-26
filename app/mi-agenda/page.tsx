@@ -21,7 +21,7 @@ import {
 } from '@/modules/agenda/utils/calendarLayout';
 import useNow from '@/lib/useNow';
 import useGetAppointmentsRange from '@/services/appointments/useGetAppointmentsRange';
-import useGetSettings from '@/services/settings/useGetSettings';
+import useGetBusinessContext from '@/services/settings/useGetBusinessContext';
 import { useSessionActor } from '@/modules/auth/hooks/useAuth';
 
 /**
@@ -42,7 +42,12 @@ const MyAgendaPage = () => {
 	const [picked, setPicked] = useState<string | null>(null);
 
 	const { actor } = useSessionActor();
-	const { data: settings } = useGetSettings();
+	/*
+	 * El marco del negocio, no su configuración: `/settings` es de administración y
+	 * a un profesional le responde 403. Sin la zona horaria, esta pantalla mostraría
+	 * el día del navegador en lugar del día del local.
+	 */
+	const { data: settings } = useGetBusinessContext();
 	const timezone = settings?.timezone;
 
 	const now = useNow(60_000);

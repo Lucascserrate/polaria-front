@@ -244,9 +244,11 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 						 * `contents` para no dejar un hueco cuando no hay prueba de la que
 						 * hablar: el envoltorio existe solo para poder esconderlo colapsado.
 						 */}
-						<div className="contents collapsed:hidden">
-							<TrialStatus />
-						</div>
+						{isAdmin && (
+							<div className="contents collapsed:hidden">
+								<TrialStatus />
+							</div>
+						)}
 
 						<button
 							className="flex w-full items-center gap-2 cursor-pointer collapsed:justify-center"
