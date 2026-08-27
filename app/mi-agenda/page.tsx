@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toggleMobileSidebar } from '@/components/sidebar-mobile';
@@ -40,6 +40,21 @@ import { useSessionActor } from '@/modules/auth/hooks/useAuth';
 const MyAgendaPage = () => {
 	const [view, setView] = useState<AgendaView>('day');
 	const [picked, setPicked] = useState<string | null>(null);
+
+	/**
+	 * `?date=2026-08-27` abre la agenda en ese día.
+	 *
+	 * Es a donde lleva el botón "Ver mi agenda" del aviso por WhatsApp: sin esto
+	 * caería en hoy, y el aviso de una cita de mañana obligaría a buscarla.
+	 *
+	 * Se aplica una sola vez, al abrir, igual que en la agenda del negocio: después
+	 * manda lo que se elija en pantalla, porque sincronizar la URL con cada click
+	 * convertiría cada cambio de día en una entrada del historial.
+	 */
+	useEffect(() => {
+		const date = new URLSearchParams(window.location.search).get('date');
+		if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) setPicked(date);
+	}, []);
 
 	const { actor } = useSessionActor();
 	/*

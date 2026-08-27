@@ -213,14 +213,6 @@ export const schemeFor = (member: {
 	calendarColor?: string | null;
 }): TeamColorScheme => schemeOf(colorOf(member));
 
-/**
- * El relleno sólido con su texto encima: avatares y muestras del selector.
- *
- * La sombra viene incluida porque el blanco sobre estos tonos la necesita para
- * tener borde, y dejarla afuera la haría opcional: cada consumidor nuevo tendría
- * que acordarse de agregarla, y el que se olvidara no vería que quedó mal —vería
- * que quedó un poco flojo.
- */
 export const fillStyleOf = (color: TeamColor): React.CSSProperties => ({
 	backgroundColor: schemeOf(color).hex,
 	color: schemeOf(color).on,
