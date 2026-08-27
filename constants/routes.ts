@@ -15,4 +15,6 @@ export const ROUTES = {
 	teamNew: '/team/new',
 	/** La agenda de un profesional, acotada a sus propias citas. */
 	myAgenda: '/mi-agenda',
+	/** Los números de un profesional, acotados a su propio trabajo. */
+	myStats: '/mis-estadisticas',
 };

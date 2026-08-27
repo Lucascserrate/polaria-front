@@ -62,6 +62,7 @@ const adminNavItems: NavItem[] = [
  */
 const professionalNavItems: NavItem[] = [
 	{ href: ROUTES.myAgenda, label: 'Mi agenda', icon: BookIcon },
+	{ href: ROUTES.myStats, label: 'Mis estadísticas', icon: ChartLine },
 ];
 
 /** Una fila del menú, colapsada o no. El `title` es el nombre cuando no se ve. */

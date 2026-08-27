@@ -72,3 +72,46 @@ export interface ReportQuery {
 	from?: string;
 	to?: string;
 }
+
+/**
+ * Lo que se le informa a un profesional sobre su propio trabajo.
+ *
+ * No es `TenantReport` recortado: el grano es otro. Los números del negocio se
+ * cuentan por cita; los de una persona, por segmento, porque una cita puede
+ * repartirse entre dos profesionales y a cada uno le corresponde lo suyo.
+ *
+ * Tampoco lleva `staffRanking`: comparar a alguien con sus compañeros es
+ * exactamente lo que no le toca ver.
+ */
+export interface StaffReport {
+	range: {
+		preset: ReportPreset;
+		from: string;
+		to: string;
+		timezone: string;
+	};
+	currency: string;
+	staff: {
+		id: string;
+		name: string;
+	};
+	/** Facturado hoy, en la semana y en el mes, al margen del período elegido. */
+	revenueSnapshots: {
+		today: number;
+		week: number;
+		month: number;
+	};
+	summary: {
+		revenueTotal: number;
+		completedCount: number;
+		cancelledCount: number;
+		pendingCount: number;
+		/** Personas distintas atendidas. Un cliente que volvió tres veces cuenta una. */
+		clientsServed: number;
+		/** Servicios prestados. Acá el grano es el segmento: son unidades de trabajo. */
+		servicesPerformed: number;
+		averageTicket: number;
+	};
+	timeline: ReportTimeline | null;
+	serviceRanking: ServiceRankingEntry[];
+}
