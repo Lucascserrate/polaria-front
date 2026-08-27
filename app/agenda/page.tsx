@@ -39,6 +39,7 @@ import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
 import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useDeleteBooking from '@/services/appointments/useDeleteBooking';
 import useGetSettings from '@/services/settings/useGetSettings';
+import { colorOf, fillStyleOf } from '@/modules/team/utils/colors';
 
 /** Iniciales del profesional, para la cabecera angosta de su columna. */
 const initialsOf = (name: string) =>
@@ -262,7 +263,20 @@ const AgendaPage = () => {
 			header: (
 				<div className="flex items-center justify-center gap-2">
 					{column.staffId && (
-						<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold">
+						/*
+						 * Las iniciales en su color, el mismo con el que se pintan sus citas
+						 * abajo. Es lo que hace que la columna se lea como una unidad en
+						 * lugar de como un nombre con bloques de color al azar debajo.
+						 */
+						<span
+							className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
+							style={fillStyleOf(
+								colorOf({
+									id: column.staffId,
+									calendarColor: column.calendarColor,
+								}),
+							)}
+						>
 							{initialsOf(column.name)}
 						</span>
 					)}

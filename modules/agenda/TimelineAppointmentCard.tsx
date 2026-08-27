@@ -33,6 +33,7 @@ import type {
 	AppointmentStatus,
 } from '@/types/appointments.types';
 import { formatMinute } from './utils/calendarLayout';
+import { blockSchemeOf } from './utils/blockColor';
 import { describeReminder } from './utils/reminderStatus';
 import { cn } from '@/lib/utils';
 import {
@@ -67,6 +68,13 @@ interface Props {
 	onEdit?: (id: string) => void;
 	onDelete?: (id: string) => void;
 	isUpdating?: boolean;
+	/**
+	 * El profesional de la columna, cuando la columna es una persona.
+	 *
+	 * Solo llega en la vista por profesional. En la semanal viene vacío y el color
+	 * se deduce de los tramos: ver `blockSchemeOf`.
+	 */
+	staffId?: string | null;
 	/**
 	 * Segunda línea de la card. Por defecto, profesional y servicio.
 	 *
@@ -104,6 +112,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 	onDelete,
 	isUpdating = false,
 	detail,
+	staffId,
 }) => {
 	const [confirming, setConfirming] = useState<'cancel' | 'delete' | null>(
 		null,
@@ -111,6 +120,27 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 
 	const colors = STATUS_COLORS[appointment.status] ?? STATUS_COLORS.confirmed;
 	const isOpen = OPEN_STATUSES.includes(appointment.status);
+
+	/**
+	 * El color del profesional, o `null` si a esta cita no le corresponde ninguno
+	 * —compartida entre dos, o sin asignar—.
+	 *
+	 * Se reparte así entre color y estado:
+	 *
+	 * - **La barra lateral siempre lleva el color de la persona.** Es la respuesta a
+	 *   "de quién es esto", que es para lo que existe el color, y en la vista
+	 *   semanal —donde las citas de todo el equipo se mezclan en una columna— es la
+	 *   única forma de saberlo sin abrir la card.
+	 * - **El fondo lo tiñe la persona solo mientras la cita está abierta.** Atendida
+	 *   y cancelada tienen su propio tratamiento y lo conservan: ahí el dato que
+	 *   importa primero es que ya se resolvió, no de quién era.
+	 *
+	 * Lo que se pierde con esto es la distinción de hue entre pendiente y
+	 * confirmada, que la barra llevaba antes. Era `blue-500` contra `sky-500` en
+	 * 3 píxeles: dos azules contiguos que en la práctica nadie podía separar. El
+	 * estado sigue estando escrito en la card y en el menú.
+	 */
+	const staffScheme = blockSchemeOf(appointment.segments ?? [], staffId);
 	const isCancelled = appointment.status === 'cancelled';
 	const isCompleted = appointment.status === 'completed';
 	const inline = height < SINGLE_LINE_HEIGHT;
@@ -126,10 +156,32 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 					'group relative block h-full overflow-hidden rounded-md border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
 					colors.surface,
 				)}
+				/*
+				 * El tinte va como `background-image` y no como capa aparte ni como
+				 * `background-color`.
+				 *
+				 * No como capa porque un `absolute` se pinta **después** del contenido
+				 * estático de su hermano, así que un `inset-0` translúcido quedaría
+				 * velando el texto de la cita. Y no como `background-color` porque el
+				 * tinte es translúcido y necesita el fondo opaco que trae
+				 * `colors.surface`: sin él se vería la grilla a través. Un degradado de
+				 * un solo color compone las dos capas en la misma propiedad.
+				 */
+				style={
+					staffScheme && isOpen
+						? {
+								backgroundImage: `linear-gradient(${staffScheme.tint}, ${staffScheme.tint})`,
+							}
+						: undefined
+				}
 			>
 				<span
 					aria-hidden="true"
-					className={cn('absolute top-0 left-0 h-full w-[3px]', colors.accent)}
+					className={cn(
+						'absolute top-0 left-0 h-full w-[3px]',
+						!staffScheme && colors.accent,
+					)}
+					style={staffScheme ? { backgroundColor: staffScheme.hex } : undefined}
 				/>
 
 				<Popover>

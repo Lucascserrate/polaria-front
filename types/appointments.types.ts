@@ -1,8 +1,5 @@
 export type AppointmentStatus =
-	| 'pending'
-	| 'confirmed'
-	| 'completed'
-	| 'cancelled';
+	'pending' | 'confirmed' | 'completed' | 'cancelled';
 
 /** Estado del recordatorio de una cita, tal como lo informa el backend. */
 export interface AppointmentReminderApi {
@@ -22,6 +19,8 @@ export interface AppointmentReminderApi {
 export interface AppointmentSegmentApi {
 	staffId: string | null;
 	staffName: string | null;
+	/** Token de color del profesional. `null` si no eligió ninguno. */
+	staffColor?: string | null;
 	serviceId: string;
 	serviceName: string | null;
 	startTime: string;
@@ -93,6 +92,8 @@ export interface Appointment {
 export interface AppointmentSegment {
 	staffId: string | null;
 	staffName: string | null;
+	/** Token de color del profesional. `null` si no eligió ninguno. */
+	staffColor?: string | null;
 	serviceId: string;
 	serviceName: string | null;
 	startTime: string;

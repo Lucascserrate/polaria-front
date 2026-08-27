@@ -120,6 +120,8 @@ export interface WorkingStaffResponse {
 	staff: Array<{
 		id: string;
 		name: string;
+		/** Token de color. Su columna en la agenda combina con sus citas. */
+		calendarColor?: string | null;
 		ranges: Array<{ from: string; to: string }>;
 	}>;
 }

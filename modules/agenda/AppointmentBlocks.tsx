@@ -72,6 +72,14 @@ const AppointmentBlocks: React.FC<Props> = ({
 						onDelete={onDelete}
 						isUpdating={updatingId === block.appointment.id}
 						detail={block.detail}
+						/*
+						 * De quién es la columna, cuando la columna es una persona.
+						 *
+						 * En la vista por profesional el bloque ya es un tramo suyo, así
+						 * que el color sale de ahí. En la semanal viene vacío y el color se
+						 * deduce de los tramos de la cita. Ver `blockSchemeOf`.
+						 */
+						staffId={block.staffId}
 					/>
 				</div>
 			);

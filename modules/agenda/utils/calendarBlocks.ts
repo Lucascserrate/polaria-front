@@ -69,6 +69,7 @@ export const UNASSIGNED_COLUMN = 'unassigned';
 export interface StaffColumnInput {
 	id: string;
 	name: string;
+	calendarColor?: string | null;
 	/** Jornada del día, en horas de reloj. */
 	ranges: Array<{ from: string; to: string }>;
 }
@@ -78,6 +79,7 @@ export interface StaffColumn {
 	/** `null` en la columna de lo que quedó sin asignar. */
 	staffId: string | null;
 	name: string;
+	calendarColor?: string | null;
 	openRanges: MinuteRange[];
 	blocks: AppointmentBlock[];
 	/** No le toca trabajar ese día, pero tiene citas. Su columna va cerrada. */
@@ -171,6 +173,7 @@ export const buildStaffColumns = (input: {
 		key: staff.id,
 		staffId: staff.id,
 		name: staff.name,
+		calendarColor: staff.calendarColor ?? null,
 		openRanges: toOpenRanges(staff.ranges),
 		blocks: blocksOf(staff.id),
 	}));
@@ -199,6 +202,15 @@ export const buildStaffColumns = (input: {
 			key: staffId,
 			staffId,
 			name,
+			/*
+			 * De este profesional no vino jornada, así que tampoco vino su color: se
+			 * toma del primer tramo suyo, que ya lo trae. Sin esto, su columna sería la
+			 * única del día con el encabezado descolorido respecto de sus propias citas.
+			 */
+			calendarColor:
+				blocksOf(staffId)[0]?.appointment.segments.find(
+					(segment) => segment.staffId === staffId,
+				)?.staffColor ?? null,
 			openRanges: [],
 			offDuty: true,
 			blocks: blocksOf(staffId),
