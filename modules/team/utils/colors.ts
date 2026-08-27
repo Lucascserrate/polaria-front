@@ -158,8 +158,6 @@ export const INK = '#18181b';
  */
 export const ON_FILL = PAPER;
 
-export const ON_FILL_SHADOW = '0 1px 2px rgb(0 0 0 / 0.45)';
-
 const SCHEMES: Record<TeamColor, TeamColorScheme> = Object.fromEntries(
 	TEAM_COLORS.map((color) => {
 		const hex = HEX[color];
@@ -226,5 +224,4 @@ export const schemeFor = (member: {
 export const fillStyleOf = (color: TeamColor): React.CSSProperties => ({
 	backgroundColor: schemeOf(color).hex,
 	color: schemeOf(color).on,
-	textShadow: ON_FILL_SHADOW,
 });
