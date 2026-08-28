@@ -1,54 +1,53 @@
 'use client';
 
-import 'leaflet/dist/leaflet.css';
-
 import { useState } from 'react';
-import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { Crosshair, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import MapView, {
+	type Coordinates,
+	type FlyTarget,
+} from '@/components/MapView';
 
-export interface Coordinates {
-	latitude: number;
-	longitude: number;
-}
+export type { Coordinates };
 
 interface Props {
 	value: Coordinates | null;
 	onChange: (value: Coordinates) => void;
 }
 
-/** Centro por defecto cuando el negocio todavía no eligió nada. */
+/** Centro por defecto cuando el negocio todavía no eligió nada. Santa Cruz. */
 const FALLBACK_CENTER: Coordinates = {
 	latitude: -17.783327,
-	longitude: -63.182140,
+	longitude: -63.18214,
 };
-
-const ZOOM = 16;
 
 /**
- * Informa el centro del mapa cada vez que deja de moverse.
+ * Selector de ubicación sobre un mapa.
  *
- * La selección es el centro y no un marcador que se arrastra: así el gesto es
- * mover el mapa, que es lo que la gente hace por instinto, y no hay que acertarle
- * a un pin chico con el dedo.
+ * Acá no hay nada de Mapbox: el mapa es `MapView`, y esta pantalla se ocupa solo de
+ * elegir un punto. Antes tenía las dos cosas mezcladas —token, estilo, controles,
+ * ciclo de vida del mapa— y el gesto de selección quedaba enterrado entre plomería.
+ *
+ * **La selección es el centro del mapa**, no un marcador que se arrastra. Mover el
+ * mapa es lo que la gente hace por instinto, y no hay que acertarle a un pin chico
+ * con el dedo. De ahí que el pin sea un elemento del DOM centrado por CSS y no un
+ * `<Marker>`: así no puede quedar desalineado del punto que se está eligiendo, y no
+ * intercepta los gestos.
  */
-const CenterReporter: React.FC<{ onChange: (value: Coordinates) => void }> = ({
-	onChange,
-}) => {
-	useMapEvents({
-		moveend: (event) => {
-			const center = event.target.getCenter();
-			onChange({ latitude: center.lat, longitude: center.lng });
-		},
-	});
-
-	return null;
-};
-
-/** Botón para saltar a la ubicación del dispositivo. */
-const LocateButton: React.FC = () => {
-	const map = useMap();
+const LocationPicker: React.FC<Props> = ({ value, onChange }) => {
 	const [locating, setLocating] = useState(false);
+
+	/**
+	 * Adónde mover el mapa, cuando lo pide el botón.
+	 *
+	 * Es lo único que lo mueve desde afuera. **No se actualiza con `value`**, y eso es
+	 * lo que evita un bucle: cada movimiento del mapa produce un `value` nuevo, así
+	 * que seguirlo lo movería mientras el usuario lo está arrastrando.
+	 */
+	const [flyTo, setFlyTo] = useState<FlyTarget | null>(null);
+
+	/** Se lee una sola vez, al montar. Después la posición la manda el mapa. */
+	const [initialCenter] = useState(() => value ?? FALLBACK_CENTER);
 
 	const locate = () => {
 		if (!navigator.geolocation) return;
@@ -56,10 +55,13 @@ const LocateButton: React.FC = () => {
 		setLocating(true);
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
-				map.flyTo(
-					[position.coords.latitude, position.coords.longitude],
-					ZOOM,
-				);
+				setFlyTo({
+					latitude: position.coords.latitude,
+					longitude: position.coords.longitude,
+					// Ver `FlyTarget`: sin esto, pedir dos veces el mismo punto no movería
+					// el mapa la segunda vez.
+					nonce: Date.now(),
+				});
 				setLocating(false);
 			},
 			// Si el usuario niega el permiso no se insiste: el mapa se mueve a mano.
@@ -69,57 +71,33 @@ const LocateButton: React.FC = () => {
 	};
 
 	return (
-		<Button
-			type="button"
-			variant="secondary"
-			size="sm"
-			className="absolute right-2 top-2 z-[500] gap-1 shadow-sm"
-			disabled={locating}
-			onClick={locate}
-		>
-			<Crosshair className="h-3.5 w-3.5" />
-			{locating ? 'Buscando...' : 'Mi ubicación'}
-		</Button>
-	);
-};
-
-/**
- * Selector de ubicación sobre un mapa.
- *
- * Usa OpenStreetMap con Leaflet y no un proveedor con clave: el registro es
- * self-service, y un mapa que depende de una API key con facturación se rompe
- * para todos los negocios nuevos el día que esa cuenta tenga un problema.
- *
- * El pin es un elemento del DOM centrado por CSS, no un marcador de Leaflet. Así
- * se evita el asunto conocido de los iconos de Leaflet con los empaquetadores, y
- * el pin no puede quedar desalineado del punto que se está eligiendo.
- */
-const LocationPicker: React.FC<Props> = ({ value, onChange }) => {
-	const center = value ?? FALLBACK_CENTER;
-
-	return (
 		<div className="space-y-2">
 			<div className="relative h-64 overflow-hidden rounded-lg border border-border">
-				<MapContainer
-					center={[center.latitude, center.longitude]}
-					zoom={ZOOM}
+				<MapView
+					initialCenter={initialCenter}
+					onMoveEnd={onChange}
+					flyTo={flyTo}
 					className="h-full w-full"
-					// Sin esto, la rueda del mouse captura el scroll de la página al
-					// pasar por encima del mapa.
-					scrollWheelZoom={false}
+					fallbackMessage="El mapa no está configurado en este entorno. Podés seguir sin elegir la ubicación."
+				/>
+
+				{/* A la izquierda: arriba a la derecha van los controles de zoom. */}
+				<Button
+					type="button"
+					variant="secondary"
+					size="sm"
+					className="absolute top-2 left-2 z-10 gap-1 shadow-sm"
+					disabled={locating}
+					onClick={locate}
 				>
-					<TileLayer
-						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-						url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-					/>
-					<CenterReporter onChange={onChange} />
-					<LocateButton />
-				</MapContainer>
+					<Crosshair className="h-3.5 w-3.5" />
+					{locating ? 'Buscando...' : 'Mi ubicación'}
+				</Button>
 
 				{/* El pin marca el centro exacto y no intercepta los gestos del mapa. */}
 				<MapPin
 					aria-hidden="true"
-					className="pointer-events-none absolute left-1/2 top-1/2 z-[400] h-8 w-8 -translate-x-1/2 -translate-y-full text-destructive drop-shadow"
+					className="pointer-events-none absolute top-1/2 left-1/2 z-10 h-6 w-6 -translate-x-1/2 -translate-y-full drop-shadow"
 				/>
 			</div>
 

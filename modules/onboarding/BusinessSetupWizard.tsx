@@ -22,7 +22,7 @@ import HoursStep from './steps/HoursStep';
 import type { Coordinates } from './LocationPicker';
 
 /**
- * Leaflet toca `window` al importarse, así que el mapa se carga en el navegador.
+ * Mapbox GL toca `window` al importarse, así que el mapa se carga en el navegador.
  * Además solo hace falta en un paso: cargarlo antes sería bajar peso para una
  * pantalla que el usuario puede saltear.
  */

@@ -12,7 +12,7 @@ import useGetSettings from '@/services/settings/useGetSettings';
 import useUpdateSettings from '@/services/settings/useUpdateSettings';
 import type { Coordinates } from '@/modules/onboarding/LocationPicker';
 
-/** Leaflet toca `window` al importarse, así que el mapa se carga en el navegador. */
+/** Mapbox GL toca `window` al importarse, así que el mapa se carga en el navegador. */
 const LocationPicker = dynamic(
 	() => import('@/modules/onboarding/LocationPicker'),
 	{
