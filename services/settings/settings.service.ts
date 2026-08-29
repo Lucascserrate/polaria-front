@@ -54,6 +54,27 @@ export type SettingsResponse = {
 		reminderTemplateMetaStatus: string | null;
 	};
 	/**
+	 * Si la WABA puede pagarle a Meta los mensajes.
+	 *
+	 * Aparte de `whatsappConnection` porque son preguntas distintas y se resuelven en
+	 * lugares distintos: la conexión con Embedded Signup, esto en el Billing Hub de
+	 * Meta. Una WABA conectada puede no poder enviar nada.
+	 */
+	whatsappBilling: {
+		/**
+		 * `UNKNOWN` | `ACTION_REQUIRED`. No hay un estado que afirme que el negocio
+		 * puede enviar: eso solo lo confirma un envio que no falle.
+		 */
+		status: string;
+		/** Lo que dijo Meta, con sus palabras. */
+		reason: string | null;
+		checkedAt: string | null;
+		/** El flujo oficial de Meta. `null` si faltan los ids para armarlo. */
+		setupUrl: string | null;
+	};
+	/** Si el negocio activó los avisos automáticos, al equipo y a los clientes. */
+	notificationsEnabled: boolean;
+	/**
 	 * Recordatorios del negocio. Aparte de `whatsappConnection` porque es una
 	 * capacidad del negocio y no del canal.
 	 */
@@ -68,6 +89,7 @@ export type SettingsResponse = {
 };
 
 export type UpdateSettingsPayload = {
+	notificationsEnabled?: boolean;
 	polariaName?: string;
 	businessType?: string;
 	timezone?: string;
@@ -155,3 +177,14 @@ export const getBusinessContext =
 		const { data } = await axiosInstance.get('/settings/context');
 		return data;
 	};
+
+/**
+ * El negocio dice que ya configuró la facturación en el Billing Hub de Meta.
+ *
+ * Se le cree y el estado vuelve a "no sabemos", que no bloquea. No es una
+ * verificación: si el problema sigue, el próximo envío fallido lo vuelve a marcar.
+ */
+export const refreshWhatsappBilling = async (): Promise<SettingsResponse> => {
+	const { data } = await axiosInstance.post('/settings/whatsapp/billing/check');
+	return data;
+};

@@ -1,5 +1,6 @@
 import SettingsSectionHeader from '@/modules/settings/SettingsSectionHeader';
 import WhatsappSettingsSection from '@/modules/settings/sections/WhatsappSettingsSection';
+import WhatsappNotificationsCard from '@/modules/settings/WhatsappNotificationsCard';
 
 export default function WhatsappSettingsPage() {
 	return (
@@ -9,6 +10,7 @@ export default function WhatsappSettingsPage() {
 				description="La cuenta por la que tus clientes reservan."
 			/>
 			<WhatsappSettingsSection />
+			<WhatsappNotificationsCard />
 		</div>
 	);
 }
