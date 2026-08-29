@@ -20,6 +20,7 @@ interface Props {
 	) => void;
 	setRole: (role: StaffAccessRole) => void;
 	error?: string;
+	warnings?: string[];
 	/** El dueño no puede dejar de serlo desde esta pantalla. */
 	roleLocked?: boolean;
 }
@@ -29,6 +30,7 @@ const ProfileSection: React.FC<Props> = ({
 	set,
 	setRole,
 	error,
+	warnings = [],
 	roleLocked = false,
 }) => (
 	<div className="space-y-8">
@@ -131,6 +133,15 @@ const ProfileSection: React.FC<Props> = ({
 		</div>
 
 		{error && <p className="text-sm text-red-600">{error}</p>}
+
+		{warnings.map((warning) => (
+			<p
+				key={warning}
+				className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-500"
+			>
+				{warning}
+			</p>
+		))}
 
 		<div className="space-y-3 border-t border-border pt-6">
 			<div>

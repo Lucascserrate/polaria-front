@@ -92,7 +92,11 @@ const draftFrom = (member: StaffMember): TeamMemberDraft => ({
  * nombrarla como a las demás.
  */
 export type SectionKey =
-	'profile' | 'services' | 'schedule' | 'commission' | 'access';
+	| 'profile'
+	| 'services'
+	| 'schedule'
+	| 'commission'
+	| 'access';
 
 export interface DraftIssues {
 	/** Impiden guardar. */
@@ -191,6 +195,12 @@ export const useTeamMemberDraft = (member?: StaffMember | null) => {
 		if (draft.providesServices && draft.serviceIds.length === 0) {
 			warnings.services = [
 				'Sin servicios asignados no va a poder recibir reservas.',
+			];
+		}
+
+		if (draft.providesServices && !draft.phone.trim()) {
+			warnings.profile = [
+				'Sin teléfono no va a recibir por WhatsApp los avisos de sus citas.',
 			];
 		}
 

@@ -216,6 +216,7 @@ const TeamMemberEditor: React.FC<Props> = ({
 							set={set}
 							setRole={setRole}
 							error={issues.errors.profile}
+							warnings={issues.warnings.profile}
 							roleLocked={isOwner}
 						/>
 					)}
