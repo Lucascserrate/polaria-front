@@ -34,6 +34,61 @@ const LocationPicker = dynamic(
  * guarda todo al final porque abandonar a mitad de camino dejaría el negocio
  * incompleto; acá el negocio ya existe y cada pantalla es independiente.
  */
+/**
+ * El enlace de la página pública, para copiar y pegar donde haga falta.
+ *
+ * Es de sólo lectura a propósito: el slug se asigna una vez a partir del nombre
+ * y no cambia aunque el negocio se renombre, porque el enlace ya está pegado en
+ * un QR sobre el mostrador y en la biografía de Instagram. Un campo editable
+ * acá sería una forma silenciosa de romper todo eso.
+ */
+const PublicPageLink: React.FC<{ url: string | null }> = ({ url }) => {
+	const [copied, setCopied] = useState(false);
+
+	if (!url) return null;
+
+	const copy = async () => {
+		try {
+			await navigator.clipboard.writeText(url);
+			setCopied(true);
+			window.setTimeout(() => setCopied(false), 2000);
+		} catch {
+			// Sin permiso de portapapeles queda el enlace a la vista para copiarlo
+			// a mano, que es lo que hace la mayoría igual.
+		}
+	};
+
+	return (
+		<div className="space-y-2">
+			<Label>Tu página de reservas</Label>
+			<div className="flex flex-wrap items-center gap-2">
+				<a
+					href={url}
+					target="_blank"
+					rel="noreferrer"
+					className="truncate rounded-md border border-border bg-muted px-3 py-2 text-sm underline-offset-4 hover:underline"
+				>
+					{url}
+				</a>
+				<Button variant="outline" size="sm" onClick={() => void copy()}>
+					{copied ? (
+						<>
+							<Check className="mr-2 h-4 w-4" />
+							Copiado
+						</>
+					) : (
+						'Copiar enlace'
+					)}
+				</Button>
+			</div>
+			<p className="text-sm text-muted-foreground">
+				Compartilo por WhatsApp, en tu perfil de Instagram o en un QR: tus
+				clientes reservan desde ahí sin escribirte.
+			</p>
+		</div>
+	);
+};
+
 const BusinessInfoSection: React.FC = () => {
 	const { data: settings, isLoading } = useGetSettings();
 	const {
@@ -46,12 +101,14 @@ const BusinessInfoSection: React.FC = () => {
 	const [name, setName] = useState<string | null>(null);
 	const [businessType, setBusinessType] = useState<string | null>(null);
 	const [timezone, setTimezone] = useState<string | null>(null);
+	const [address, setAddress] = useState<string | null>(null);
 	const [location, setLocation] = useState<Coordinates | null>(null);
 	const [locationTouched, setLocationTouched] = useState(false);
 
 	const currentName = name ?? settings?.polariaName ?? '';
 	const currentType = businessType ?? settings?.businessType ?? '';
 	const currentTimezone = timezone ?? settings?.timezone ?? '';
+	const currentAddress = address ?? settings?.address ?? '';
 	const currentLocation = locationTouched
 		? location
 		: (settings?.location ?? null);
@@ -65,6 +122,8 @@ const BusinessInfoSection: React.FC = () => {
 			polariaName: currentName.trim(),
 			businessType: currentType,
 			timezone: currentTimezone || undefined,
+			// Vacío borra la dirección: es lo que significa haber limpiado el campo.
+			address: currentAddress.trim() || null,
 			location: currentLocation,
 		});
 	};
@@ -91,6 +150,8 @@ const BusinessInfoSection: React.FC = () => {
 				</p>
 			</div>
 
+			<PublicPageLink url={settings?.publicBookingUrl ?? null} />
+
 			<div className="space-y-2">
 				<Label>Tipo de negocio</Label>
 				<BusinessTypeStep value={currentType} onChange={setBusinessType} />
@@ -101,6 +162,25 @@ const BusinessInfoSection: React.FC = () => {
 				disabled={isPending}
 				onChange={setTimezone}
 			/>
+
+			<div className="space-y-2">
+				<div className="flex items-center justify-between gap-2">
+					<Label htmlFor="business-address">Dirección</Label>
+					<span className="text-xs text-muted-foreground">Opcional</span>
+				</div>
+				<Input
+					id="business-address"
+					value={currentAddress}
+					disabled={isPending}
+					placeholder="Av. Cristóbal de Mendoza 1234, Santa Cruz"
+					onChange={(event) => setAddress(event.target.value)}
+				/>
+				<p className="text-sm text-muted-foreground">
+					Es la dirección que se lee en tu página de reservas. Las coordenadas
+					de abajo son otra cosa: sirven para abrir el mapa y para enviar la
+					ubicación por WhatsApp.
+				</p>
+			</div>
 
 			<div className="space-y-2">
 				<div className="flex items-center justify-between gap-2">

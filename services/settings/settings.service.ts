@@ -3,6 +3,19 @@ import type { WeeklyRange } from '@/modules/schedule/utils/weeklySchedule';
 
 export type SettingsResponse = {
 	polariaName: string;
+	/**
+	 * Identificador del negocio en su página pública de reservas. `null` hasta
+	 * que guarda su nombre por primera vez.
+	 *
+	 * No se edita: se asigna una sola vez a partir del nombre y no cambia aunque
+	 * el negocio se renombre, porque el enlace ya está pegado en un QR y en una
+	 * biografía de Instagram.
+	 */
+	slug: string | null;
+	/** El enlace ya armado, que es lo que el negocio comparte. */
+	publicBookingUrl: string | null;
+	/** Dirección del local en texto, para la página pública. */
+	address: string | null;
 	/** Ver `BUSINESS_TYPES`. `null` hasta que la configuración inicial lo carga. */
 	businessType: string | null;
 	timezone: string;
@@ -60,6 +73,8 @@ export type UpdateSettingsPayload = {
 	timezone?: string;
 	/** `null` borra la ubicación; ausente la deja como está. */
 	location?: { latitude: number; longitude: number } | null;
+	/** Misma regla: `null` la borra, ausente la deja como está. */
+	address?: string | null;
 	businessHours?: WeeklyRange[];
 	/** Apagado, Polaria deja de responder por WhatsApp en todo el negocio. */
 	aiEnabled?: boolean;
@@ -80,6 +95,7 @@ export const updateSettings = async (
 		businessType: payload.businessType,
 		timezone: payload.timezone,
 		location: payload.location,
+		address: payload.address,
 		businessHours: payload.businessHours,
 		aiEnabled: payload.aiEnabled,
 		reminderOffsets: payload.reminderOffsets,
