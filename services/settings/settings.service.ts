@@ -19,6 +19,8 @@ export type SettingsResponse = {
 	/** Ver `BUSINESS_TYPES`. `null` hasta que la configuración inicial lo carga. */
 	businessType: string | null;
 	timezone: string;
+	/** Prefijo telefónico del país, sin `+`. Lo deriva el backend de la zona horaria. */
+	dialCode: string;
 	/** Moneda del negocio, en ISO 4217. La necesita cualquier pantalla con precios. */
 	currency: string;
 	location: { latitude: number; longitude: number } | null;

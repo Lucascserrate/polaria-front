@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Check, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import useGetClients from '@/services/useGetClients';
+import useGetClients from '@/services/clients/useGetClients';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import type { DraftClient } from './useBookingDraft';
 

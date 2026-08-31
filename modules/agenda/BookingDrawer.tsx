@@ -17,7 +17,7 @@ import useGetAppointmentDetail from '@/services/appointments/useGetAppointmentDe
 import useEditBooking from '@/services/appointments/useEditBooking';
 import useCreateBooking from '@/services/appointments/useCreateBooking';
 import useGetSettings from '@/services/settings/useGetSettings';
-import { findOrCreateClient } from '@/services/clients';
+import { findOrCreateClient } from '@/services/clients/clients.service';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import useGetServices from '@/services/services/useGetServices';
 import useGetStaff from '@/services/staff/useGetStaff';

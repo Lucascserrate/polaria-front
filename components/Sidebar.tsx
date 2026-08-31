@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
 	Settings,
 	Users,
+	Contact,
 	Scissors,
 	ChartLine,
 	Menu,
@@ -44,6 +45,7 @@ interface NavItem {
 const adminNavItems: NavItem[] = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
 	{ href: ROUTES.team, label: 'Equipo', icon: Users },
+	{ href: ROUTES.clients, label: 'Clientes', icon: Contact },
 	{ href: ROUTES.services, label: 'Servicios', icon: Scissors },
 	{ href: ROUTES.analytics, label: 'Analíticas', icon: ChartLine },
 	// { href: ROUTES.chat, label: 'Chat', icon: MessageCircle },
