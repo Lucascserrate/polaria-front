@@ -1,5 +1,10 @@
 import { axiosInstance } from '@/lib/axios';
-import type { ClientApi, ClientPageApi } from '@/types/appointments.types';
+import type {
+	ClientApi,
+	ClientAppointmentsPageApi,
+	ClientPageApi,
+	ClientSummaryApi,
+} from '@/types/appointments.types';
 
 export interface ClientsQuery {
 	/** Busca en nombre, teléfono y email a la vez. */
@@ -68,6 +73,23 @@ export const deleteClient = async (
 	id: string,
 ): Promise<ClientDeletionResult> => {
 	const { data } = await axiosInstance.delete(`/clients/${id}`);
+	return data;
+};
+
+export const getClientSummary = async (
+	id: string,
+): Promise<ClientSummaryApi> => {
+	const { data } = await axiosInstance.get(`/clients/${id}/summary`);
+	return data;
+};
+
+export const getClientAppointments = async (
+	id: string,
+	query: { page?: number; limit?: number } = {},
+): Promise<ClientAppointmentsPageApi> => {
+	const { data } = await axiosInstance.get(`/clients/${id}/appointments`, {
+		params: query,
+	});
 	return data;
 };
 

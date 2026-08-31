@@ -1,10 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ROUTES, clientRoute } from '@/constants/routes';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import ClientDrawer, {
+	isClientTab,
+	type ClientTab,
+} from '@/modules/clients/ClientDrawer';
 import ClientsTable from '@/modules/clients/ClientsTable';
 import NewClientDialog from '@/modules/clients/NewClientDialog';
 import useGetClients from '@/services/clients/useGetClients';
@@ -13,6 +19,9 @@ import useGetSettings from '@/services/settings/useGetSettings';
 const PAGE_SIZE = 20;
 
 const ClientsPage = () => {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+
 	const [search, setSearch] = useState('');
 	const [page, setPage] = useState(1);
 	const [adding, setAdding] = useState(false);
@@ -27,6 +36,20 @@ const ClientsPage = () => {
 
 	const clients = data?.items ?? [];
 	const total = data?.total ?? 0;
+
+	/*
+	 * Qué ficha está abierta y en qué pestaña sale de la URL, no del estado.
+	 *
+	 * Editar es otra pantalla, y al volver hay que reabrir a la misma persona
+	 * donde estaba: eso sólo se puede reconstruir si estaba escrito en la
+	 * dirección. De paso la ficha queda linkeable desde una cita.
+	 */
+	const openClientId = searchParams.get('client');
+	const rawTab = searchParams.get('tab');
+	const tab: ClientTab = isClientTab(rawTab) ? rawTab : 'summary';
+
+	const openClient = (id: string, nextTab: ClientTab = 'summary') =>
+		router.push(clientRoute(id, nextTab), { scroll: false });
 
 	return (
 		<div className="space-y-6">
@@ -78,7 +101,11 @@ const ClientsPage = () => {
 				/>
 			) : (
 				<>
-					<ClientsTable clients={clients} dialCode={settings?.dialCode} />
+					<ClientsTable
+						clients={clients}
+						dialCode={settings?.dialCode}
+						onOpen={(client) => openClient(client.id)}
+					/>
 					<Pagination
 						page={page}
 						total={total}
@@ -93,6 +120,21 @@ const ClientsPage = () => {
 				open={adding}
 				dialCode={settings?.dialCode}
 				onOpenChange={setAdding}
+			/>
+
+			<ClientDrawer
+				clientId={openClientId}
+				tab={tab}
+				dialCode={settings?.dialCode}
+				currency={settings?.currency ?? 'BOB'}
+				onTabChange={(next) => {
+					// Reemplaza en vez de apilar: cambiar de pestaña no es navegar, y
+					// apilarlas obligaría a doce "atrás" para salir de la ficha.
+					if (openClientId) {
+						router.replace(clientRoute(openClientId, next), { scroll: false });
+					}
+				}}
+				onClose={() => router.push(ROUTES.clients, { scroll: false })}
 			/>
 		</div>
 	);
@@ -154,4 +196,14 @@ const Pagination: React.FC<{
 	);
 };
 
-export default ClientsPage;
+/**
+ * `useSearchParams` obliga a un límite de Suspense en el App Router: sin él, la
+ * compilación de producción falla al prerenderizar la página.
+ */
+const ClientsPageWithSuspense = () => (
+	<Suspense fallback={null}>
+		<ClientsPage />
+	</Suspense>
+);
+
+export default ClientsPageWithSuspense;

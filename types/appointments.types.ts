@@ -131,6 +131,31 @@ export interface ClientApi {
 	createdAt: string;
 }
 
+/**
+ * Los números del cliente, para el Resumen de su ficha.
+ *
+ * Ninguno se guarda: el backend los calcula sobre las citas cada vez. No hay
+ * importes: sin módulo de pagos, un total diría plata que el negocio no vio.
+ */
+export interface ClientSummaryApi {
+	totalAppointments: number;
+	completedAppointments: number;
+	cancelledAppointments: number;
+	/** La última atendida, o `null` si nunca vino. */
+	lastAppointmentAt: string | null;
+	/** La próxima que ocupa agenda, o `null`. */
+	nextAppointmentAt: string | null;
+}
+
+/** Una página del historial de citas de un cliente. */
+export interface ClientAppointmentsPageApi {
+	items: AppointmentApi[];
+	total: number;
+	page: number;
+	limit: number;
+	hasMore: boolean;
+}
+
 /** Una página de la lista de clientes, tal como la devuelve `GET /clients`. */
 export interface ClientPageApi {
 	items: ClientApi[];

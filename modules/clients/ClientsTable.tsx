@@ -16,6 +16,7 @@ import { formatClientPhone, SOURCE_LABELS } from './utils/phone';
 interface Props {
 	clients: ClientApi[];
 	dialCode?: string;
+	onOpen: (client: ClientApi) => void;
 }
 
 /** El día en que se cargó, corto. La hora no aporta nada en una lista. */
@@ -29,12 +30,12 @@ const formatDate = (iso: string) =>
 /**
  * La cartera de clientes.
  *
- * Todavía no se puede abrir una fila: la ficha llega junto con el click que la
- * abre, porque un click que sólo cambia la dirección y no muestra nada es una
- * pantalla rota. Cuando llegue, la fila va a abrir la ficha y no el editor —al
- * revés que en Equipo, donde la ficha *es* el formulario—.
+ * La fila abre la ficha, no el editor. Es la diferencia con Equipo, donde el
+ * click lleva directo a editar porque ahí la ficha *es* el formulario: de un
+ * cliente lo primero que se quiere es mirarlo —cuándo vino, qué se hizo— y no
+ * corregirle el nombre.
  */
-const ClientsTable: React.FC<Props> = ({ clients, dialCode }) => {
+const ClientsTable: React.FC<Props> = ({ clients, dialCode, onOpen }) => {
 	return (
 		<>
 			{/* Escritorio */}
@@ -50,7 +51,20 @@ const ClientsTable: React.FC<Props> = ({ clients, dialCode }) => {
 					</TableHeader>
 					<TableBody>
 						{clients.map((client) => (
-							<TableRow key={client.id}>
+							<TableRow
+								key={client.id}
+								tabIndex={0}
+								role="button"
+								aria-label={`Ver la ficha de ${client.name ?? 'este cliente'}`}
+								className="cursor-pointer"
+								onClick={() => onOpen(client)}
+								onKeyDown={(event) => {
+									if (event.key === 'Enter' || event.key === ' ') {
+										event.preventDefault();
+										onOpen(client);
+									}
+								}}
+							>
 								<TableCell>
 									<span className="flex items-center gap-3">
 										<ClientAvatar client={client} size="sm" />
@@ -86,19 +100,22 @@ const ClientsTable: React.FC<Props> = ({ clients, dialCode }) => {
 			{/* Móvil */}
 			<ul className="space-y-2 md:hidden">
 				{clients.map((client) => (
-					<li
-						key={client.id}
-						className="flex items-center gap-3 rounded-xl border border-border p-3"
-					>
-						<ClientAvatar client={client} size="sm" />
-						<span className="min-w-0 flex-1">
-							<span className="block truncate font-medium">
-								{client.name || 'Sin nombre'}
+					<li key={client.id}>
+						<button
+							type="button"
+							onClick={() => onOpen(client)}
+							className="flex w-full items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:bg-muted/40"
+						>
+							<ClientAvatar client={client} size="sm" />
+							<span className="min-w-0 flex-1">
+								<span className="block truncate font-medium">
+									{client.name || 'Sin nombre'}
+								</span>
+								<span className="mt-0.5 block truncate text-xs text-muted-foreground">
+									<PhoneCell client={client} dialCode={dialCode} />
+								</span>
 							</span>
-							<span className="mt-0.5 block truncate text-xs text-muted-foreground">
-								<PhoneCell client={client} dialCode={dialCode} />
-							</span>
-						</span>
+						</button>
 					</li>
 				))}
 			</ul>
