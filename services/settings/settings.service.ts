@@ -62,8 +62,8 @@ export type SettingsResponse = {
 	 */
 	whatsappBilling: {
 		/**
-		 * `UNKNOWN` | `ACTION_REQUIRED`. No hay un estado que afirme que el negocio
-		 * puede enviar: eso solo lo confirma un envio que no falle.
+		 * `PENDING_SETUP` | `UNKNOWN` | `ACTION_REQUIRED`. Ninguno afirma que el
+		 * negocio pueda enviar: eso solo lo confirma un envío que no falle.
 		 */
 		status: string;
 		/** Lo que dijo Meta, con sus palabras. */
@@ -112,16 +112,19 @@ export const getSettings = async (): Promise<SettingsResponse> => {
 export const updateSettings = async (
 	payload: UpdateSettingsPayload,
 ): Promise<SettingsResponse> => {
-	const { data } = await axiosInstance.patch<SettingsResponse>('/settings', {
-		polariaName: payload.polariaName,
-		businessType: payload.businessType,
-		timezone: payload.timezone,
-		location: payload.location,
-		address: payload.address,
-		businessHours: payload.businessHours,
-		aiEnabled: payload.aiEnabled,
-		reminderOffsets: payload.reminderOffsets,
-	});
+	/*
+	 * Se manda `payload` entero y no una lista de campos escrita a mano.
+	 *
+	 * La lista existía y se olvidó de `notificationsEnabled`: el tipo lo tenía, así
+	 * que compilaba, y el interruptor "no dejaba desactivar" porque el PATCH salía sin
+	 * el campo y el backend no cambiaba nada. `UpdateSettingsPayload` ya define
+	 * exactamente qué se puede mandar; repetirlo acá solo agregaba un lugar donde
+	 * quedar desincronizado sin que nada avise.
+	 */
+	const { data } = await axiosInstance.patch<SettingsResponse>(
+		'/settings',
+		payload,
+	);
 
 	return data;
 };

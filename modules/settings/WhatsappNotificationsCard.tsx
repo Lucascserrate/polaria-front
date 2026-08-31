@@ -21,17 +21,18 @@ import useRefreshWhatsappBilling from '@/services/settings/useRefreshWhatsappBil
  * Muestra **tres estados separados** —conectado, facturación, notificaciones— porque
  * son tres cosas distintas que se arreglan en tres lugares distintos, y confundirlas
  * ya nos costó una noche: una WABA conectada, con plantillas aprobadas y número
- * verificado, no entregaba un solo mensaje porque en Meta le faltaba la moneda.
+ * verificado, no entregaba un solo mensaje porque en Meta le faltaba el método de
+ * pago.
  *
- * De la facturación solo se afirman dos cosas, que son las dos que sabemos: **Meta
- * reportó un problema**, o **no lo sabemos**. No hay un verde de "facturación lista":
- * lo hubo, apoyado en una consulta que solo lee la moneda configurada, y prometía
- * algo que nunca comprobamos. Que un negocio puede enviar lo confirma un envío que no
+ * Ese método de pago es un paso que Meta exige a todo cliente de un Tech Provider y
+ * que **no se puede hacer desde acá**: no existe un flujo embebido para cargarlo, solo
+ * la pantalla de facturación de Meta. Por eso esta pantalla lleva hasta ahí en vez de
+ * pedir datos de tarjeta, y por eso el paso aparece antes de activar y no después del
+ * primer mensaje que no llegó.
+ *
+ * De la facturación no se afirma nunca que esté lista: o falta el paso, o Meta rechazó
+ * algo, o no lo sabemos. Que un negocio puede enviar lo confirma un envío que no
  * falla, nada más.
- *
- * Meta le cobra directamente al negocio. Polaria no cobra por mensaje ni lleva saldo,
- * y esta pantalla no pide datos de pago: lleva al flujo de Meta, que es donde eso se
- * hace.
  */
 const WhatsappNotificationsCard: React.FC = () => {
 	const { data } = useGetSettings();
@@ -45,14 +46,19 @@ const WhatsappNotificationsCard: React.FC = () => {
 	const billing = data.whatsappBilling;
 	const enabled = data.notificationsEnabled;
 
-	const billingBlocks = billing.status === 'ACTION_REQUIRED';
-
 	/*
-	 * Solo bloquea cuando Meta lo dijo.
+	 * Dos motivos distintos para frenar, y conviene no mezclarlos en la pantalla.
 	 *
-	 * El otro estado es "no sabemos", y trabar a un negocio que funciona por algo que
-	 * no comprobamos sería peor que no comprobar nada.
+	 * `PENDING_SETUP` es un paso que falta, no un error: está pendiente para todos
+	 * hasta que alguien lo haga, así que se muestra sin alarma. `ACTION_REQUIRED` es
+	 * Meta rechazando algo concreto, y ahí sí va en ámbar y con sus palabras.
 	 */
+	const setupPending = billing.status === 'PENDING_SETUP';
+	const billingRejected = billing.status === 'ACTION_REQUIRED';
+	const billingBlocks = setupPending || billingRejected;
+
+	// `UNKNOWN` no bloquea: es nuestra ignorancia y no una objeción de Meta, y trabar
+	// a un negocio que funciona por eso sería trabajar en contra suyo.
 	const canEnable = connected && !billingBlocks;
 
 	return (
@@ -78,7 +84,11 @@ const WhatsappNotificationsCard: React.FC = () => {
 				<StatusRow
 					state={billingBlocks ? 'warn' : 'off'}
 					label={
-						billingBlocks ? 'Facturación pendiente' : 'Facturación en Meta'
+						billingRejected
+							? 'Meta rechazó un envío por facturación'
+							: setupPending
+								? 'Falta el método de pago en Meta'
+								: 'Facturación en Meta'
 					}
 					detail={
 						billingBlocks
@@ -95,21 +105,42 @@ const WhatsappNotificationsCard: React.FC = () => {
 			</ul>
 
 			{billingBlocks && (
-				<div className="space-y-3 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
+				<div
+					className={cn(
+						'space-y-3 rounded-lg border p-4',
+						billingRejected
+							? 'border-amber-500/50 bg-amber-500/10'
+							: 'border-border bg-muted/40',
+					)}
+				>
 					<div>
-						<p className="text-sm font-medium text-amber-800 dark:text-amber-400">
-							Configuración de facturación requerida
+						<p
+							className={cn(
+								'text-sm font-medium',
+								billingRejected && 'text-amber-800 dark:text-amber-400',
+							)}
+						>
+							{billingRejected
+								? 'Meta bloqueó los envíos'
+								: 'Agregá un método de pago en Meta'}
 						</p>
-						<p className="mt-1 text-sm text-amber-800/90 dark:text-amber-400/90">
-							Meta rechazó un envío por un problema de facturación en tu cuenta
-							de WhatsApp Business. Los cargos de WhatsApp los realiza Meta
-							directamente a tu cuenta.
+						<p
+							className={cn(
+								'mt-1 text-sm',
+								billingRejected
+									? 'text-amber-800/90 dark:text-amber-400/90'
+									: 'text-muted-foreground',
+							)}
+						>
+							{billingRejected
+								? 'Meta rechazó un envío por un problema de facturación en tu cuenta de WhatsApp Business.'
+								: 'Meta cobra los mensajes directamente a tu cuenta de WhatsApp Business, así que necesita una tarjeta cargada antes del primer envío. Se hace una sola vez, en la pantalla de Meta.'}
 						</p>
 					</div>
 
 					{/* Lo que dijo Meta, con sus palabras: es más preciso que parafrasearlo. */}
 					{billing.reason && (
-						<p className="rounded border border-amber-500/30 bg-background/50 p-2 text-xs break-words text-muted-foreground">
+						<p className="rounded border border-amber-500/30 bg-background/50 p-2 text-xs wrap-break-word text-muted-foreground">
 							{billing.reason}
 						</p>
 					)}
@@ -122,7 +153,9 @@ const WhatsappNotificationsCard: React.FC = () => {
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									Configurar en Meta
+									{billingRejected
+										? 'Revisar en Meta'
+										: 'Agregar método de pago'}
 									<ExternalLink className="size-3.5" />
 								</a>
 							</Button>
@@ -135,7 +168,7 @@ const WhatsappNotificationsCard: React.FC = () => {
 							onClick={() => recheck()}
 						>
 							{checking && <Spinner className="size-3.5" />}
-							Ya lo configuré
+							Ya lo hice
 						</Button>
 					</div>
 
@@ -156,9 +189,11 @@ const WhatsappNotificationsCard: React.FC = () => {
 					<span className="mt-1 block text-xs text-muted-foreground">
 						{!connected
 							? 'Necesitás conectar WhatsApp primero.'
-							: billingBlocks
-								? 'Resolvé la facturación en Meta para poder activarlas.'
-								: 'Se envían desde tu propio número de WhatsApp Business.'}
+							: setupPending
+								? 'Agregá el método de pago en Meta para poder activarlas.'
+								: billingRejected
+									? 'Resolvé lo que reporta Meta para poder activarlas.'
+									: 'Se envían desde tu propio número de WhatsApp Business.'}
 					</span>
 				</span>
 
