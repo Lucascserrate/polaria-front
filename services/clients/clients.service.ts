@@ -92,11 +92,3 @@ export const getClientAppointments = async (
 	});
 	return data;
 };
-
-export const findOrCreateClient = async (input: {
-	name: string;
-	phone?: string;
-}): Promise<ClientApi> => {
-	const { data } = await axiosInstance.post('/clients/find-or-create', input);
-	return data;
-};
