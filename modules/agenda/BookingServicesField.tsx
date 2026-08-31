@@ -1,6 +1,6 @@
 'use client';
 
-import { Scissors } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import type { AppointmentSegmentApi } from '@/types/appointments.types';
 import type { StaffMember } from '@/types/staff.types';
 import BookingServicesEditor, {
@@ -62,7 +62,7 @@ const BookingServicesField: React.FC<Props> = ({
 }) => (
 	<div className="space-y-2 px-2">
 		<p className="flex items-center gap-2 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-			<Scissors className="h-3 w-3" />
+			<BookOpen className="h-3 w-3" />
 			Servicios · {items.length}
 		</p>
 

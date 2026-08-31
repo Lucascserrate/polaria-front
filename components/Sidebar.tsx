@@ -6,7 +6,6 @@ import {
 	Settings,
 	Users,
 	Contact,
-	Scissors,
 	ChartLine,
 	Menu,
 	X,
@@ -15,6 +14,7 @@ import {
 	PanelLeftClose,
 	PanelLeftOpen,
 	type LucideIcon,
+	BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LuLogOut } from 'react-icons/lu';
@@ -46,7 +46,7 @@ const adminNavItems: NavItem[] = [
 	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
 	{ href: ROUTES.team, label: 'Equipo', icon: Users },
 	{ href: ROUTES.clients, label: 'Clientes', icon: Contact },
-	{ href: ROUTES.services, label: 'Servicios', icon: Scissors },
+	{ href: ROUTES.services, label: 'Servicios', icon: BookOpen },
 	{ href: ROUTES.analytics, label: 'Analíticas', icon: ChartLine },
 	// { href: ROUTES.chat, label: 'Chat', icon: MessageCircle },
 	{ href: ROUTES.settings, label: 'Configuración', icon: Settings },

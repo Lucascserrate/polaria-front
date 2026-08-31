@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Pencil, Scissors, Trash2, User, X } from 'lucide-react';
+import { BookOpen, Check, Pencil, Trash2, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	Popover,
@@ -256,7 +256,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 								{appointment.staff}
 							</p>
 							<p className="flex items-center gap-2">
-								<Scissors className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+								<BookOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
 								{appointment.service}
 							</p>
 							<p className="text-muted-foreground">
