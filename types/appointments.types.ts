@@ -145,6 +145,8 @@ export interface ClientSummaryApi {
 	lastAppointmentAt: string | null;
 	/** La próxima que ocupa agenda, o `null`. */
 	nextAppointmentAt: string | null;
+	/** Cuántas ocupan agenda por delante. Lo usa el diálogo de eliminación. */
+	futureAppointments: number;
 }
 
 /** Una página del historial de citas de un cliente. */
