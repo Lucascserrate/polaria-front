@@ -112,9 +112,30 @@ export interface ServiceApi {
 	isActive: boolean;
 }
 
+/** Por qué puerta entró el cliente. `null` en los anteriores a que se registrara. */
+export type ClientSource = 'whatsapp' | 'web' | 'panel';
+
 export interface ClientApi {
 	id: string;
 	name?: string;
-	phone: string;
+	/**
+	 * `null` sólo en los clientes que la agenda creó escribiendo un nombre suelto.
+	 * Sin teléfono no se los puede reconocer en ningún otro canal.
+	 */
+	phone: string | null;
+	email?: string | null;
+	/** `'YYYY-MM-DD'`. Un cumpleaños no tiene hora ni zona. */
+	birthDate?: string | null;
+	createdVia?: ClientSource | null;
 	notes?: string;
+	createdAt: string;
+}
+
+/** Una página de la lista de clientes, tal como la devuelve `GET /clients`. */
+export interface ClientPageApi {
+	items: ClientApi[];
+	total: number;
+	page: number;
+	limit: number;
+	hasMore: boolean;
 }

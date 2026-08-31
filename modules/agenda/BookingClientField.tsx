@@ -4,10 +4,14 @@ import { useMemo, useState } from 'react';
 import { Check, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import useGetClients from '@/services/useGetClients';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import type { DraftClient } from './useBookingDraft';
 
 /** Coincidencias que se ofrecen. Más que esto tapa el resto del formulario. */
 const MAX_MATCHES = 5;
+
+/** Menos que esto devuelve medio padrón y no ayuda a elegir. */
+const MIN_SEARCH_LENGTH = 2;
 
 interface Props {
 	client: DraftClient;
@@ -29,18 +33,29 @@ interface Props {
  */
 const BookingClientField: React.FC<Props> = ({ client, onChange }) => {
 	const [touched, setTouched] = useState(false);
-	const { data: clients = [] } = useGetClients();
+
+	/*
+	 * La búsqueda la resuelve el servidor: traer la cartera entera para filtrarla
+	 * acá dejaba de funcionar sola a medida que el negocio acumulaba clientes.
+	 */
+	const term = client.name.trim();
+	const debouncedTerm = useDebouncedValue(term);
+	const canSearch =
+		!!onChange && touched && debouncedTerm.length >= MIN_SEARCH_LENGTH;
+
+	const { data } = useGetClients(
+		{ search: debouncedTerm, limit: MAX_MATCHES + 1 },
+		{ enabled: canSearch },
+	);
 
 	const matches = useMemo(() => {
-		const term = client.name.trim().toLowerCase();
-		if (!onChange || !touched || term.length < 2) return [];
+		if (!canSearch) return [];
 
-		return clients
-			.filter((entry) => (entry.name ?? '').toLowerCase().includes(term))
+		return (data?.items ?? [])
 			// Ya elegido: ofrecerlo de nuevo no agrega nada.
 			.filter((entry) => entry.id !== client.id)
 			.slice(0, MAX_MATCHES);
-	}, [clients, client.name, client.id, onChange, touched]);
+	}, [data, client.id, canSearch]);
 
 	return (
 		<div className="flex items-start gap-3 p-2">
