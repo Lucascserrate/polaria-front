@@ -55,11 +55,6 @@ const TeamPage = () => {
 		}
 	};
 
-	const activeCount = members.filter((member) => member.isActive).length;
-	const bookableCount = members.filter(
-		(member) => member.isActive && (member.providesServices ?? true),
-	).length;
-
 	if (isLoading) {
 		return (
 			<p className="py-16 text-center text-muted-foreground">
@@ -91,19 +86,6 @@ const TeamPage = () => {
 				</Button>
 			</div>
 
-			{members.length > 0 && (
-				<div className="grid gap-4 sm:grid-cols-3">
-					<Stat label="En el equipo" value={members.length} />
-					<Stat label="Activos" value={activeCount} />
-					{/*
-					 * "Atienden" y no "activos" es la cuenta que importa: es la que
-					 * responde cuántas personas puede ofrecer una reserva, y con
-					 * administradores en el equipo deja de coincidir con el total.
-					 */}
-					<Stat label="Atienden clientes" value={bookableCount} />
-				</div>
-			)}
-
 			{message && (
 				<p className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
 					{message}
@@ -127,12 +109,5 @@ const TeamPage = () => {
 		</div>
 	);
 };
-
-const Stat: React.FC<{ label: string; value: number }> = ({ label, value }) => (
-	<div className="rounded-xl border border-border p-4">
-		<p className="text-sm text-muted-foreground">{label}</p>
-		<p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-	</div>
-);
 
 export default TeamPage;
