@@ -1,75 +1,97 @@
 'use client';
 
+import { formatMoney } from '@/lib/money';
 import type { StaffSummary } from '@/types/reports.types';
+import InfoHint from './InfoHint';
 
 interface Props {
 	summary: StaffSummary;
+	currency: string;
 }
 
 /**
- * De qué estuvo hecho el período, debajo del titular.
+ * De qué estuvo hecho el período, en una sola tira.
  *
- * Lo facturado, el promedio por cita y la cantidad de citas se mudaron a
- * `EarningsHeadline`: son el número con el que se abre la pantalla y su contexto
- * inmediato. Acá queda lo que matiza esa jornada y no compite con ella.
+ * Eran cuatro tarjetas, que en una pantalla ancha se leían bien y en un teléfono
+ * se convertían en cuatro bloques apilados: había que scrollear cuatro veces para
+ * enterarse de cuatro números de dos dígitos. Son cifras cortas y comparables
+ * entre sí, así que van juntas y en horizontal; ninguna necesita una caja propia.
  *
- * Clientes y servicios son dos números distintos a propósito. Cuatro servicios
- * pueden ser cuatro personas o dos que pidieron corte y barba, y esa diferencia
- * es la jornada.
+ * Quedaron tres, y la selección no es por tamaño sino por uso. **Citas** y
+ * **personas** son dos números distintos a propósito: cuatro citas pueden ser
+ * cuatro personas o dos que volvieron, y esa diferencia es la jornada. **Por
+ * cita** es lo único que se sostiene solo cuando cambia el período, porque no
+ * crece con los días que uno mire.
  *
- * Las canceladas se destacan solo cuando las hay: un cero en rojo permanente
- * enseña a ignorar el lugar donde después aparece un número que importa.
+ * Se fueron dos. "Servicios realizados" decía lo mismo que el ranking de abajo,
+ * que además lo desglosa. "Por atender" cambiaba de significado con el selector
+ * —con el mes elegido contaba el futuro del mes— y donde sí servía, que es hoy,
+ * no era una estadística sino la agenda.
+ *
+ * Las canceladas son una línea que aparece solo cuando las hay. Un cero fijo en
+ * rojo enseña a ignorar el lugar donde después aparece un número que importa.
  */
-const MyWorkSummary: React.FC<Props> = ({ summary }) => (
-	<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-		<Metric
-			label="Clientes atendidos"
-			value={summary.clientsServed}
-			hint="Personas distintas. Quien volvió dos veces cuenta una."
-		/>
-		<Metric
-			label="Servicios realizados"
-			value={summary.servicesPerformed}
-			hint="Cada servicio cuenta, aunque dos sean de la misma cita."
-		/>
-		<Metric
-			label="Por atender"
-			value={summary.pendingCount}
-			hint="Citas tuyas que siguen abiertas."
-		/>
-		<Metric
-			label="Canceladas"
-			value={summary.cancelledCount}
-			tone={summary.cancelledCount > 0 ? 'warn' : 'neutral'}
-		/>
-	</div>
-);
+const MyWorkSummary: React.FC<Props> = ({ summary, currency }) => {
+	if (summary.completedCount === 0) {
+		return (
+			<p className="rounded-xl border border-border px-4 py-6 text-center text-sm text-muted-foreground">
+				Todavía no hay citas atendidas en este período.
+			</p>
+		);
+	}
+
+	return (
+		<div className="space-y-2">
+			<div className="grid grid-cols-3 divide-x divide-border rounded-xl border border-border">
+				<Metric label="Citas" value={String(summary.completedCount)} />
+
+				<Metric
+					label="Personas"
+					value={String(summary.clientsServed)}
+					hint="Personas distintas. Quien volvió dos veces en el período cuenta una sola, así que este número puede ser menor que el de citas."
+				/>
+
+				<Metric
+					label="Por cita"
+					value={formatMoney(summary.averageTicket, currency)}
+				/>
+			</div>
+
+			{summary.cancelledCount > 0 && (
+				<p className="px-1 text-xs text-muted-foreground">
+					<span className="font-medium text-foreground tabular-nums">
+						{summary.cancelledCount}
+					</span>{' '}
+					{summary.cancelledCount === 1
+						? 'cita cancelada'
+						: 'citas canceladas'}{' '}
+					en este período.
+				</p>
+			)}
+		</div>
+	);
+};
 
 interface MetricProps {
 	label: string;
-	value: number;
+	/** Ya escrito: puede ser un conteo o un monto con su moneda. */
+	value: string;
 	hint?: string;
-	tone?: 'neutral' | 'warn';
 }
 
-const Metric: React.FC<MetricProps> = ({
-	label,
-	value,
-	hint,
-	tone = 'neutral',
-}) => (
-	<div className="rounded-xl border border-border p-4">
-		<p className="text-xs text-muted-foreground">{label}</p>
-		<p
-			className={
-				tone === 'warn'
-					? 'mt-1 text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-500'
-					: 'mt-1 text-2xl font-bold tabular-nums'
-			}
-		>
+const Metric: React.FC<MetricProps> = ({ label, value, hint }) => (
+	<div className="px-2 py-4 text-center">
+		<p className="flex items-center justify-center font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+			{label}
+			{hint && (
+				<InfoHint label={`Qué cuenta ${label}`} className="-my-1 ml-0.5">
+					{hint}
+				</InfoHint>
+			)}
+		</p>
+		<p className="mt-1 text-2xl font-bold tracking-tight tabular-nums">
 			{value}
 		</p>
-		{hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
 	</div>
 );
 

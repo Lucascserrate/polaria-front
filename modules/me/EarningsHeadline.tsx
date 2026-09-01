@@ -1,16 +1,11 @@
 'use client';
 
-import { ArrowDownRight, ArrowUpRight, Info } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from '@/components/ui/popover';
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { comparisonLabel, periodLabel } from '@/modules/analytics/utils/format';
 import type { StaffReport } from '@/types/reports.types';
+import InfoHint from './InfoHint';
 import { compareRevenue, type RevenueComparison } from './utils/comparison';
 
 interface Props {
@@ -56,11 +51,27 @@ const EarningsHeadline: React.FC<Props> = ({ report }) => {
 					{periodLabel(preset, report.range)}
 				</p>
 
-				<Explainer
-					rate={rate}
-					revenue={summary.revenueTotal}
-					currency={currency}
-				/>
+				<InfoHint label="Cómo se calcula" className="-mt-1 -mr-1">
+					{rate === null ? (
+						<p>
+							El negocio no configuró una comisión para vos, así que acá va todo
+							lo que generaste. Si trabajás a porcentaje, pedile que la cargue en
+							tu ficha.
+						</p>
+					) : (
+						<>
+							<p>
+								Tu {rate}% sobre los{' '}
+								{formatMoney(summary.revenueTotal, currency)} que facturaste en
+								este período.
+							</p>
+							<p className="mt-2 text-muted-foreground">
+								Es una estimación con tu comisión de hoy. Lo que se te paga lo
+								liquida el negocio.
+							</p>
+						</>
+					)}
+				</InfoHint>
 			</div>
 
 			<p className="text-4xl font-bold tracking-tight tabular-nums sm:text-5xl">
@@ -80,42 +91,28 @@ const EarningsHeadline: React.FC<Props> = ({ report }) => {
 				</p>
 			)}
 
-			<div className="mt-4 space-y-1 border-t border-border pt-3 text-sm text-muted-foreground">
-				{summary.completedCount > 0 ? (
-					<p>
-						<Strong>{summary.completedCount}</Strong>{' '}
-						{summary.completedCount === 1 ? 'cita atendida' : 'citas atendidas'}{' '}
-						· <Strong>{formatMoney(summary.averageTicket, currency)}</Strong> por
-						cita
-					</p>
-				) : (
-					<p>Todavía no hay citas atendidas en este período.</p>
-				)}
-
-				{/*
-				 * El mes en curso, para quien está mirando un día o una semana. Es una
-				 * línea y no una tarjeta aparte: sin este contexto, un "hoy" consultado a
-				 * media mañana se lee como una pantalla vacía. Con el mes seleccionado
-				 * sobra, porque el titular ya es ese número.
-				 */}
-				{preset !== 'month' && (
-					<p>
-						Este mes:{' '}
-						<Strong>{formatMoney(currentMonth.revenue, currency)}</Strong>{' '}
-						generados
-						{currentMonth.estimatedCommission !== null && (
-							<>
-								{' '}
-								·{' '}
-								<Strong>
-									{formatMoney(currentMonth.estimatedCommission, currency)}
-								</Strong>{' '}
-								tuyos
-							</>
-						)}
-					</p>
-				)}
-			</div>
+			{/*
+			 * El mes en curso, para quien está mirando un día o una semana. Es una
+			 * línea y no una tarjeta aparte: sin este contexto, un "hoy" consultado a
+			 * media mañana se lee como una pantalla vacía. Con el mes seleccionado
+			 * sobra, porque el titular ya es ese número.
+			 */}
+			{preset !== 'month' && (
+				<p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
+					Este mes:{' '}
+					<Strong>{formatMoney(currentMonth.revenue, currency)}</Strong>{' '}
+					generados
+					{currentMonth.estimatedCommission !== null && (
+						<>
+							{' · '}
+							<Strong>
+								{formatMoney(currentMonth.estimatedCommission, currency)}
+							</Strong>{' '}
+							tuyos
+						</>
+					)}
+				</p>
+			)}
 		</section>
 	);
 };
@@ -173,57 +170,5 @@ const Trend: React.FC<TrendProps> = ({
 		</p>
 	);
 };
-
-interface ExplainerProps {
-	rate: number | null;
-	revenue: number;
-	currency: string;
-}
-
-/**
- * De dónde sale el número, detrás de un ⓘ.
- *
- * Es un popover y no un tooltip porque esta pantalla se usa desde el teléfono, y
- * un tooltip que aparece al pasar el mouse no existe cuando no hay mouse.
- *
- * Sin tasa configurada el ⓘ sigue estando, y es cuando más sirve: explica por qué
- * no hay comisión y qué pedirle al negocio para que la haya.
- */
-const Explainer: React.FC<ExplainerProps> = ({ rate, revenue, currency }) => (
-	<Popover>
-		<PopoverTrigger asChild>
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon-sm"
-				className="-mt-1 -mr-1 shrink-0 text-muted-foreground"
-				aria-label="Cómo se calcula este número"
-			>
-				<Info className="h-4 w-4" />
-			</Button>
-		</PopoverTrigger>
-
-		<PopoverContent align="end" className="w-72 text-sm">
-			{rate === null ? (
-				<p>
-					El negocio no configuró una comisión para vos, así que acá va todo lo
-					que generaste. Si trabajás a porcentaje, pedile que la cargue en tu
-					ficha.
-				</p>
-			) : (
-				<>
-					<p>
-						Tu {rate}% sobre los {formatMoney(revenue, currency)} que facturaste
-						en este período.
-					</p>
-					<p className="mt-2 text-muted-foreground">
-						Es una estimación con tu comisión de hoy. Lo que se te paga lo
-						liquida el negocio.
-					</p>
-				</>
-			)}
-		</PopoverContent>
-	</Popover>
-);
 
 export default EarningsHeadline;

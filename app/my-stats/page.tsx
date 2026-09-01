@@ -134,7 +134,7 @@ const MyStatsPage = () => {
 
 					<EarningsHeadline report={data} />
 
-					<MyWorkSummary summary={data.summary} />
+					<MyWorkSummary summary={data.summary} currency={data.currency} />
 
 					{data.timeline && (
 						<section className="space-y-3">
