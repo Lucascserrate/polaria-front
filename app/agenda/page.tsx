@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Menu, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toggleMobileSidebar } from '@/components/sidebar-mobile';
+import { useBottomNav } from '@/components/BottomNav';
 import AgendaToolbar, { type AgendaView } from '@/modules/agenda/AgendaToolbar';
 import CalendarGrid, {
 	type CalendarColumn,
@@ -62,6 +63,7 @@ const initialsOf = (name: string) =>
  * nadie tocó la fecha se corrige sola al llegar.
  */
 const AgendaPage = () => {
+	const bottomNav = useBottomNav();
 	const [view, setView] = useState<AgendaView>('week');
 	const [picked, setPicked] = useState<string | null>(null);
 
@@ -407,10 +409,14 @@ const AgendaPage = () => {
 				}
 				menu={
 					/*
+					 * Con la barra de abajo no va: abriría un cajón que dice lo mismo que
+					 * la barra. Queda para mientras la sesión no se resolvió.
+					 *
 					 * Solo abre. Cerrar es tocar afuera, como ya era: con el menú
 					 * abierto este botón queda debajo del velo y no se puede volver a
 					 * tocar, así que una "X" acá sería una salida que no funciona.
 					 */
+					bottomNav ? undefined : (
 					<Button
 						variant="ghost"
 						size="icon"
@@ -419,6 +425,7 @@ const AgendaPage = () => {
 					>
 						<Menu className="h-5 w-5" />
 					</Button>
+					)
 				}
 			/>
 

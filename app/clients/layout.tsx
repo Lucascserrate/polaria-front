@@ -1,4 +1,4 @@
-import { Sidebar } from '@/components/Sidebar';
+import AppShell from '@/components/AppShell';
 
 interface Props {
 	children: React.ReactNode;
@@ -11,15 +11,10 @@ interface Props {
  * crece es la tabla, y si la pantalla entera scrollea el buscador y el
  * encabezado se van con ella. El scroll lo maneja la lista, no esta pantalla.
  */
-const ClientsLayout: React.FC<Props> = ({ children }) => {
-	return (
-		<div className="flex h-screen overflow-hidden bg-background">
-			<Sidebar />
-			<main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-14 transition-all duration-200 md:ml-(--sidebar-width) md:p-8 md:pt-8">
-				{children}
-			</main>
-		</div>
-	);
-};
+const ClientsLayout: React.FC<Props> = ({ children }) => (
+	<AppShell variant="fixed" className="p-4 md:p-8">
+		{children}
+	</AppShell>
+);
 
 export default ClientsLayout;

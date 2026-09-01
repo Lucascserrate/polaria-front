@@ -1,7 +1,9 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+import { useBottomNav } from '@/components/BottomNav';
 import { useMobileSidebar } from '@/components/sidebar-mobile';
+import { cn } from '@/lib/utils';
 
 interface Props {
 	onClick: () => void;
@@ -22,6 +24,10 @@ const AddAppointmentFab: React.FC<Props> = ({ onClick }) => {
 	// sobre el velo se lee como que quedó suelto.
 	const menuOpen = useMobileSidebar();
 
+	// Con la barra de navegación abajo, el botón sube su alto: si no, el pulgar
+	// que va a crear una cita cae sobre "Agenda".
+	const bottomNav = useBottomNav();
+
 	if (menuOpen) return null;
 
 	return (
@@ -29,7 +35,12 @@ const AddAppointmentFab: React.FC<Props> = ({ onClick }) => {
 			type="button"
 			aria-label="Agregar cita"
 			onClick={onClick}
-			className="fixed right-4 bottom-6 z-40 flex size-14 items-center justify-center rounded-full border border-white/25 bg-primary/80 text-primary-foreground shadow-[0_10px_30px_-6px_rgb(0_0_0/0.45),inset_0_1px_0_rgb(255_255_255/0.35)] backdrop-blur-xl backdrop-saturate-150 transition-transform duration-150 active:scale-95 md:hidden"
+			className={cn(
+				'fixed right-4 z-40 flex size-14 items-center justify-center rounded-full border border-white/25 bg-primary/80 text-primary-foreground shadow-[0_10px_30px_-6px_rgb(0_0_0/0.45),inset_0_1px_0_rgb(255_255_255/0.35)] backdrop-blur-xl backdrop-saturate-150 transition-transform duration-150 active:scale-95 md:hidden',
+				bottomNav
+					? 'bottom-[calc(5rem+env(safe-area-inset-bottom))]'
+					: 'bottom-6',
+			)}
 		>
 			{/* El reflejo de arriba, que es lo que lo hace leer como vidrio y no como
 			    un círculo translúcido. */}

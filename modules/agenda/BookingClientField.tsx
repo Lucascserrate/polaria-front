@@ -1,8 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { AlertCircle, Search, UserPlus, UserRound, X } from 'lucide-react';
+import {
+	AlertCircle,
+	ExternalLink,
+	Search,
+	UserPlus,
+	UserRound,
+	X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
@@ -100,13 +106,30 @@ const BookingClientField: React.FC<Props> = ({
 					)}
 				</div>
 
+				{/*
+				 * En una pestaña nueva, y no en ésta.
+				 *
+				 * La ficha es otra ruta, así que ir en la misma pestaña desmonta el
+				 * drawer y se lleva la reserva a medio armar —los servicios elegidos, el
+				 * horario— o los cambios sin guardar de una que se estaba editando.
+				 * Volver con el botón del navegador no los recupera: el borrador vive en
+				 * memoria.
+				 *
+				 * Que sea otra pestaña además es lo que hace útil al enlace: se mira el
+				 * historial de la persona *mientras* se le arma el turno, que es
+				 * justamente cuando interesa saber si suele faltar.
+				 */}
 				{client.id && (
-					<Link
+					<a
 						href={clientRoute(client.id)}
-						className="mt-3 inline-block text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
 					>
 						Ver ficha del cliente
-					</Link>
+						<ExternalLink className="size-3" aria-hidden="true" />
+						<span className="sr-only">(se abre en una pestaña nueva)</span>
+					</a>
 				)}
 			</Panel>
 		);

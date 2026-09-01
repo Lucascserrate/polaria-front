@@ -2,20 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-	Settings,
-	Users,
-	Contact,
-	ChartLine,
-	Menu,
-	X,
-	BookIcon,
-	Rocket,
-	PanelLeftClose,
-	PanelLeftOpen,
-	type LucideIcon,
-	BookOpen,
-} from 'lucide-react';
+import { Menu, X, Rocket, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LuLogOut } from 'react-icons/lu';
 import { useLogout } from '@/modules/auth/hooks/useLogout';
@@ -23,7 +10,8 @@ import { useSessionActor } from '@/modules/auth/hooks/useAuth';
 import { isAdminRole } from '@/modules/auth/session';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/app/logo';
-import BottomNav, { useBottomNav } from '@/components/BottomNav';
+import { useBottomNav } from '@/components/BottomNav';
+import { adminNavItems, professionalNavItems } from '@/components/nav-items';
 import { ROUTES } from '@/constants/routes';
 import { toggleSidebarPreference } from '@/components/sidebar-preference';
 import {
@@ -31,42 +19,9 @@ import {
 	toggleMobileSidebar,
 	useMobileSidebar,
 } from '@/components/sidebar-mobile';
-import useGetOnboardingStatus from '@/services/onboarding/useGetOnboardingStatus';
-import { SETUP_STEP_COUNT } from '@/modules/onboarding/PolariaSetupChecklist';
+import { useSetupProgress } from '@/modules/onboarding/useSetupProgress';
 import TrialStatus from '@/modules/onboarding/TrialStatus';
 import AccountBadge from '@/modules/account/AccountBadge';
-
-interface NavItem {
-	href: string;
-	label: string;
-	icon: LucideIcon;
-}
-
-/** El panel del negocio: lo que ve quien administra. */
-const adminNavItems: NavItem[] = [
-	{ href: ROUTES.agenda, label: 'Agenda', icon: BookIcon },
-	{ href: ROUTES.team, label: 'Equipo', icon: Users },
-	{ href: ROUTES.clients, label: 'Clientes', icon: Contact },
-	{ href: ROUTES.services, label: 'Servicios', icon: BookOpen },
-	{ href: ROUTES.analytics, label: 'Analíticas', icon: ChartLine },
-	// { href: ROUTES.chat, label: 'Chat', icon: MessageCircle },
-	{ href: ROUTES.settings, label: 'Configuración', icon: Settings },
-];
-
-/**
- * Lo que ve un profesional: su trabajo, y nada del negocio.
- *
- * No es el menú de administración con ítems escondidos. Es otro menú, y la
- * diferencia importa: los ítems que faltan no son permisos que le falten, son
- * secciones que no tienen que ver con lo que esa persona vino a hacer.
- *
- * Esconder no protege nada —eso lo hace el backend, que responde 403— así que
- * mostrar el menú correcto es una decisión de producto y no de seguridad.
- */
-const professionalNavItems: NavItem[] = [
-	{ href: ROUTES.myAgenda, label: 'Mi agenda', icon: BookIcon },
-	{ href: ROUTES.myStats, label: 'Mis estadísticas', icon: ChartLine },
-];
 
 /** Una fila del menú, colapsada o no. El `title` es el nombre cuando no se ve. */
 const itemClasses = (isActive: boolean) =>
@@ -123,20 +78,11 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 	 * Es una entrada temporal, no una sección del producto: cuando el negocio
 	 * termina, desaparece del menú en lugar de quedar como un ítem que siempre
 	 * dice lo mismo. El estado lo decide el backend, así que se va sola.
-	 *
-	 * Es del negocio, no de la persona: un profesional no tiene nada que
-	 * configurar, y el endpoint le responde 403.
 	 */
-	const { data: onboarding } = useGetOnboardingStatus(isAdmin);
-	const setupPending = Boolean(onboarding && onboarding.nextStep !== null);
-	const completedSteps = onboarding
-		? Object.values(onboarding.steps).filter(Boolean).length
-		: 0;
+	const setup = useSetupProgress(isAdmin);
 
 	return (
 		<>
-			{bottomNav && <BottomNav />}
-
 			{/* Mobile menu button */}
 			{floatingTrigger && !bottomNav && (
 				<Button
@@ -201,7 +147,7 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 
 					{/* Navigation */}
 					<nav className="flex-1 p-4 space-y-1 collapsed:px-2">
-						{setupPending && (
+						{setup.pending && (
 							<Link
 								href={ROUTES.setup}
 								onClick={() => setMobileSidebar(false)}
@@ -219,13 +165,13 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 									Empezar
 								</span>
 								<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-700 collapsed:hidden dark:text-amber-500">
-									{completedSteps} de {SETUP_STEP_COUNT}
+									{setup.completed} de {setup.total}
 								</span>
 							</Link>
 						)}
 
 						{/* "Empezar" no es una sección del producto: el separador lo dice. */}
-						{setupPending && (
+						{setup.pending && (
 							<div
 								className="my-2 border-t border-neutral-200"
 								aria-hidden="true"
