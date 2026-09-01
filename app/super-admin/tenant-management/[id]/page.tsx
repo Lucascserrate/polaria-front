@@ -6,6 +6,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import TenantEditor from '@/modules/tenants/TenantEditor';
+import { ROUTES } from '@/constants/routes';
 import { TENANTS_BASE_ROUTE } from '@/modules/tenants/routes';
 import { tenantsService } from '@/services/tenants.service';
 import type { Tenant, UpdateTenantDto } from '@/types/tenant.types';
@@ -69,6 +70,23 @@ const TenantPage = () => {
 		}
 	}, [id]);
 
+	/** Ver `handleEnter` en el listado: recarga en vez de navegar, y por qué. */
+	const handleEnter = async () => {
+		if (!id) return;
+
+		try {
+			await tenantsService.impersonate(id);
+			window.location.href = ROUTES.agenda;
+		} catch (cause) {
+			setError(
+				axios.isAxiosError(cause) &&
+					typeof cause.response?.data?.message === 'string'
+					? cause.response.data.message
+					: 'No se pudo entrar al negocio. Intentá de nuevo.',
+			);
+		}
+	};
+
 	const handleSave = async (payload: UpdateTenantDto) => {
 		if (!id) return;
 		setSaving(true);
@@ -116,6 +134,7 @@ const TenantPage = () => {
 			key={tenant.id}
 			tenant={tenant}
 			onRefresh={() => void refresh()}
+			onEnter={() => void handleEnter()}
 			saving={saving}
 			error={error}
 			onSave={(payload) => void handleSave(payload)}

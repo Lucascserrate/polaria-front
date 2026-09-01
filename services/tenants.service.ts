@@ -70,6 +70,17 @@ class TenantsService {
 			`/support/tenants/${tenantId}/whatsapp/disconnect`,
 		);
 	}
+
+	/**
+	 * Abre una sesión de soporte dentro del negocio.
+	 *
+	 * No devuelve nada que haya que guardar: lo que hace es dejar una cookie que
+	 * el navegador va a mandar sola en todo lo que venga después. La sesión propia
+	 * del super admin queda intacta, así que salir no pasa por Google de nuevo.
+	 */
+	async impersonate(tenantId: string): Promise<void> {
+		await axiosInstance.post(`/support/tenants/${tenantId}/impersonate`);
+	}
 }
 
 export const tenantsService = new TenantsService();

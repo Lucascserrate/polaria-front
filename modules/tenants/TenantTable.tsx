@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, Pencil, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, LogIn, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,6 +25,7 @@ import type { Tenant } from '@/types/tenant.types';
 interface TenantTableProps {
 	tenants: Tenant[];
 	onOpen: (tenant: Tenant) => void;
+	onEnter: (tenant: Tenant) => void;
 	onDelete: (tenant: Tenant) => void;
 	onAddClick: () => void;
 }
@@ -46,6 +47,7 @@ const statusLabel: Record<string, string> = {
 export function TenantTable({
 	tenants,
 	onOpen,
+	onEnter,
 	onDelete,
 	onAddClick,
 }: TenantTableProps) {
@@ -64,6 +66,11 @@ export function TenantTable({
 			<ContextMenuItem onSelect={() => onOpen(tenant)}>
 				<Pencil />
 				Editar
+			</ContextMenuItem>
+
+			<ContextMenuItem onSelect={() => onEnter(tenant)}>
+				<LogIn />
+				Entrar al negocio
 			</ContextMenuItem>
 
 			<ContextMenuSeparator />

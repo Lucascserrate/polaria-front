@@ -1,6 +1,7 @@
 'use client';
 
 import BottomNav, { useBottomNav } from '@/components/BottomNav';
+import ImpersonationBanner from '@/components/ImpersonationBanner';
 import { Sidebar } from '@/components/Sidebar';
 import { cn } from '@/lib/utils';
 
@@ -57,34 +58,49 @@ const AppShell: React.FC<Props> = ({
 	return (
 		<div
 			className={cn(
-				'flex bg-background',
+				'flex flex-col bg-background',
 				variant === 'fixed' ? 'h-screen overflow-hidden' : 'min-h-screen',
 			)}
 		>
-			<Sidebar floatingTrigger={floatingTrigger} />
+			{/*
+			 * Fuera del marco y arriba de todo: una sesión de soporte no es un dato de
+			 * una pantalla, es de quién son todas. En `fixed` el alto que ocupa se lo
+			 * saca a la grilla, que es correcto —la agenda tiene que entrar en lo que
+			 * queda— y por eso el contenedor pasa a ser una columna.
+			 */}
+			<ImpersonationBanner />
 
-			<main
+			<div
 				className={cn(
-					'flex-1 transition-all duration-200 md:ml-(--sidebar-width)',
-					variant === 'fixed' && 'flex min-h-0 flex-col overflow-hidden',
-					className,
-					// El hueco del botón flotante, solo mientras el botón exista.
-					showsFloatingTrigger && 'max-md:pt-14',
-					/*
-					 * El hueco de la barra. En `fixed` es su alto exacto, porque ahí el
-					 * relleno le saca alto a una grilla que se mide en horas; en `page`
-					 * lleva un respiro más, para que la última línea no quede pegada.
-					 */
-					bottomNav &&
-						(variant === 'fixed'
-							? 'max-md:pb-[calc(3.5rem+env(safe-area-inset-bottom))]'
-							: 'max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))]'),
+					'flex min-h-0 flex-1',
+					variant === 'fixed' && 'overflow-hidden',
 				)}
 			>
-				{children}
-			</main>
+				<Sidebar floatingTrigger={floatingTrigger} />
 
-			{bottomNav && <BottomNav />}
+				<main
+					className={cn(
+						'flex-1 transition-all duration-200 md:ml-(--sidebar-width)',
+						variant === 'fixed' && 'flex min-h-0 flex-col overflow-hidden',
+						className,
+						// El hueco del botón flotante, solo mientras el botón exista.
+						showsFloatingTrigger && 'max-md:pt-14',
+						/*
+						 * El hueco de la barra. En `fixed` es su alto exacto, porque ahí el
+						 * relleno le saca alto a una grilla que se mide en horas; en `page`
+						 * lleva un respiro más, para que la última línea no quede pegada.
+						 */
+						bottomNav &&
+							(variant === 'fixed'
+								? 'max-md:pb-[calc(3.5rem+env(safe-area-inset-bottom))]'
+								: 'max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))]'),
+					)}
+				>
+					{children}
+				</main>
+
+				{bottomNav && <BottomNav />}
+			</div>
 		</div>
 	);
 };

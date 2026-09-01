@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,8 @@ interface Props {
 	tenant: Tenant;
 	/** Relee la ficha desde el servidor. Lo necesita la sección de WhatsApp. */
 	onRefresh: () => void;
+	/** Abre una sesión de soporte dentro del negocio. */
+	onEnter: () => void;
 	saving?: boolean;
 	error?: string | null;
 	onSave: (payload: UpdateTenantDto) => void;
@@ -68,6 +70,7 @@ const NAV: NavGroup[] = [
 const TenantEditor: React.FC<Props> = ({
 	tenant,
 	onRefresh,
+	onEnter,
 	saving = false,
 	error,
 	onSave,
@@ -104,6 +107,15 @@ const TenantEditor: React.FC<Props> = ({
 				</div>
 
 				<div className="flex items-center gap-2">
+					{/*
+					 * Entrar está acá y no solo en el listado porque es lo que sigue
+					 * naturalmente a mirar la ficha: se abre para entender un problema y lo
+					 * siguiente es verlo con los ojos del negocio.
+					 */}
+					<Button variant="outline" onClick={onEnter}>
+						<LogIn className="size-4" />
+						Entrar al negocio
+					</Button>
 					<Button asChild variant="outline">
 						<Link href={TENANTS_BASE_ROUTE}>Cancelar</Link>
 					</Button>

@@ -16,6 +16,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { ROUTES } from '@/constants/routes';
 import { CreateTenantDialog } from '@/modules/tenants/CreateTenantDialog';
 import { TenantTable } from '@/modules/tenants/TenantTable';
 import { tenantRoute } from '@/modules/tenants/routes';
@@ -67,6 +68,23 @@ export default function TenantManagementPage() {
 			setCreateError(messageOf(error, 'No se pudo crear el negocio.'));
 		} finally {
 			setCreating(false);
+		}
+	};
+
+	/**
+	 * Entra al negocio y recarga el panel entero.
+	 *
+	 * Recarga y no `router.push`: lo que cambia no es la ruta sino de quién son
+	 * todos los datos, y react-query tiene en memoria los del super admin. Una
+	 * navegación del lado del cliente los dejaría ahí hasta que cada consulta se
+	 * revalide sola, y mientras tanto la pantalla mezclaría dos negocios.
+	 */
+	const handleEnter = async (tenant: Tenant) => {
+		try {
+			await tenantsService.impersonate(tenant.id);
+			window.location.href = ROUTES.agenda;
+		} catch (error) {
+			console.error('Error entering tenant:', error);
 		}
 	};
 
@@ -159,6 +177,7 @@ export default function TenantManagementPage() {
 						tenants={tenants}
 						onAddClick={() => setCreateOpen(true)}
 						onOpen={(tenant) => router.push(tenantRoute(tenant.id))}
+						onEnter={(tenant) => void handleEnter(tenant)}
 						onDelete={setDeleting}
 					/>
 				</CardContent>
