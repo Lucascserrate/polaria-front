@@ -1,8 +1,15 @@
 'use client';
 
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuSeparator,
+	ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import {
 	Table,
 	TableBody,
@@ -16,7 +23,7 @@ import type { Tenant } from '@/types/tenant.types';
 
 interface TenantTableProps {
 	tenants: Tenant[];
-	onEdit: (tenant: Tenant) => void;
+	onOpen: (tenant: Tenant) => void;
 	onDelete: (tenant: Tenant) => void;
 	onAddClick: () => void;
 }
@@ -26,12 +33,47 @@ const statusLabel: Record<string, string> = {
 	inactive: 'Inactivo',
 };
 
+/**
+ * El listado de negocios.
+ *
+ * La fila entera abre la ficha; editar y eliminar viven en el menú del click
+ * derecho, como en Clientes. Es el gesto que el sistema operativo ya reservó
+ * para "las acciones de esto", así que no hay que enseñarlo, y deja la fila
+ * libre para su único trabajo: abrir. Una columna de botones competiría con ese
+ * click en cada renglón y además obligaría a apuntarle a un icono de 16px.
+ */
 export function TenantTable({
 	tenants,
-	onEdit,
+	onOpen,
 	onDelete,
 	onAddClick,
 }: TenantTableProps) {
+	/*
+	 * En touch el menú se abre con una pulsación larga y, al soltar, el navegador
+	 * todavía dispara el click: sin esto la ficha se abriría por debajo del menú
+	 * que se acaba de abrir. El `data-state` lo pone el propio trigger.
+	 */
+	const open = (event: React.MouseEvent<HTMLElement>, tenant: Tenant) => {
+		if (event.currentTarget.dataset.state === 'open') return;
+		onOpen(tenant);
+	};
+
+	const actions = (tenant: Tenant) => (
+		<ContextMenuContent>
+			<ContextMenuItem onSelect={() => onOpen(tenant)}>
+				<Pencil />
+				Editar
+			</ContextMenuItem>
+
+			<ContextMenuSeparator />
+
+			<ContextMenuItem variant="destructive" onSelect={() => onDelete(tenant)}>
+				<Trash2 />
+				Eliminar
+			</ContextMenuItem>
+		</ContextMenuContent>
+	);
+
 	if (tenants.length === 0) {
 		return (
 			<div className="text-center py-12">
@@ -58,46 +100,48 @@ export function TenantTable({
 							<TableHead>WhatsApp</TableHead>
 							<TableHead>Estado</TableHead>
 							<TableHead>Fecha de creación</TableHead>
-							<TableHead className="text-right">Acciones</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{tenants.map((tenant) => (
-							<TableRow key={tenant.id}>
-								<TableCell className="font-medium">{tenant.name}</TableCell>
-								<TableCell>{tenant.businessType || 'Sin definir'}</TableCell>
-								<TableCell>{tenant.email || 'Sin correo'}</TableCell>
-								<TableCell>{tenant.whatsappPhoneNumber}</TableCell>
-								<TableCell>
-									<Badge
-										variant={
-											tenant.status === 'inactive' ? 'secondary' : 'default'
-										}
+							<ContextMenu key={tenant.id}>
+								<ContextMenuTrigger asChild>
+									<TableRow
+										tabIndex={0}
+										role="button"
+										aria-label={`Abrir la ficha de ${tenant.name}`}
+										className="cursor-pointer data-[state=open]:bg-muted/50"
+										onClick={(event) => open(event, tenant)}
+										onKeyDown={(event) => {
+											if (event.key === 'Enter' || event.key === ' ') {
+												event.preventDefault();
+												onOpen(tenant);
+											}
+										}}
 									>
-										{statusLabel[tenant.status ?? 'active'] ?? 'Activo'}
-									</Badge>
-								</TableCell>
-								<TableCell>{formatDate(new Date(tenant.createdAt))}</TableCell>
-								<TableCell className="text-right">
-									<div className="flex justify-end gap-1">
-										<Button
-											variant="ghost"
-											size="icon"
-											onClick={() => onEdit(tenant)}
-										>
-											<Pencil className="h-4 w-4" />
-										</Button>
-										<Button
-											variant="ghost"
-											size="icon"
-											onClick={() => onDelete(tenant)}
-											className="text-red-600 hover:text-red-700 hover:bg-red-50"
-										>
-											<Trash2 className="h-4 w-4" />
-										</Button>
-									</div>
-								</TableCell>
-							</TableRow>
+										<TableCell className="font-medium">{tenant.name}</TableCell>
+										<TableCell>{tenant.businessType || 'Sin definir'}</TableCell>
+										<TableCell>{tenant.email || 'Sin correo'}</TableCell>
+										<TableCell>
+											<WhatsappCell tenant={tenant} />
+										</TableCell>
+										<TableCell>
+											<Badge
+												variant={
+													tenant.status === 'inactive' ? 'secondary' : 'default'
+												}
+											>
+												{statusLabel[tenant.status ?? 'active'] ?? 'Activo'}
+											</Badge>
+										</TableCell>
+										<TableCell>
+											{formatDate(new Date(tenant.createdAt))}
+										</TableCell>
+									</TableRow>
+								</ContextMenuTrigger>
+
+								{actions(tenant)}
+							</ContextMenu>
 						))}
 					</TableBody>
 				</Table>
@@ -105,68 +149,75 @@ export function TenantTable({
 
 			<div className="space-y-3 md:hidden">
 				{tenants.map((tenant) => (
-					<div
-						key={tenant.id}
-						className="rounded-xl border border-border bg-card p-4 shadow-sm"
-					>
-						<div className="flex items-start justify-between gap-3">
-							<div className="space-y-1">
-								<p className="font-semibold leading-tight">{tenant.name}</p>
-								<p className="text-sm text-muted-foreground">
-									{tenant.businessType || 'Sin definir'}
-								</p>
-							</div>
-							<Badge
-								variant={tenant.status === 'inactive' ? 'secondary' : 'default'}
+					<ContextMenu key={tenant.id}>
+						<ContextMenuTrigger asChild>
+							<button
+								type="button"
+								onClick={(event) => open(event, tenant)}
+								className="w-full rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-muted/40 data-[state=open]:bg-muted/40"
 							>
-								{statusLabel[tenant.status ?? 'active'] ?? 'Activo'}
-							</Badge>
-						</div>
+								<span className="flex items-start justify-between gap-3">
+									<span className="space-y-1">
+										<span className="block font-semibold leading-tight">
+											{tenant.name}
+										</span>
+										<span className="block text-sm text-muted-foreground">
+											{tenant.businessType || 'Sin definir'}
+										</span>
+									</span>
+									<Badge
+										variant={
+											tenant.status === 'inactive' ? 'secondary' : 'default'
+										}
+									>
+										{statusLabel[tenant.status ?? 'active'] ?? 'Activo'}
+									</Badge>
+								</span>
 
-						<div className="mt-4 space-y-2 text-sm">
-							<div className="flex items-center justify-between gap-3">
-								<span className="text-muted-foreground">Correo</span>
-								<span className="text-right font-medium break-all">
-									{tenant.email || 'Sin correo'}
+								<span className="mt-4 block space-y-2 text-sm">
+									<span className="flex items-center justify-between gap-3">
+										<span className="text-muted-foreground">Correo</span>
+										<span className="text-right font-medium break-all">
+											{tenant.email || 'Sin correo'}
+										</span>
+									</span>
+									<span className="flex items-center justify-between gap-3">
+										<span className="text-muted-foreground">WhatsApp</span>
+										<span className="text-right font-medium break-all">
+											<WhatsappCell tenant={tenant} />
+										</span>
+									</span>
+									<span className="flex items-center justify-between gap-3">
+										<span className="text-muted-foreground">Creado</span>
+										<span className="font-medium">
+											{formatDate(new Date(tenant.createdAt))}
+										</span>
+									</span>
 								</span>
-							</div>
-							<div className="flex items-center justify-between gap-3">
-								<span className="text-muted-foreground">WhatsApp</span>
-								<span className="text-right font-medium break-all">
-									{tenant.whatsappPhoneNumber}
-								</span>
-							</div>
-							<div className="flex items-center justify-between gap-3">
-								<span className="text-muted-foreground">Creado</span>
-								<span className="font-medium">
-									{formatDate(new Date(tenant.createdAt))}
-								</span>
-							</div>
-						</div>
+							</button>
+						</ContextMenuTrigger>
 
-						<div className="mt-4 flex gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								className="flex-1"
-								onClick={() => onEdit(tenant)}
-							>
-								<Pencil className="mr-2 h-4 w-4" />
-								Editar
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-								onClick={() => onDelete(tenant)}
-							>
-								<Trash2 className="mr-2 h-4 w-4" />
-								Eliminar
-							</Button>
-						</div>
-					</div>
+						{actions(tenant)}
+					</ContextMenu>
 				))}
 			</div>
 		</div>
 	);
 }
+
+/**
+ * El número, o el aviso de que el negocio todavía no conectó.
+ *
+ * Sin número no hay nada que Polaria pueda hacer por ese negocio: no recibe
+ * mensajes ni puede enviarlos. Decirlo en el listado es lo que permite a soporte
+ * distinguir de un vistazo un alta a medio terminar de un negocio operando.
+ */
+const WhatsappCell: React.FC<{ tenant: Tenant }> = ({ tenant }) =>
+	tenant.whatsappPhoneNumber ? (
+		<span className="tabular-nums">{tenant.whatsappPhoneNumber}</span>
+	) : (
+		<span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-500">
+			<AlertCircle className="size-3 shrink-0" />
+			Sin conectar
+		</span>
+	);

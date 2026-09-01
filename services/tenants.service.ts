@@ -16,6 +16,11 @@ class TenantsService {
 		return data;
 	}
 
+	async getById(id: string): Promise<Tenant> {
+		const { data } = await axiosInstance.get(`/tenants/${id}`);
+		return data;
+	}
+
 	async create(tenantData: CreateTenantDto): Promise<Tenant> {
 		const payload: CreateTenantDto = {
 			...tenantData,
@@ -26,13 +31,15 @@ class TenantsService {
 		return data;
 	}
 
+	/**
+	 * Manda solo lo que el editor cambió.
+	 *
+	 * La zona horaria no se rellena con la del navegador como en el alta: acá el
+	 * negocio ya tiene la suya, y completar un campo vacío con la de quien está
+	 * mirando la pantalla desde otro país le movería la agenda entera.
+	 */
 	async update(id: string, tenantData: UpdateTenantDto): Promise<Tenant> {
-		const payload: UpdateTenantDto = {
-			...tenantData,
-			timezone: tenantData.timezone || DEFAULT_TIMEZONE,
-		};
-
-		const { data } = await axiosInstance.patch(`/tenants/${id}`, payload);
+		const { data } = await axiosInstance.patch(`/tenants/${id}`, tenantData);
 		return data;
 	}
 
