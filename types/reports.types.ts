@@ -94,6 +94,14 @@ export interface StaffReport {
 	staff: {
 		id: string;
 		name: string;
+		/**
+		 * Su porcentaje sobre lo que factura, o `null` si el negocio no configuró
+		 * comisión. Ya viene parseado: acá no hace falta `parseCommissionRate`.
+		 *
+		 * Va en `staff` y no en `summary` porque no es un resultado del período sino
+		 * una condición del profesional, y vale igual para el período anterior.
+		 */
+		commissionRate: number | null;
 	};
 	/** Facturado hoy, en la semana y en el mes, al margen del período elegido. */
 	revenueSnapshots: {
@@ -101,17 +109,43 @@ export interface StaffReport {
 		week: number;
 		month: number;
 	};
-	summary: {
-		revenueTotal: number;
-		completedCount: number;
-		cancelledCount: number;
-		pendingCount: number;
-		/** Personas distintas atendidas. Un cliente que volvió tres veces cuenta una. */
-		clientsServed: number;
-		/** Servicios prestados. Acá el grano es el segmento: son unidades de trabajo. */
-		servicesPerformed: number;
-		averageTicket: number;
+	summary: StaffSummary;
+	/**
+	 * El mismo resumen, del período inmediatamente anterior.
+	 *
+	 * Lo que convierte un número en información: "Bs 200" no dice nada, "Bs 200,
+	 * 12% más que el mes pasado" sí. Lo resuelve el backend porque qué días son "el
+	 * período anterior" depende del calendario del negocio, no del reloj del
+	 * navegador —y un mes se compara contra el mes anterior completo, no contra 31
+	 * días atrás—.
+	 */
+	comparison: {
+		/** Qué días fueron, para poder nombrar la comparación ("vs. julio"). */
+		range: { from: string; to: string };
+		summary: StaffSummary;
 	};
 	timeline: ReportTimeline | null;
 	serviceRanking: ServiceRankingEntry[];
+}
+
+/** Los números de un profesional en un período. El reporte lo usa dos veces. */
+export interface StaffSummary {
+	revenueTotal: number;
+	/**
+	 * Lo que le corresponde de `revenueTotal`, o `null` si el negocio no configuró
+	 * comisión —distinto de una comisión de cero, que sí se muestra—.
+	 *
+	 * Es **estimado** y hay que escribirlo así en pantalla: sale de la tasa vigente
+	 * hoy, no de la que regía el día de cada servicio, y no hay registro de pagos,
+	 * así que no sabe nada de lo que el negocio ya liquidó.
+	 */
+	estimatedCommission: number | null;
+	completedCount: number;
+	cancelledCount: number;
+	pendingCount: number;
+	/** Personas distintas atendidas. Un cliente que volvió tres veces cuenta una. */
+	clientsServed: number;
+	/** Servicios prestados. Acá el grano es el segmento: son unidades de trabajo. */
+	servicesPerformed: number;
+	averageTicket: number;
 }
