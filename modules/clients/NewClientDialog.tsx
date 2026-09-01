@@ -29,7 +29,7 @@ interface Props {
 	onCreated?: (client: ClientApi) => void;
 }
 
-const EMPTY = { name: '', phone: '', email: '', birthDate: '' };
+const EMPTY = { name: '', phone: '' };
 
 /**
  * El alta de un cliente desde la lista.
@@ -39,8 +39,6 @@ const EMPTY = { name: '', phone: '', email: '', birthDate: '' };
  * o por la página. Dejarlo opcional acá sería sembrar de a un duplicado por
  * carga, y no habría forma de repararlo después.
  *
- * Un diálogo y no una pantalla: son cuatro campos, y la ficha completa se llena
- * después, editando.
  */
 const NewClientDialog: React.FC<Props> = ({
 	open,
@@ -95,8 +93,6 @@ const NewClientForm: React.FC<{
 			const created = await createClient.mutateAsync({
 				name: draft.name.trim(),
 				phone: draft.phone.trim(),
-				email: draft.email.trim() || undefined,
-				birthDate: draft.birthDate || undefined,
 			});
 			onCreated?.(created);
 			onDone(false);
@@ -138,23 +134,6 @@ const NewClientForm: React.FC<{
 						inputMode="tel"
 						placeholder={dialCode ? `+${dialCode} 70123456` : '70123456'}
 						onChange={(event) => set('phone', event.target.value)}
-					/>
-				</Field>
-
-				<Field label="Email">
-					<Input
-						type="email"
-						value={draft.email}
-						placeholder="ana@ejemplo.com"
-						onChange={(event) => set('email', event.target.value)}
-					/>
-				</Field>
-
-				<Field label="Fecha de nacimiento">
-					<Input
-						type="date"
-						value={draft.birthDate}
-						onChange={(event) => set('birthDate', event.target.value)}
 					/>
 				</Field>
 

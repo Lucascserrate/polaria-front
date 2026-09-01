@@ -178,7 +178,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 				<span
 					aria-hidden="true"
 					className={cn(
-						'absolute top-0 left-0 h-full w-[3px]',
+						'absolute top-0 left-0 h-full w-0.75',
 						!staffScheme && colors.accent,
 					)}
 					style={staffScheme ? { backgroundColor: staffScheme.hex } : undefined}
