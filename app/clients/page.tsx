@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import axios from 'axios';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +13,13 @@ import ClientDrawer, {
 	type ClientTab,
 } from '@/modules/clients/ClientDrawer';
 import ClientsTable from '@/modules/clients/ClientsTable';
+import DeleteClientDialog from '@/modules/clients/DeleteClientDialog';
 import NewClientDialog from '@/modules/clients/NewClientDialog';
+import useDeleteClient from '@/services/clients/useDeleteClient';
 import useGetClients from '@/services/clients/useGetClients';
+import useGetClientSummary from '@/services/clients/useGetClientSummary';
 import useGetSettings from '@/services/settings/useGetSettings';
+import type { ClientApi } from '@/types/appointments.types';
 
 const PAGE_SIZE = 20;
 
@@ -25,6 +30,8 @@ const ClientsPage = () => {
 	const [search, setSearch] = useState('');
 	const [page, setPage] = useState(1);
 	const [adding, setAdding] = useState(false);
+	const [deleting, setDeleting] = useState<ClientApi | null>(null);
+	const [error, setError] = useState<string | null>(null);
 
 	const debouncedSearch = useDebouncedValue(search);
 	const { data: settings } = useGetSettings();
@@ -33,6 +40,14 @@ const ClientsPage = () => {
 		page,
 		limit: PAGE_SIZE,
 	});
+
+	/*
+	 * El resumen del que se va a eliminar, no el de la fila que se mira. Es lo
+	 * que le deja al diálogo decir de antemano si el cliente tiene citas por
+	 * delante —y entonces no se puede— o historial que conservar.
+	 */
+	const { data: deletingSummary } = useGetClientSummary(deleting?.id);
+	const deleteClient = useDeleteClient();
 
 	const clients = data?.items ?? [];
 	const total = data?.total ?? 0;
@@ -51,8 +66,32 @@ const ClientsPage = () => {
 	const openClient = (id: string, nextTab: ClientTab = 'summary') =>
 		router.push(clientRoute(id, nextTab), { scroll: false });
 
+	const handleDelete = async () => {
+		if (!deleting) return;
+		setError(null);
+
+		try {
+			await deleteClient.mutateAsync(deleting.id);
+			// Si la ficha abierta era la suya, ya no hay a quién mostrar.
+			if (openClientId === deleting.id) {
+				router.push(ROUTES.clients, { scroll: false });
+			}
+			setDeleting(null);
+		} catch (cause) {
+			// El backend explica el caso —citas próximas, por ejemplo—, y ese
+			// mensaje es el que sirve.
+			setError(
+				axios.isAxiosError(cause) &&
+					typeof cause.response?.data?.message === 'string'
+					? cause.response.data.message
+					: 'No se pudo eliminar el cliente. Intentá de nuevo.',
+			);
+			setDeleting(null);
+		}
+	};
+
 	return (
-		<div className="space-y-6">
+		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			<div className="flex flex-wrap items-start justify-between gap-4">
 				<div>
 					<h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -74,7 +113,13 @@ const ClientsPage = () => {
 				</Button>
 			</div>
 
-			<div className="relative max-w-sm">
+			{error && (
+				<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+					{error}
+				</p>
+			)}
+
+			<div className="relative max-w-sm shrink-0">
 				<Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 				<Input
 					value={search}
@@ -105,6 +150,10 @@ const ClientsPage = () => {
 						clients={clients}
 						dialCode={settings?.dialCode}
 						onOpen={(client) => openClient(client.id)}
+						onEdit={(client) =>
+							router.push(`${ROUTES.clients}/${client.id}/edit`)
+						}
+						onDelete={setDeleting}
 					/>
 					<Pagination
 						page={page}
@@ -121,6 +170,19 @@ const ClientsPage = () => {
 				dialCode={settings?.dialCode}
 				onOpenChange={setAdding}
 			/>
+
+			{deleting && (
+				<DeleteClientDialog
+					client={deleting}
+					summary={deletingSummary}
+					open
+					pending={deleteClient.isPending}
+					onOpenChange={(next) => {
+						if (!next) setDeleting(null);
+					}}
+					onConfirm={() => void handleDelete()}
+				/>
+			)}
 
 			<ClientDrawer
 				clientId={openClientId}
