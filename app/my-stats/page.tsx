@@ -85,7 +85,7 @@ const MyStatsPage = () => {
 		axios.isAxiosError(error) && error.response?.status === 404;
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 pb-2">
 			<div>
 				<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
 					Mis estadísticas
@@ -126,6 +126,7 @@ const MyStatsPage = () => {
 					 * fijas que respondían la misma pregunta con otra jerarquía.
 					 */}
 					<PeriodSelector
+						variant="segmented"
 						preset={preset}
 						range={range}
 						onPresetChange={handlePresetChange}
