@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -42,6 +43,48 @@ export const useBottomNav = (): boolean => {
 	return actor !== null && !isAdminRole(actor.role);
 };
 
+/** Cuánto hay que haber bajado para que la barra se aparte. */
+const HIDE_AFTER = 64;
+
+/** Ruido de scroll que no cuenta como cambio de dirección (rebote, temblor). */
+const NOISE = 4;
+
+/**
+ * Si la barra tiene que apartarse porque quien lee va bajando.
+ *
+ * Mira el scroll de la ventana, no el de un contenedor, y eso decide solo el
+ * comportamiento en cada pantalla: en "Mis estadísticas" la ventana scrollea y la
+ * barra se corre para devolver los 56px mientras se lee; en "Mi agenda" la
+ * ventana no scrollea nunca —scrollea la grilla por dentro— así que la barra se
+ * queda quieta sobre el calendario, que es donde uno la quiere fija. Una sola
+ * regla, sin excepciones escritas a mano.
+ *
+ * Vuelve al primer gesto hacia arriba y arriba de todo siempre está: apartarse es
+ * para no estorbar mientras se baja, no para hacerse buscar.
+ */
+const useHiddenByScroll = (): boolean => {
+	const [hidden, setHidden] = useState(false);
+
+	useEffect(() => {
+		let last = window.scrollY;
+
+		const onScroll = () => {
+			const y = window.scrollY;
+
+			if (y < HIDE_AFTER) setHidden(false);
+			else if (y > last + NOISE) setHidden(true);
+			else if (y < last - NOISE) setHidden(false);
+
+			last = y;
+		};
+
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
+	}, []);
+
+	return hidden;
+};
+
 interface Tab {
 	href: string;
 	label: string;
@@ -75,11 +118,17 @@ const tabClasses = (active: boolean) =>
  */
 const BottomNav: React.FC = () => {
 	const pathname = usePathname();
+	const hidden = useHiddenByScroll();
 
 	return (
 		<nav
 			aria-label="Navegación"
-			className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+			className={cn(
+				'fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] transition-transform duration-200 motion-reduce:transition-none md:hidden',
+				// Apartada sigue existiendo para el teclado: si algo de adentro toma el
+				// foco, vuelve sola en vez de dejar el foco en un lugar invisible.
+				hidden && 'translate-y-full focus-within:translate-y-0',
+			)}
 		>
 			<div className="grid h-14 grid-cols-3">
 				{TABS.map((tab) => {
