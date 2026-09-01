@@ -19,6 +19,7 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { formatDate } from '@/lib/date-utils';
+import { businessTypeLabel } from './businessType';
 import type { Tenant } from '@/types/tenant.types';
 
 interface TenantTableProps {
@@ -120,7 +121,9 @@ export function TenantTable({
 										}}
 									>
 										<TableCell className="font-medium">{tenant.name}</TableCell>
-										<TableCell>{tenant.businessType || 'Sin definir'}</TableCell>
+										<TableCell>
+											{businessTypeLabel(tenant.businessType) ?? 'Sin definir'}
+										</TableCell>
 										<TableCell>{tenant.email || 'Sin correo'}</TableCell>
 										<TableCell>
 											<WhatsappCell tenant={tenant} />
@@ -162,7 +165,7 @@ export function TenantTable({
 											{tenant.name}
 										</span>
 										<span className="block text-sm text-muted-foreground">
-											{tenant.businessType || 'Sin definir'}
+											{businessTypeLabel(tenant.businessType) ?? 'Sin definir'}
 										</span>
 									</span>
 									<Badge

@@ -113,8 +113,8 @@ export function CreateTenantDialog({
 							<p className="text-sm text-red-600">{errors.email}</p>
 						)}
 						<p className="text-xs text-muted-foreground">
-							Es lo que vincula el negocio con su cuenta de Google la primera vez
-							que entra al panel.
+							Es lo que vincula el negocio con su cuenta de Google la primera
+							vez que entra al panel.
 						</p>
 					</div>
 

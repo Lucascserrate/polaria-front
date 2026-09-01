@@ -1,6 +1,8 @@
 'use client';
 
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import BusinessTypeStep from '@/modules/onboarding/steps/BusinessTypeStep';
 import SectionHeader from '../SectionHeader';
 import Field from '../Field';
 import type { TenantDraft } from '../useTenantDraft';
@@ -15,7 +17,7 @@ const ProfileSection: React.FC<Props> = ({ draft, set, error }) => (
 	<div className="space-y-8">
 		<SectionHeader
 			title="Perfil"
-			description="Cómo se llama el negocio y con qué cuenta entra al panel."
+			description="Cómo se llama el negocio, a qué se dedica y con qué cuenta entra al panel."
 		/>
 
 		<div className="grid gap-4 sm:grid-cols-2">
@@ -26,19 +28,6 @@ const ProfileSection: React.FC<Props> = ({ draft, set, error }) => (
 					onChange={(event) => set('name', event.target.value)}
 					placeholder="Barbería Central"
 					aria-invalid={Boolean(error)}
-				/>
-			</Field>
-
-			<Field
-				label="Tipo de negocio"
-				htmlFor="businessType"
-				hint="Define qué vocabulario usa Polaria al conversar."
-			>
-				<Input
-					id="businessType"
-					value={draft.businessType}
-					onChange={(event) => set('businessType', event.target.value)}
-					placeholder="barberia"
 				/>
 			</Field>
 
@@ -60,6 +49,7 @@ const ProfileSection: React.FC<Props> = ({ draft, set, error }) => (
 				label="Zona horaria"
 				htmlFor="timezone"
 				required
+				className="sm:col-span-2"
 				hint="Identificador IANA. El horario de atención se interpreta acá: una zona equivocada corre toda la agenda."
 			>
 				<Input
@@ -69,6 +59,22 @@ const ProfileSection: React.FC<Props> = ({ draft, set, error }) => (
 					placeholder="America/La_Paz"
 				/>
 			</Field>
+		</div>
+
+		{/*
+		 * Las mismas tarjetas del onboarding, y no un campo de texto.
+		 *
+		 * El rubro es una lista cerrada de códigos —`BARBERSHOP`, no "barberia"—
+		 * porque alimenta decisiones de producto: servicios sugeridos, tono del
+		 * asistente. El campo libre que había acá dejaba a soporte escribiendo
+		 * etiquetas que ninguna de esas decisiones sabe leer.
+		 */}
+		<div className="space-y-2">
+			<Label>Tipo de negocio</Label>
+			<BusinessTypeStep
+				value={draft.businessType}
+				onChange={(value) => set('businessType', value)}
+			/>
 		</div>
 
 		{error && <p className="text-sm text-red-600">{error}</p>}

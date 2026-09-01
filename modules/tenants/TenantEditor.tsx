@@ -77,7 +77,8 @@ const TenantEditor: React.FC<Props> = ({
 		if (key === 'location') return draft.location ? 'En el mapa' : null;
 		if (key === 'whatsapp')
 			return draft.whatsappPhoneNumber.trim() ? 'Conectado' : null;
-		if (key === 'system') return draft.status === 'inactive' ? 'Inactivo' : null;
+		if (key === 'system')
+			return draft.status === 'inactive' ? 'Inactivo' : null;
 		return null;
 	};
 
