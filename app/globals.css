@@ -153,22 +153,116 @@
 	}
 }
 
-::-webkit-scrollbar {
-	width: 4px;
-	height: 4px;
+/**
+ * La barra de scroll.
+ *
+ * Tenía 4px de ancho. Se veía discreta y no servía para nada: con el mouse hay
+ * que **acertarle** a la barra para arrastrarla, y 4px es un blanco imposible.
+ * Donde eso se nota es en los negocios que atienden con una computadora sin
+ * rueda de mouse, que scrollean arrastrando y no podían.
+ *
+ * La solución no es una barra gorda. El truco es separar las dos medidas: el
+ * elemento mide 14px —que es lo que se puede agarrar, borde transparente
+ * incluido— pero solo se pintan los 6px de adentro, gracias a `background-clip`.
+ * Blanco grande, dibujo fino.
+ *
+ * Y siempre visible, nunca aparecer al pasar por encima: una barra que se
+ * esconde obliga a mover el mouse para descubrir dónde estaba, que es el mismo
+ * problema con un paso más.
+ */
+:root {
+	--scrollbar-track: oklch(0 0 0 / 4%);
+	--scrollbar-thumb: oklch(0 0 0 / 22%);
+	--scrollbar-thumb-hover: oklch(0 0 0 / 38%);
+	--scrollbar-thumb-active: oklch(0 0 0 / 50%);
+	--scrollbar-size: 14px;
+	/* Lo que queda sin pintar a cada lado del pulgar. */
+	--scrollbar-inset: 4px;
 }
 
+.dark {
+	--scrollbar-track: oklch(1 0 0 / 5%);
+	--scrollbar-thumb: oklch(1 0 0 / 22%);
+	--scrollbar-thumb-hover: oklch(1 0 0 / 38%);
+	--scrollbar-thumb-active: oklch(1 0 0 / 52%);
+}
+
+/* Firefox, que no entiende `::-webkit-scrollbar`. */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+::-webkit-scrollbar {
+	width: var(--scrollbar-size);
+	height: var(--scrollbar-size);
+}
+
+/*
+ * El canal se ve, apenas. No es decoración: hacer click en el canal salta una
+ * pantalla, y eso solo se usa si se nota que el canal está ahí.
+ */
 ::-webkit-scrollbar-track {
-	background: transparent;
+	background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.15);
+	background: var(--scrollbar-thumb);
+	/*
+	 * El borde transparente es del pulgar, así que sigue siendo agarrable: lo
+	 * único que hace es correr el relleno hacia adentro.
+	 */
+	border: var(--scrollbar-inset) solid transparent;
+	background-clip: padding-box;
 	border-radius: 9999px;
 }
 
+/*
+ * En una lista larga el pulgar se encoge en proporción al contenido y vuelve a
+ * ser inagarrable, justo donde más falta hace scrollear. 44px es el mínimo que
+ * se puede apuntar con comodidad.
+ *
+ * El mínimo va por orientación y no en la regla de arriba a propósito: un
+ * `min-width` suelto también se lo aplicaría el pulgar vertical, que mide lo
+ * que mide la barra, y lo dejaría de 44px de ancho dentro de un canal de 14.
+ */
+::-webkit-scrollbar-thumb:vertical {
+	min-height: 44px;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+	min-width: 44px;
+}
+
 ::-webkit-scrollbar-thumb:hover {
-	background: rgba(0, 0, 0, 0.25);
+	background: var(--scrollbar-thumb-hover);
+	background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+	background: var(--scrollbar-thumb-active);
+	background-clip: padding-box;
+}
+
+/* Sin esto, el cruce de la barra vertical con la horizontal queda gris. */
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+/*
+ * Con el dedo no hace falta agarrar nada: se arrastra el contenido. Ahí la barra
+ * vuelve a ser lo que debe, una señal de cuánto falta, y no se come 14px de una
+ * pantalla que ya es angosta.
+ */
+@media (pointer: coarse) {
+	:root {
+		--scrollbar-size: 6px;
+		--scrollbar-inset: 1px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
 }
 
 @media (width >= 48rem) {
