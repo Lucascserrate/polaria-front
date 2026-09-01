@@ -103,11 +103,18 @@ export interface StaffReport {
 		 */
 		commissionRate: number | null;
 	};
-	/** Facturado hoy, en la semana y en el mes, al margen del período elegido. */
-	revenueSnapshots: {
-		today: number;
-		week: number;
-		month: number;
+	/**
+	 * Lo generado en el mes en curso, al margen del período elegido.
+	 *
+	 * La única cifra que no sigue al selector, y está por una razón concreta: quien
+	 * mira "hoy" a media mañana ve un cero, y necesita el mes al lado para saber que
+	 * mira una jornada que empieza y no una pantalla rota. Antes eran tres —hoy,
+	 * semana y mes—, que son las tres opciones del selector.
+	 */
+	currentMonth: {
+		revenue: number;
+		/** Su parte, o `null` si el negocio no configuró comisión. */
+		estimatedCommission: number | null;
 	};
 	summary: StaffSummary;
 	/**

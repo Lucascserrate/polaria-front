@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import Link from 'next/link';
@@ -9,8 +9,7 @@ import { ROUTES } from '@/constants/routes';
 import PeriodSelector from '@/modules/analytics/PeriodSelector';
 import AnalyticsTimeline from '@/modules/analytics/AnalyticsTimeline';
 import ServiceRanking from '@/modules/analytics/ServiceRanking';
-import { formatRange } from '@/modules/analytics/utils/format';
-import RevenueSnapshots from '@/modules/me/RevenueSnapshots';
+import EarningsHeadline from '@/modules/me/EarningsHeadline';
 import MyWorkSummary from '@/modules/me/MyWorkSummary';
 import { getMyReport } from '@/services/reports';
 import type { DateRange } from '@/lib/dateRange';
@@ -35,7 +34,13 @@ const todayIso = (): string => {
  * comparar a alguien con sus compañeros no es información sobre su trabajo.
  */
 const MyStatsPage = () => {
-	const [preset, setPreset] = useState<ReportPreset>('month');
+	/*
+	 * Arranca en "hoy" y no en el mes: la pregunta con la que alguien abre esto
+	 * desde el celular a media jornada es cómo viene el día. Lo que antes hacía
+	 * falta el mes para no ver una pantalla en cero ahora lo resuelve la línea de
+	 * contexto del titular, que muestra el mes sin robarle el lugar al día.
+	 */
+	const [preset, setPreset] = useState<ReportPreset>('today');
 	const [range, setRange] = useState<DateRange>(() => {
 		const today = todayIso();
 		return { from: today, to: today };
@@ -70,11 +75,6 @@ const MyStatsPage = () => {
 		}
 		setPreset(next);
 	};
-
-	const rangeLabel = useMemo(
-		() => (data ? formatRange(data.range.from, data.range.to) : null),
-		[data],
-	);
 
 	/*
 	 * El dueño no tiene números propios: no es una ficha del equipo, y los del
@@ -119,25 +119,22 @@ const MyStatsPage = () => {
 				</p>
 			) : (
 				<>
-					<RevenueSnapshots
-						snapshots={data.revenueSnapshots}
-						currency={data.currency}
+					{/*
+					 * El selector va primero porque gobierna todo lo que sigue: el
+					 * titular, el resumen, el gráfico y el ranking hablan del período
+					 * que se elige acá. Antes vivía en el medio, debajo de tres cifras
+					 * fijas que respondían la misma pregunta con otra jerarquía.
+					 */}
+					<PeriodSelector
+						preset={preset}
+						range={range}
+						onPresetChange={handlePresetChange}
+						onRangeChange={setRange}
 					/>
 
-					<div className="border-t border-border pt-6">
-						<PeriodSelector
-							preset={preset}
-							range={range}
-							onPresetChange={handlePresetChange}
-							onRangeChange={setRange}
-						/>
-					</div>
+					<EarningsHeadline report={data} />
 
-					<MyWorkSummary
-						summary={data.summary}
-						currency={data.currency}
-						rangeLabel={rangeLabel}
-					/>
+					<MyWorkSummary summary={data.summary} />
 
 					{data.timeline && (
 						<section className="space-y-3">
