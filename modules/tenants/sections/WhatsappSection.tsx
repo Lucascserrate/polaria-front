@@ -1,71 +1,110 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import WhatsappEmbeddedSignupButton from '@/modules/settings/WhatsappEmbeddedSignupButton';
+import { tenantsService } from '@/services/tenants.service';
+import type { Tenant } from '@/types/tenant.types';
 import SectionHeader from '../SectionHeader';
-import Field from '../Field';
-import type { TenantDraft } from '../useTenantDraft';
 
 interface Props {
-	draft: TenantDraft;
-	set: <K extends keyof TenantDraft>(key: K, value: TenantDraft[K]) => void;
-	warnings?: string[];
+	tenant: Tenant;
+	/** Relee la ficha: conectar y desconectar cambian el tenant del servidor. */
+	onRefresh: () => void;
 }
 
 /**
- * La conexión con Meta.
+ * La conexión con Meta, corrida desde soporte.
  *
- * Normalmente no se toca nada acá: estos tres datos los escribe el Embedded
- * Signup cuando el negocio conecta su número, y es el único camino que los sabe
- * bien. Están editables porque siguen siendo la única salida cuando una conexión
- * queda a medias y hay que arreglarla desde soporte.
+ * Antes eran tres campos de texto —número, phone id, access token— y no servían
+ * para lo único que hace falta cuando un negocio no puede conectar: **conectarlo**.
+ * Un token pegado a mano no existe hasta que alguien lo obtiene de Meta, y el
+ * intercambio del `code` por credenciales, el registro del número y la
+ * suscripción de la app son cosas que solo hace el flujo real.
  *
- * Un campo que se deja vacío no borra lo guardado: ver `toPayload`.
+ * Así que acá va el mismo Embedded Signup del panel del negocio, con una sola
+ * diferencia: las rutas de soporte reciben el tenant en la URL en vez de sacarlo
+ * del JWT. Ver `SupportWhatsappController`.
+ *
+ * Es una sección que **actúa en el momento**, no un formulario: no pasa por el
+ * borrador ni espera al "Guardar cambios" de la cabecera. Es a propósito —si las
+ * credenciales vivieran en el borrador, guardar después de conectar pisaría lo
+ * que acaba de escribir Meta con lo que se leyó al abrir la pantalla.
  */
-const WhatsappSection: React.FC<Props> = ({ draft, set, warnings = [] }) => (
-	<div className="space-y-8">
-		<SectionHeader
-			title="WhatsApp"
-			description="Las credenciales de la conexión. Las escribe el registro embebido; acá solo se corrigen."
-		/>
+const WhatsappSection: React.FC<Props> = ({ tenant, onRefresh }) => {
+	const [disconnecting, setDisconnecting] = useState(false);
 
-		<div className="space-y-4">
-			<Field
-				label="Número de teléfono"
-				htmlFor="whatsappPhoneNumber"
-				hint="El número visible del negocio, tal como lo devuelve Meta."
-			>
-				<Input
-					id="whatsappPhoneNumber"
-					value={draft.whatsappPhoneNumber}
-					onChange={(event) => set('whatsappPhoneNumber', event.target.value)}
-					placeholder="+15556384943"
-				/>
-			</Field>
+	const handleDisconnect = async () => {
+		setDisconnecting(true);
+		try {
+			await tenantsService.disconnectWhatsapp(tenant.id);
+			onRefresh();
+		} catch (error) {
+			console.error('Error disconnecting WhatsApp:', error);
+		} finally {
+			setDisconnecting(false);
+		}
+	};
 
-			<Field label="WhatsApp Phone ID" htmlFor="whatsappPhoneId">
-				<Input
-					id="whatsappPhoneId"
-					value={draft.whatsappPhoneId}
-					onChange={(event) => set('whatsappPhoneId', event.target.value)}
-					placeholder="1013549818517591"
-				/>
-			</Field>
+	return (
+		<div className="space-y-8">
+			<SectionHeader
+				title="WhatsApp"
+				description="Conectá el número del negocio con el mismo flujo de Meta que usa su panel."
+			/>
 
-			<Field label="WhatsApp Access Token" htmlFor="whatsappAccessToken">
-				<Input
-					id="whatsappAccessToken"
-					value={draft.whatsappAccessToken}
-					onChange={(event) => set('whatsappAccessToken', event.target.value)}
-					placeholder="EAAL..."
-				/>
-			</Field>
+			<WhatsappEmbeddedSignupButton
+				audience="support"
+				// El error se deja subir: el componente lo muestra tal cual, y el más
+				// probable —el número ya está tomado por otro negocio— es justo el que
+				// soporte necesita leer con las palabras del backend.
+				onComplete={async (result) => {
+					await tenantsService.completeWhatsappSignup(tenant.id, result);
+					onRefresh();
+				}}
+				onDisconnect={() => void handleDisconnect()}
+				disconnecting={disconnecting}
+				connected={Boolean(tenant.whatsappPhoneId)}
+				connectedAt={tenant.whatsappConnectedAt ?? null}
+				phoneNumber={tenant.whatsappPhoneNumber}
+				verifiedName={tenant.whatsappVerifiedName ?? null}
+				unavailableSince={tenant.whatsappUnavailableSince ?? null}
+				unavailableReason={tenant.whatsappUnavailableReason ?? null}
+			/>
+
+			<Credentials tenant={tenant} />
 		</div>
+	);
+};
 
-		{warnings.map((warning) => (
-			<p key={warning} className="text-sm text-amber-600 dark:text-amber-500">
-				{warning}
-			</p>
-		))}
+/**
+ * Lo que quedó guardado, para leer y no para editar.
+ *
+ * Sirve para diagnosticar: cuando Meta responde algo raro, lo primero que hay
+ * que ver es si el phone id y la WABA que quedaron son los que el negocio dice
+ * tener. Editables no aportaban nada —ver arriba— pero visibles sí.
+ */
+const Credentials: React.FC<{ tenant: Tenant }> = ({ tenant }) => (
+	<dl className="space-y-3 rounded-xl border border-border p-4 text-sm">
+		<Row label="Número" value={tenant.whatsappPhoneNumber} />
+		<Row label="Phone ID" value={tenant.whatsappPhoneId} />
+		<Row
+			label="Access token"
+			// El token no se muestra: es una credencial que abre la cuenta de Meta del
+			// negocio, y para diagnosticar alcanza con saber si está o no.
+			value={tenant.whatsappAccessToken ? 'Guardado' : null}
+		/>
+	</dl>
+);
+
+const Row: React.FC<{ label: string; value?: string | null }> = ({
+	label,
+	value,
+}) => (
+	<div className="flex items-baseline justify-between gap-4">
+		<dt className="text-muted-foreground">{label}</dt>
+		<dd className="min-w-0 truncate text-right font-medium">
+			{value || <span className="text-muted-foreground">Sin dato</span>}
+		</dd>
 	</div>
 );
 

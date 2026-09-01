@@ -16,6 +16,8 @@ import SystemSection from './sections/SystemSection';
 
 interface Props {
 	tenant: Tenant;
+	/** Relee la ficha desde el servidor. Lo necesita la sección de WhatsApp. */
+	onRefresh: () => void;
 	saving?: boolean;
 	error?: string | null;
 	onSave: (payload: UpdateTenantDto) => void;
@@ -65,6 +67,7 @@ const NAV: NavGroup[] = [
  */
 const TenantEditor: React.FC<Props> = ({
 	tenant,
+	onRefresh,
 	saving = false,
 	error,
 	onSave,
@@ -75,8 +78,7 @@ const TenantEditor: React.FC<Props> = ({
 	/** Lo que cada sección dice de sí misma en el nav. */
 	const badgeOf = (key: SectionKey): string | null => {
 		if (key === 'location') return draft.location ? 'En el mapa' : null;
-		if (key === 'whatsapp')
-			return draft.whatsappPhoneNumber.trim() ? 'Conectado' : null;
+		if (key === 'whatsapp') return tenant.whatsappPhoneId ? 'Conectado' : null;
 		if (key === 'system')
 			return draft.status === 'inactive' ? 'Inactivo' : null;
 		return null;
@@ -192,11 +194,7 @@ const TenantEditor: React.FC<Props> = ({
 					)}
 
 					{section === 'whatsapp' && (
-						<WhatsappSection
-							draft={draft}
-							set={set}
-							warnings={issues.warnings.whatsapp}
-						/>
+						<WhatsappSection tenant={tenant} onRefresh={onRefresh} />
 					)}
 
 					{section === 'system' && <SystemSection draft={draft} set={set} />}

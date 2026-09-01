@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
-import useCompleteWhatsappSignup from '@/services/settings/useCompleteWhatsappSignup';
-import useDisconnectWhatsapp from '@/services/settings/useDisconnectWhatsapp';
 import { describeUnavailableReason } from './utils/whatsappStatus';
 import {
 	AlertDialog,
@@ -58,7 +56,33 @@ type EmbeddedSignupMetaPayload = {
 	errorMessage?: string;
 };
 
+/** Lo que Meta devolvió al terminar el flujo, listo para mandar al backend. */
+export type EmbeddedSignupResult = {
+	code: string;
+	businessId?: string;
+	wabaId?: string;
+	phoneNumberId?: string;
+	/** El número sigue activo en la app de WhatsApp Business. */
+	coexistence: boolean;
+};
+
 type WhatsappEmbeddedSignupButtonProps = {
+	/**
+	 * Quién está mirando. Cambia el texto, no el flujo: el dueño conecta su
+	 * propia cuenta; soporte conecta la de un negocio que no es suyo.
+	 */
+	audience?: 'owner' | 'support';
+	/**
+	 * Qué hacer con lo que devolvió Meta.
+	 *
+	 * Viene de afuera porque es lo único que cambia entre los dos paneles: en el
+	 * del negocio el tenant sale del JWT, y en el de soporte viaja en la URL. El
+	 * intercambio con Meta —que es la parte delicada— es el mismo y vive una sola
+	 * vez, acá.
+	 */
+	onComplete: (result: EmbeddedSignupResult) => Promise<unknown>;
+	onDisconnect: () => void;
+	disconnecting?: boolean;
 	connected?: boolean;
 	connectedAt?: string | null;
 	phoneNumber?: string | null;
@@ -113,6 +137,10 @@ const isMetaOrigin = (origin: string): boolean => {
 const WhatsappEmbeddedSignupButton: React.FC<
 	WhatsappEmbeddedSignupButtonProps
 > = ({
+	audience = 'owner',
+	onComplete,
+	onDisconnect,
+	disconnecting = false,
 	connected = false,
 	connectedAt = null,
 	phoneNumber = null,
@@ -123,9 +151,7 @@ const WhatsappEmbeddedSignupButton: React.FC<
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const embeddedSignupMetaRef = useRef<EmbeddedSignupMetaPayload>({});
-	const { mutateAsync: completeSignup } = useCompleteWhatsappSignup();
-	const { mutate: disconnect, isPending: disconnecting } =
-		useDisconnectWhatsapp();
+	const isSupport = audience === 'support';
 
 	// El estado de conexión sale de `/settings`, que es lo único que sabe qué
 	// número quedó guardado. Un flag local además mentiría al cambiar de número:
@@ -333,7 +359,7 @@ const WhatsappEmbeddedSignupButton: React.FC<
 							// tiene que disparar la sincronización de contactos e historial.
 							coexistence: meta.event === COEXISTENCE_FINISH_EVENT,
 						};
-						await completeSignup(finalPayload);
+						await onComplete(finalPayload);
 					} catch (signupError) {
 						console.error('[Embedded Signup] complete failed', signupError);
 						// El caso más probable acá es un 409: el número o la cuenta ya
@@ -390,8 +416,9 @@ const WhatsappEmbeddedSignupButton: React.FC<
 						</div>
 					) : (
 						<p className="text-sm text-muted-foreground">
-							Activá la integración oficial para empezar a recibir mensajes en tu
-							cuenta.
+							{isSupport
+								? 'El dueño tiene que entrar con su cuenta de Meta en la ventana que se abre: es la que elige el número y la WABA. Lo que devuelva queda guardado en este negocio.'
+								: 'Activá la integración oficial para empezar a recibir mensajes en tu cuenta.'}
 						</p>
 					)}
 				</div>
@@ -441,7 +468,7 @@ const WhatsappEmbeddedSignupButton: React.FC<
 			{isConnected ? (
 				<div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 					<p className="text-xs text-muted-foreground">
-						Al cambiar el número conservás todo lo demás: servicios, staff,
+						Al cambiar el número se conserva todo lo demás: servicios, staff,
 						horarios y el historial de conversaciones.
 					</p>
 
@@ -473,21 +500,22 @@ const WhatsappEmbeddedSignupButton: React.FC<
 										 * está dando de baja el número de WhatsApp.
 										 */}
 										<p>
-											El número sigue existiendo en tu cuenta de Meta. Esto solo
-											deja de usarlo desde Polaria, y podés volver a conectarlo
-											cuando quieras.
+											El número sigue existiendo en {isSupport ? 'la' : 'tu'}{' '}
+											cuenta de Meta{isSupport ? ' del negocio' : ''}. Esto solo
+											deja de usarlo desde Polaria, y se puede volver a conectar
+											cuando sea.
 										</p>
 										<p>
-											Si lo que querés es que Polaria deje de responder por un
-											rato, apagá el interruptor de arriba en vez de
-											desconectar.
+											{isSupport
+												? 'Si lo que hace falta es que Polaria deje de responder un rato, apagá la IA en «Estado e IA» en vez de desconectar.'
+												: 'Si lo que querés es que Polaria deje de responder por un rato, apagá el interruptor de arriba en vez de desconectar.'}
 										</p>
 									</div>
 								</AlertDialogDescription>
 							</AlertDialogHeader>
 							<AlertDialogFooter>
 								<AlertDialogCancel>Cancelar</AlertDialogCancel>
-								<AlertDialogAction onClick={() => disconnect()}>
+								<AlertDialogAction onClick={() => onDisconnect()}>
 									Desconectar
 								</AlertDialogAction>
 							</AlertDialogFooter>

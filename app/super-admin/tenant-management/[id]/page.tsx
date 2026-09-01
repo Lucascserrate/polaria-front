@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
@@ -51,6 +51,24 @@ const TenantPage = () => {
 		};
 	}, [id]);
 
+	/**
+	 * Relee la ficha **sin** volver a la pantalla de carga.
+	 *
+	 * Lo pide la sección de WhatsApp, que actúa en el momento: conectar cambia el
+	 * tenant del servidor y hay que reflejarlo. Mostrar el spinner desmontaría el
+	 * editor y tiraría lo que se estuviera escribiendo en Perfil o Ubicación, que
+	 * no tienen nada que ver con lo que acaba de pasar.
+	 */
+	const refresh = useCallback(async () => {
+		if (!id) return;
+
+		try {
+			setTenant(await tenantsService.getById(id));
+		} catch (cause) {
+			console.error('Error refreshing tenant:', cause);
+		}
+	}, [id]);
+
 	const handleSave = async (payload: UpdateTenantDto) => {
 		if (!id) return;
 		setSaving(true);
@@ -97,6 +115,7 @@ const TenantPage = () => {
 			// datos de la anterior.
 			key={tenant.id}
 			tenant={tenant}
+			onRefresh={() => void refresh()}
 			saving={saving}
 			error={error}
 			onSave={(payload) => void handleSave(payload)}

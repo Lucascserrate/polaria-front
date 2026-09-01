@@ -24,6 +24,14 @@ export interface Tenant {
 	whatsappPhoneNumber: string | null;
 	whatsappPhoneId?: string | null;
 	whatsappAccessToken?: string | null;
+	whatsappVerifiedName?: string | null;
+	whatsappConnectedAt?: string | null;
+	/**
+	 * Desde cuándo Meta informa que la conexión se cayó. Es un tercer estado, no
+	 * lo mismo que estar sin conectar: las credenciales siguen guardadas.
+	 */
+	whatsappUnavailableSince?: string | null;
+	whatsappUnavailableReason?: string | null;
 	timezone: string;
 	email?: string;
 	googleId?: string;
@@ -56,9 +64,6 @@ export interface UpdateTenantDto {
 	latitude?: number | null;
 	longitude?: number | null;
 	email?: string;
-	whatsappPhoneNumber?: string;
-	whatsappPhoneId?: string;
-	whatsappAccessToken?: string;
 	timezone?: string;
 	status?: TenantStatus;
 	aiEnabled?: boolean;

@@ -25,9 +25,6 @@ export interface TenantDraft {
 	address: string;
 	/** `null` mientras el negocio no tenga coordenadas cargadas. */
 	location: TenantLocation | null;
-	whatsappPhoneNumber: string;
-	whatsappPhoneId: string;
-	whatsappAccessToken: string;
 	status: TenantStatus;
 	aiEnabled: boolean;
 }
@@ -61,9 +58,6 @@ const draftFrom = (tenant: Tenant): TenantDraft => ({
 	timezone: tenant.timezone ?? '',
 	address: tenant.address ?? '',
 	location: locationOf(tenant),
-	whatsappPhoneNumber: tenant.whatsappPhoneNumber ?? '',
-	whatsappPhoneId: tenant.whatsappPhoneId ?? '',
-	whatsappAccessToken: tenant.whatsappAccessToken ?? '',
 	status: tenant.status ?? 'active',
 	aiEnabled: tenant.aiEnabled ?? true,
 });
@@ -104,12 +98,6 @@ export const useTenantDraft = (tenant: Tenant) => {
 			];
 		}
 
-		if (!draft.whatsappPhoneNumber.trim()) {
-			warnings.whatsapp = [
-				'El negocio todavía no conectó WhatsApp: no recibe mensajes ni puede enviarlos.',
-			];
-		}
-
 		return { errors, warnings };
 	}, [draft]);
 
@@ -118,11 +106,13 @@ export const useTenantDraft = (tenant: Tenant) => {
 	/**
 	 * Lo que se manda al guardar.
 	 *
-	 * La dirección viaja como `null` cuando queda vacía, no como `''`: es la única
-	 * forma de borrarla: TypeORM ignora lo que llega `undefined`. Las credenciales
-	 * de WhatsApp hacen lo contrario —vacías no se mandan— porque acá nunca se
-	 * completan a mano, y un campo que se dejó en blanco por descuido no puede
-	 * desconectar al negocio.
+	 * La dirección viaja como `null` cuando queda vacía y no como `''`, porque es
+	 * la única forma de borrarla: TypeORM ignora lo que llega `undefined`.
+	 *
+	 * Nada de WhatsApp pasa por acá. La conexión no se edita como un campo: la
+	 * escribe Meta al terminar el Embedded Signup, y si viviera en el borrador,
+	 * guardar después de conectar pisaría las credenciales nuevas con las que se
+	 * leyeron al abrir la pantalla.
 	 */
 	const toPayload = (): UpdateTenantDto => ({
 		name: draft.name.trim(),
@@ -132,9 +122,6 @@ export const useTenantDraft = (tenant: Tenant) => {
 		address: draft.address.trim() || null,
 		latitude: draft.location?.latitude ?? null,
 		longitude: draft.location?.longitude ?? null,
-		whatsappPhoneNumber: draft.whatsappPhoneNumber.trim() || undefined,
-		whatsappPhoneId: draft.whatsappPhoneId.trim() || undefined,
-		whatsappAccessToken: draft.whatsappAccessToken.trim() || undefined,
 		status: draft.status,
 		aiEnabled: draft.aiEnabled,
 	});

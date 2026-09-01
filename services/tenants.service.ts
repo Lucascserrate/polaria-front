@@ -1,4 +1,5 @@
 import { axiosInstance } from '@/lib/axios';
+import type { EmbeddedSignupResult } from '@/modules/settings/WhatsappEmbeddedSignupButton';
 import type {
 	CreateTenantDto,
 	Tenant,
@@ -45,6 +46,29 @@ class TenantsService {
 
 	async delete(id: string): Promise<void> {
 		await axiosInstance.delete(`/tenants/${id}`);
+	}
+
+	/**
+	 * Guarda en este negocio lo que devolvió el Embedded Signup.
+	 *
+	 * Ruta propia de soporte y no la de `/settings`: aquélla saca el tenant del
+	 * JWT, así que correrla desde acá guardaría las credenciales en el negocio de
+	 * quien está dando soporte. Acá el tenant va en la URL.
+	 */
+	async completeWhatsappSignup(
+		tenantId: string,
+		result: EmbeddedSignupResult,
+	): Promise<void> {
+		await axiosInstance.patch(
+			`/support/tenants/${tenantId}/whatsapp/embedded-signup`,
+			result,
+		);
+	}
+
+	async disconnectWhatsapp(tenantId: string): Promise<void> {
+		await axiosInstance.post(
+			`/support/tenants/${tenantId}/whatsapp/disconnect`,
+		);
 	}
 }
 
