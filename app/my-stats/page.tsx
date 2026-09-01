@@ -6,6 +6,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
+import { useBottomNav } from '@/components/BottomNav';
 import PeriodSelector from '@/modules/analytics/PeriodSelector';
 import AnalyticsTimeline from '@/modules/analytics/AnalyticsTimeline';
 import ServiceRanking from '@/modules/analytics/ServiceRanking';
@@ -47,6 +48,14 @@ const MyStatsPage = () => {
 	});
 
 	const isCustom = preset === 'custom';
+
+	/*
+	 * El selector se pega arriba solo cuando la navegación es la barra de abajo.
+	 * Con el hamburguesa flotando en la esquina —que es lo que ve alguien del
+	 * negocio que además atiende— una barra pegada a todo el ancho se le mete
+	 * debajo.
+	 */
+	const stickySelector = useBottomNav();
 
 	const { data, isLoading, isError, error } = useQuery<StaffReport>({
 		queryKey: [
@@ -125,13 +134,21 @@ const MyStatsPage = () => {
 					 * que se elige acá. Antes vivía en el medio, debajo de tres cifras
 					 * fijas que respondían la misma pregunta con otra jerarquía.
 					 */}
-					<PeriodSelector
-						variant="segmented"
-						preset={preset}
-						range={range}
-						onPresetChange={handlePresetChange}
-						onRangeChange={setRange}
-					/>
+					<div
+						className={
+							stickySelector
+								? 'sticky top-0 z-20 -mx-4 border-b border-border bg-background px-4 py-3 md:static md:mx-0 md:border-0 md:p-0'
+								: undefined
+						}
+					>
+						<PeriodSelector
+							variant="segmented"
+							preset={preset}
+							range={range}
+							onPresetChange={handlePresetChange}
+							onRangeChange={setRange}
+						/>
+					</div>
 
 					<EarningsHeadline report={data} />
 

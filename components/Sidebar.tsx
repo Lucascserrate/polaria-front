@@ -23,6 +23,7 @@ import { useSessionActor } from '@/modules/auth/hooks/useAuth';
 import { isAdminRole } from '@/modules/auth/session';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/app/logo';
+import BottomNav, { useBottomNav } from '@/components/BottomNav';
 import { ROUTES } from '@/constants/routes';
 import { toggleSidebarPreference } from '@/components/sidebar-preference';
 import {
@@ -84,6 +85,9 @@ interface Props {
 	 * La Agenda lo apaga y pone el suyo dentro de la barra del calendario: acá
 	 * cada fila que se reserve para el botón es media hora del día que deja de
 	 * verse.
+	 *
+	 * Para el profesional no se dibuja en ningún caso: su menú es la barra de
+	 * abajo, y dos formas de llegar al mismo lugar es una de más.
 	 */
 	floatingTrigger?: boolean;
 }
@@ -107,6 +111,13 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 	const navItems = isAdmin ? adminNavItems : professionalNavItems;
 
 	/*
+	 * En móvil el profesional navega por abajo. El cajón sigue existiendo —en
+	 * escritorio es el menú de siempre— pero se queda sin quien lo abra, que es
+	 * justamente lo que se busca: los dos destinos ya están a la vista.
+	 */
+	const bottomNav = useBottomNav();
+
+	/*
 	 * "Empezar" solo existe mientras falte configurar algo.
 	 *
 	 * Es una entrada temporal, no una sección del producto: cuando el negocio
@@ -124,8 +135,10 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 
 	return (
 		<>
+			{bottomNav && <BottomNav />}
+
 			{/* Mobile menu button */}
-			{floatingTrigger && (
+			{floatingTrigger && !bottomNav && (
 				<Button
 					variant="ghost"
 					size="icon"

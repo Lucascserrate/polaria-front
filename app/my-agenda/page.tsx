@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toggleMobileSidebar } from '@/components/sidebar-mobile';
+import { useBottomNav } from '@/components/BottomNav';
 import AgendaToolbar, { type AgendaView } from '@/modules/agenda/AgendaToolbar';
 import CalendarGrid, {
 	type CalendarColumn,
@@ -57,6 +58,7 @@ const MyAgendaPage = () => {
 	}, []);
 
 	const { actor } = useSessionActor();
+	const bottomNav = useBottomNav();
 	/*
 	 * El marco del negocio, no su configuración: `/settings` es de administración y
 	 * a un profesional le responde 403. Sin la zona horaria, esta pantalla mostraría
@@ -171,15 +173,22 @@ const MyAgendaPage = () => {
 				onDateChange={setPicked}
 				onShift={handleShift}
 				busy={isFetching}
+				/*
+				 * Con la barra de abajo este botón abriría un cajón que dice lo mismo
+				 * que la barra. Se dibuja solo mientras la sesión no se resolvió o
+				 * cuando entró alguien del negocio, que sí navega por el cajón.
+				 */
 				menu={
-					<Button
-						variant="ghost"
-						size="icon"
-						aria-label="Abrir menú"
-						onClick={() => toggleMobileSidebar()}
-					>
-						<Menu className="h-5 w-5" />
-					</Button>
+					bottomNav ? undefined : (
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label="Abrir menú"
+							onClick={() => toggleMobileSidebar()}
+						>
+							<Menu className="h-5 w-5" />
+						</Button>
+					)
 				}
 			/>
 
