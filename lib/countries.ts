@@ -379,3 +379,47 @@ export const splitPhone = (raw: string): SplitPhone => {
 		? { dial, national: digits.slice(dial.length) }
 		: { dial: '', national: digits };
 };
+
+/**
+ * Sin tildes y en minúscula, para comparar.
+ *
+ * Los nombres salen de `Intl` bien escritos —"Perú", "Panamá"— y nadie los
+ * escribe así en un buscador. Sin esto, tipear "peru" no encuentra Perú, que es
+ * la forma más rápida de que una búsqueda parezca rota.
+ */
+const fold = (text: string): string =>
+	text
+		.normalize('NFD')
+		.replace(/\p{Diacritic}/gu, '')
+		.toLowerCase();
+
+/** El nombre ya plegado de cada país: se calcula una vez, no en cada tecla. */
+const SEARCH_INDEX = COUNTRIES.map((country) => ({
+	country,
+	folded: fold(country.name),
+}));
+
+/**
+ * Los países que coinciden con lo escrito, por nombre o por prefijo.
+ *
+ * Las dos formas porque son dos maneras de saber lo mismo: quien tiene presente
+ * el "+54" no tiene por qué acordarse de cómo se escribe el país, y al revés.
+ *
+ * El prefijo sólo se compara cuando se escribieron dígitos. Es la parte que
+ * parece de más y no lo es: `'54'.startsWith('')` es cierto, así que con un
+ * término sin números la condición daba verdadero para los doscientos países y
+ * la búsqueda por nombre no filtraba absolutamente nada.
+ */
+export const searchCountries = (term: string): Country[] => {
+	const trimmed = term.trim();
+	if (!trimmed) return COUNTRIES;
+
+	const text = fold(trimmed);
+	const digits = trimmed.replace(/\D/g, '');
+
+	return SEARCH_INDEX.filter(
+		({ country, folded }) =>
+			folded.includes(text) ||
+			(digits !== '' && country.dial.startsWith(digits)),
+	).map(({ country }) => country);
+};

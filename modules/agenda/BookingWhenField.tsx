@@ -137,7 +137,7 @@ const BookingWhenField: React.FC<Props> = ({
 					</button>
 				</PopoverTrigger>
 
-				<PopoverContent align="start" className="w-56 p-0">
+				<PopoverContent portal={false} align="start" className="w-56 p-0">
 					{/*
 					 * El contenido se monta al abrir —Radix lo desmonta al cerrar— así
 					 * que la consulta de disponibilidad sale una sola vez, cuando alguien

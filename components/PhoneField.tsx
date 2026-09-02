@@ -9,8 +9,8 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import {
-	COUNTRIES,
 	countryForDial,
+	searchCountries,
 	splitPhone,
 	type Country,
 } from '@/lib/countries';
@@ -139,18 +139,7 @@ const CountryPicker: React.FC<{
 
 	const selected = countryForDial(dial);
 
-	const needle = term.trim().toLowerCase();
-	const matches = useMemo(
-		() =>
-			needle
-				? COUNTRIES.filter(
-						(country) =>
-							country.name.toLowerCase().includes(needle) ||
-							country.dial.startsWith(needle.replace(/\D/g, '')),
-					)
-				: COUNTRIES,
-		[needle],
-	);
+	const matches = useMemo(() => searchCountries(term), [term]);
 
 	/* El país actual queda a la vista al abrir, sin tener que buscarlo. */
 	useEffect(() => {
@@ -217,7 +206,12 @@ const CountryPicker: React.FC<{
 				</button>
 			</PopoverTrigger>
 
-			<PopoverContent align="start" className="w-72 p-0">
+			{/*
+			 * Sin portal: este campo vive dentro del diálogo de alta de cliente, y un
+			 * popover portaleado queda fuera de la excepción de scroll que Radix le
+			 * da al diálogo. La rueda del mouse dejaba de funcionar sobre la lista.
+			 */}
+			<PopoverContent portal={false} align="start" className="w-72 p-0">
 				<div className="relative border-b border-border p-2">
 					<Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input

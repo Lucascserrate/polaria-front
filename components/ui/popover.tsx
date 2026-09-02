@@ -21,10 +21,25 @@ function PopoverContent({
 	className,
 	align = 'center',
 	sideOffset = 4,
+	portal = true,
 	...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
+	/**
+	 * Con `false` el contenido se queda donde está en el DOM, sin portal.
+	 *
+	 * Hace falta dentro de un diálogo con contenido que scrollea. Radix Dialog
+	 * bloquea el scroll de la página con `react-remove-scroll` y sólo lo permite
+	 * dentro del propio diálogo, que le pasa como única excepción. Un popover
+	 * portaleado queda fuera de esa excepción: la rueda del mouse no hace nada
+	 * adentro, aunque arrastrar la barra sí, que es una forma bastante
+	 * desconcertante de estar roto.
+	 */
+	portal?: boolean;
+}) {
+	const Wrapper = portal ? PopoverPrimitive.Portal : React.Fragment;
+
 	return (
-		<PopoverPrimitive.Portal>
+		<Wrapper>
 			<PopoverPrimitive.Content
 				data-slot="popover-content"
 				align={align}
@@ -35,7 +50,7 @@ function PopoverContent({
 				)}
 				{...props}
 			/>
-		</PopoverPrimitive.Portal>
+		</Wrapper>
 	);
 }
 

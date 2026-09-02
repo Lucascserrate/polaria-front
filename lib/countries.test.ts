@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { COUNTRIES, countryForDial, splitPhone } from './countries';
+import {
+	COUNTRIES,
+	countryForDial,
+	searchCountries,
+	splitPhone,
+} from './countries';
 
 describe('COUNTRIES', () => {
 	it('trae los países donde opera Polaria', () => {
@@ -88,5 +93,40 @@ describe('countryForDial', () => {
 	it('devuelve nada para un prefijo que no existe', () => {
 		expect(countryForDial('999')).toBeNull();
 		expect(countryForDial('')).toBeNull();
+	});
+});
+
+describe('searchCountries', () => {
+	const isos = (term: string) =>
+		searchCountries(term).map((country) => country.iso);
+
+	it('filtra por nombre', () => {
+		/*
+		 * La condición del prefijo daba verdadero para todos con un término sin
+		 * dígitos —`'54'.startsWith('')` es cierto— así que buscar por nombre
+		 * devolvía los doscientos países y parecía que el buscador no andaba.
+		 */
+		const found = searchCountries('argentina');
+		expect(found).toHaveLength(1);
+		expect(found[0].iso).toBe('AR');
+	});
+
+	it('encuentra sin tildes lo que se escribe con tildes', () => {
+		expect(isos('peru')).toContain('PE');
+		expect(isos('panama')).toContain('PA');
+	});
+
+	it('filtra por prefijo cuando se escriben dígitos', () => {
+		expect(isos('591')).toEqual(['BO']);
+		expect(isos('+591')).toEqual(['BO']);
+	});
+
+	it('con el término vacío devuelve todo', () => {
+		expect(searchCountries('')).toHaveLength(COUNTRIES.length);
+		expect(searchCountries('   ')).toHaveLength(COUNTRIES.length);
+	});
+
+	it('no devuelve nada cuando no hay coincidencias', () => {
+		expect(searchCountries('zzzzz')).toEqual([]);
 	});
 });
