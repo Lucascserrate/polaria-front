@@ -1,13 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import PeriodSelector from '@/modules/analytics/PeriodSelector';
 import AnalyticsSummary from '@/modules/analytics/AnalyticsSummary';
 import AnalyticsTimeline from '@/modules/analytics/AnalyticsTimeline';
 import StaffRanking from '@/modules/analytics/StaffRanking';
 import ServiceRanking from '@/modules/analytics/ServiceRanking';
 import { formatRange } from '@/modules/analytics/utils/format';
+import { cn } from '@/lib/utils';
 import { getReport } from '@/services/reports';
 import type { DateRange } from '@/lib/dateRange';
 import type { ReportPreset, TenantReport } from '@/types/reports.types';
@@ -38,19 +39,27 @@ const AnalyticsPage = () => {
 
 	const isCustom = preset === 'custom';
 
-	const { data, isLoading, isError } = useQuery<TenantReport>({
-		queryKey: [
-			'report',
-			preset,
-			isCustom ? range.from : '',
-			isCustom ? range.to : '',
-		],
-		queryFn: () =>
-			getReport({ preset, from: range.from, to: range.to ?? range.from }),
-		// Con el rango a medias no hay nada que consultar todavía; el resultado
-		// anterior se queda en pantalla mientras se elige el segundo día.
-		enabled: !isCustom || range.to !== null,
-	});
+	const { data, isLoading, isError, isPlaceholderData } =
+		useQuery<TenantReport>({
+			queryKey: [
+				'report',
+				preset,
+				isCustom ? range.from : '',
+				isCustom ? range.to : '',
+			],
+			queryFn: () =>
+				getReport({ preset, from: range.from, to: range.to ?? range.from }),
+			// Con el rango a medias no hay nada que consultar todavía.
+			enabled: !isCustom || range.to !== null,
+			/*
+			 * El resultado anterior se queda en pantalla mientras se elige el segundo
+			 * día. Sin esto no se quedaba: el primer click cambia la clave de la
+			 * consulta, la nueva no tiene datos en caché y encima nace deshabilitada,
+			 * así que `data` se volvía `undefined` y la pantalla se vaciaba en el medio
+			 * de la selección.
+			 */
+			placeholderData: keepPreviousData,
+		});
 
 	/**
 	 * Pasar a "Personalizado" arranca desde el período que se está mirando.
@@ -100,7 +109,17 @@ const AnalyticsPage = () => {
 			)}
 
 			{data && !isLoading && (
-				<div className="space-y-6">
+				/*
+				 * Atenuado mientras lo que se ve es el resultado del período anterior.
+				 * Conservarlo evita que la pantalla se vacíe, pero sin esta señal serían
+				 * números de otro período presentados como si fueran los pedidos.
+				 */
+				<div
+					className={cn(
+						'space-y-6 transition-opacity',
+						isPlaceholderData && 'opacity-50',
+					)}
+				>
 					<AnalyticsSummary
 						summary={data.summary}
 						currency={data.currency}

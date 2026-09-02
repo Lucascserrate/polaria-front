@@ -3,14 +3,8 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { parseDateKey, toDateKey, todayKey } from '@/lib/date';
-import { isBetweenRange } from '@/lib/dateRange';
-
-/**
- * La semana arranca el lunes, igual que la grilla de horarios de Configuración.
- * `Date.getDay()` cuenta desde el domingo, así que hay que correr el índice.
- */
-const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+import { parseDateKey, todayKey } from '@/lib/date';
+import { buildMonthGrid, shiftMonth, WEEKDAY_LABELS } from '@/lib/monthGrid';
 
 const monthFormatter = new Intl.DateTimeFormat('es', {
 	month: 'long',
@@ -33,19 +27,15 @@ interface Props {
 	 * calendario resaltaría el día de mañana.
 	 */
 	today?: string;
-	/**
-	 * Otro extremo del rango, `YYYY-MM-DD`. Pasarlo —aunque sea `null`— pone al
-	 * calendario en modo rango: pinta lo que queda en el medio y deja de ofrecer
-	 * "Volver a hoy", que ahí significaría mover el inicio del período.
-	 *
-	 * El componente no sabe armar rangos: avisa el día clickeado y quien lo usa
-	 * decide si es el principio o el final.
-	 */
-	rangeEnd?: string | null;
 }
 
 /**
- * Calendario mensual para elegir qué día de la agenda se está mirando.
+ * Calendario mensual para elegir **un** día: qué fecha de la agenda se mira.
+ *
+ * Para elegir un período está `DateRangeCalendar`, que muestra dos meses. Este
+ * supo tener un modo rango y lo perdió a propósito: un solo mes obligaba a
+ * cambiar de mes en el medio de la selección, con el primer extremo ya fuera de
+ * la vista.
  *
  * El mes visible es estado propio y no se deriva de `value`: quien busca una
  * cita hojea meses sin haber elegido todavía, y hacer que la vista salte de
@@ -55,10 +45,7 @@ const MonthCalendar: React.FC<Props> = ({
 	value,
 	onChange,
 	today = todayKey(),
-	rangeEnd,
 }) => {
-	const isRangeMode = rangeEnd !== undefined;
-
 	const [visibleMonth, setVisibleMonth] = useState(() => {
 		const selected = parseDateKey(value);
 		return new Date(selected.getFullYear(), selected.getMonth(), 1);
@@ -66,14 +53,10 @@ const MonthCalendar: React.FC<Props> = ({
 
 	const year = visibleMonth.getFullYear();
 	const month = visibleMonth.getMonth();
+	const grid = buildMonthGrid(year, month);
 
-	// Cuántas celdas vacías van antes del día 1 para que caiga en su columna.
-	const leadingBlanks = (new Date(year, month, 1).getDay() + 6) % 7;
-	// El día 0 del mes siguiente es el último de este.
-	const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-	const shiftMonth = (delta: number) =>
-		setVisibleMonth(new Date(year, month + delta, 1));
+	const goToMonth = (delta: number) =>
+		setVisibleMonth((current) => shiftMonth(current, delta));
 
 	const goToToday = () => {
 		// El mes sale de `today` y no del reloj del navegador: son la misma fecha
@@ -96,7 +79,7 @@ const MonthCalendar: React.FC<Props> = ({
 						size="sm"
 						className="h-7 w-7 p-0"
 						aria-label="Mes anterior"
-						onClick={() => shiftMonth(-1)}
+						onClick={() => goToMonth(-1)}
 					>
 						<ChevronLeft className="w-4 h-4" />
 					</Button>
@@ -106,7 +89,7 @@ const MonthCalendar: React.FC<Props> = ({
 						size="sm"
 						className="h-7 w-7 p-0"
 						aria-label="Mes siguiente"
-						onClick={() => shiftMonth(1)}
+						onClick={() => goToMonth(1)}
 					>
 						<ChevronRight className="w-4 h-4" />
 					</Button>
@@ -124,15 +107,13 @@ const MonthCalendar: React.FC<Props> = ({
 					</span>
 				))}
 
-				{Array.from({ length: leadingBlanks }, (_, index) => (
+				{Array.from({ length: grid.leadingBlanks }, (_, index) => (
 					<span key={`blank-${index}`} />
 				))}
 
-				{Array.from({ length: daysInMonth }, (_, index) => {
+				{grid.days.map((key, index) => {
 					const date = new Date(year, month, index + 1);
-					const key = toDateKey(date);
-					const isSelected = key === value || key === rangeEnd;
-					const isBetween = isBetweenRange(key, value, rangeEnd);
+					const isSelected = key === value;
 					const isToday = key === today;
 
 					return (
@@ -146,11 +127,9 @@ const MonthCalendar: React.FC<Props> = ({
 							className={`h-8 w-8 rounded-full text-sm flex items-center justify-center transition-colors ${
 								isSelected
 									? 'bg-primary text-primary-foreground font-semibold'
-									: isBetween
-										? 'bg-accent hover:bg-accent/70'
-										: isToday
-											? 'text-primary font-semibold hover:bg-accent'
-											: 'hover:bg-accent'
+									: isToday
+										? 'text-primary font-semibold hover:bg-accent'
+										: 'hover:bg-accent'
 							}`}
 						>
 							{index + 1}
@@ -159,7 +138,7 @@ const MonthCalendar: React.FC<Props> = ({
 				})}
 			</div>
 
-			{!isRangeMode && value !== today && (
+			{value !== today && (
 				<Button
 					type="button"
 					variant="ghost"

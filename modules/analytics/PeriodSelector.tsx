@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { CalendarDays } from 'lucide-react';
-import MonthCalendar from '@/components/MonthCalendar';
+import DateRangeCalendar from '@/components/DateRangeCalendar';
 import { Button } from '@/components/ui/button';
 import {
 	Popover,
@@ -10,7 +10,7 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { nextRangeSelection, type DateRange } from '@/lib/dateRange';
+import type { DateRange } from '@/lib/dateRange';
 import type { ReportPreset } from '@/types/reports.types';
 import { formatRange } from './utils/format';
 
@@ -51,10 +51,11 @@ interface Props {
  * de "qué estoy viendo"; en la `segmented` es solo el ícono, porque ahí ese cartel
  * ya lo pone el encabezado del titular y las cuatro celdas tienen que medir igual.
  *
- * El rango se arma clickeando dos días en un calendario en vez de tipearlos en
- * dos campos. No es solo comodidad: con dos campos libres se podía pedir un
- * "desde" posterior al "hasta", y había que validarlo y explicarlo. Acá ese
- * estado no existe —ver `nextRangeSelection`—, así que tampoco existe el error.
+ * El rango se arma clickeando dos días en un calendario de dos meses en vez de
+ * tipearlos en dos campos. No es solo comodidad: con dos campos libres se podía
+ * pedir un "desde" posterior al "hasta", y había que validarlo y explicarlo. Acá
+ * ese estado no existe —ver `nextRangeSelection`—, así que tampoco existe el
+ * error.
  */
 const PeriodSelector: React.FC<Props> = ({
 	preset,
@@ -69,11 +70,12 @@ const PeriodSelector: React.FC<Props> = ({
 	const customLabel =
 		isCustom && range.to ? formatRange(range.from, range.to) : 'Personalizado';
 
-	const pickDay = (day: string) => {
-		const next = nextRangeSelection(range, day);
+	const pickRange = (next: DateRange) => {
 		onRangeChange(next);
 		// Se cierra recién cuando el rango quedó completo: mientras falte el
-		// segundo extremo no hay nada que consultar.
+		// segundo extremo no hay nada que consultar, y cerrarse en el medio era
+		// justamente lo que obligaba a abrir el calendario dos veces para elegir
+		// un período.
 		if (next.to) setPickerOpen(false);
 	};
 
@@ -86,16 +88,7 @@ const PeriodSelector: React.FC<Props> = ({
 			<PopoverTrigger asChild>{trigger}</PopoverTrigger>
 
 			<PopoverContent align="start" className="w-auto p-3">
-				<p className="mb-2 text-xs text-muted-foreground">
-					{range.to
-						? 'Elegí un día para empezar otro rango'
-						: 'Elegí el día en que termina el período'}
-				</p>
-				<MonthCalendar
-					value={range.from}
-					rangeEnd={range.to}
-					onChange={pickDay}
-				/>
+				<DateRangeCalendar range={range} onChange={pickRange} />
 			</PopoverContent>
 		</Popover>
 	);

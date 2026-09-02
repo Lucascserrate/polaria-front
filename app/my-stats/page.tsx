@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import EarningsHeadline from '@/modules/me/EarningsHeadline';
 import MyWorkSummary from '@/modules/me/MyWorkSummary';
 import { getMyReport } from '@/services/reports';
 import type { DateRange } from '@/lib/dateRange';
+import { cn } from '@/lib/utils';
 import type { ReportPreset, StaffReport } from '@/types/reports.types';
 
 const todayIso = (): string => {
@@ -57,7 +58,7 @@ const MyStatsPage = () => {
 	 */
 	const stickySelector = useBottomNav();
 
-	const { data, isLoading, isError, error } = useQuery<StaffReport>({
+	const { data, isError, error, isPlaceholderData } = useQuery<StaffReport>({
 		queryKey: [
 			'my-report',
 			preset,
@@ -66,9 +67,18 @@ const MyStatsPage = () => {
 		],
 		queryFn: () =>
 			getMyReport({ preset, from: range.from, to: range.to ?? range.from }),
-		// Con el rango a medias no hay nada que consultar todavía; el resultado
-		// anterior se queda en pantalla mientras se elige el segundo día.
+		// Con el rango a medias no hay nada que consultar todavía.
 		enabled: !isCustom || range.to !== null,
+		/*
+		 * El resultado anterior se queda en pantalla mientras se elige el segundo
+		 * día, y eso acá arreglaba algo peor que un parpadeo: el primer click de un
+		 * rango cambia la clave de la consulta a una que no tiene datos y que nace
+		 * deshabilitada, así que `data` quedaba `undefined` para siempre. La
+		 * pantalla mostraba "Cargando tus números…" sin fin, y como el selector
+		 * vivía dentro de esa rama, desaparecía el propio calendario con el que
+		 * había que elegir el segundo día. No se podía salir sin recargar.
+		 */
+		placeholderData: keepPreviousData,
 	});
 
 	/**
@@ -118,14 +128,6 @@ const MyStatsPage = () => {
 						<Link href={ROUTES.analytics}>Ir a Analíticas</Link>
 					</Button>
 				</div>
-			) : isError ? (
-				<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
-					No se pudieron cargar tus números. Se vuelve a intentar solo.
-				</p>
-			) : isLoading || !data ? (
-				<p className="py-16 text-center text-muted-foreground">
-					Cargando tus números…
-				</p>
 			) : (
 				<>
 					{/*
@@ -133,6 +135,11 @@ const MyStatsPage = () => {
 					 * titular, el resumen, el gráfico y el ranking hablan del período
 					 * que se elige acá. Antes vivía en el medio, debajo de tres cifras
 					 * fijas que respondían la misma pregunta con otra jerarquía.
+					 *
+					 * Y va **afuera** de las ramas de carga y error, que es lo que antes
+					 * lo hacía desaparecer justo cuando se lo estaba usando. Es un
+					 * control, no contenido: mientras la pantalla tenga algo que mostrar,
+					 * tiene que poder cambiarse el período.
 					 */}
 					<div
 						className={
@@ -150,27 +157,50 @@ const MyStatsPage = () => {
 						/>
 					</div>
 
-					<EarningsHeadline report={data} />
+					{isError ? (
+						<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+							No se pudieron cargar tus números. Se vuelve a intentar solo.
+						</p>
+					) : !data ? (
+						<p className="py-16 text-center text-muted-foreground">
+							Cargando tus números…
+						</p>
+					) : (
+						/*
+						 * Atenuado mientras lo que se ve es el resultado del período
+						 * anterior: conservarlo evita que la pantalla se vacíe, pero sin
+						 * esta señal serían los números de otro período presentados como
+						 * si fueran los pedidos.
+						 */
+						<div
+							className={cn(
+								'space-y-6 transition-opacity',
+								isPlaceholderData && 'opacity-50',
+							)}
+						>
+							<EarningsHeadline report={data} />
 
-					<MyWorkSummary summary={data.summary} currency={data.currency} />
+							<MyWorkSummary summary={data.summary} currency={data.currency} />
 
-					{data.timeline && (
-						<section className="space-y-3">
-							<h2 className="text-sm font-semibold">Cómo evolucionó</h2>
-							<AnalyticsTimeline
-								timeline={data.timeline}
-								currency={data.currency}
-							/>
-						</section>
+							{data.timeline && (
+								<section className="space-y-3">
+									<h2 className="text-sm font-semibold">Cómo evolucionó</h2>
+									<AnalyticsTimeline
+										timeline={data.timeline}
+										currency={data.currency}
+									/>
+								</section>
+							)}
+
+							<section className="space-y-3">
+								<h2 className="text-sm font-semibold">Lo que más hiciste</h2>
+								<ServiceRanking
+									entries={data.serviceRanking}
+									currency={data.currency}
+								/>
+							</section>
+						</div>
 					)}
-
-					<section className="space-y-3">
-						<h2 className="text-sm font-semibold">Lo que más hiciste</h2>
-						<ServiceRanking
-							entries={data.serviceRanking}
-							currency={data.currency}
-						/>
-					</section>
 				</>
 			)}
 		</div>
