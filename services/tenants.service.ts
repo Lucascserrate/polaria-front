@@ -3,6 +3,7 @@ import type { EmbeddedSignupResult } from '@/modules/settings/WhatsappEmbeddedSi
 import type {
 	CreateTenantDto,
 	Tenant,
+	TrialSummary,
 	UpdateTenantDto,
 } from '@/types/tenant.types';
 
@@ -69,6 +70,28 @@ class TenantsService {
 		await axiosInstance.post(
 			`/support/tenants/${tenantId}/whatsapp/disconnect`,
 		);
+	}
+
+	/** El estado de la prueba gratuita de un negocio. */
+	async getTrial(tenantId: string): Promise<TrialSummary> {
+		const { data } = await axiosInstance.get(
+			`/support/tenants/${tenantId}/trial`,
+		);
+		return data;
+	}
+
+	/**
+	 * Le suma días de prueba al negocio.
+	 *
+	 * No es idempotente y no debe serlo: apretar dos veces "+7 días" son catorce.
+	 * Por eso el llamador tiene que evitar el doble envío, y no reintentar solo.
+	 */
+	async extendTrial(tenantId: string, days: number): Promise<TrialSummary> {
+		const { data } = await axiosInstance.post(
+			`/support/tenants/${tenantId}/trial/extend`,
+			{ days },
+		);
+		return data;
 	}
 
 	/**

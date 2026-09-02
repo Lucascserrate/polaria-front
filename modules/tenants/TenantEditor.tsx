@@ -6,12 +6,18 @@ import { AlertCircle, ArrowLeft, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import type { Tenant, UpdateTenantDto } from '@/types/tenant.types';
+import type {
+	Tenant,
+	TrialSummary,
+	UpdateTenantDto,
+} from '@/types/tenant.types';
 import { TENANTS_BASE_ROUTE } from './routes';
 import useTenantDraft, { type SectionKey } from './useTenantDraft';
+import useTenantTrial from './useTenantTrial';
 import ProfileSection from './sections/ProfileSection';
 import LocationSection from './sections/LocationSection';
 import WhatsappSection from './sections/WhatsappSection';
+import TrialSection from './sections/TrialSection';
 import SystemSection from './sections/SystemSection';
 
 interface Props {
@@ -51,6 +57,10 @@ const NAV: NavGroup[] = [
 		items: [{ key: 'whatsapp', label: 'WhatsApp' }],
 	},
 	{
+		label: 'Comercial',
+		items: [{ key: 'trial', label: 'Prueba gratuita' }],
+	},
+	{
 		label: 'Sistema',
 		items: [{ key: 'system', label: 'Estado e IA' }],
 	},
@@ -60,12 +70,17 @@ const NAV: NavGroup[] = [
  * La ficha completa de un negocio.
  *
  * Es una pantalla y no un modal por la misma razón que la del equipo: ya no es
- * un formulario, son cuatro grupos de datos que no se revisan juntos, y en un
+ * un formulario, son varios grupos de datos que no se revisan juntos, y en un
  * diálogo cualquiera de ellos —el mapa, sobre todo— quedaba detrás de un scroll
  * interno de 400px.
  *
  * El guardado es uno solo, en la cabecera, y manda la ficha entera. Guardar por
  * sección obligaría a explicar en cada una si lo de al lado quedó pendiente.
+ *
+ * WhatsApp y la prueba gratuita quedan afuera de ese guardado, y no es una
+ * excepción caprichosa: no son campos sino acciones que ocurren en el momento
+ * —conectar, extender—. Si vivieran en el borrador, guardar después de actuar
+ * pisaría con lo que se leyó al abrir la pantalla.
  */
 const TenantEditor: React.FC<Props> = ({
 	tenant,
@@ -78,10 +93,18 @@ const TenantEditor: React.FC<Props> = ({
 	const [section, setSection] = useState<SectionKey>('profile');
 	const { draft, set, issues, canSave, toPayload } = useTenantDraft(tenant);
 
+	/*
+	 * La prueba se carga acá y no dentro de su sección para que el nav pueda
+	 * decir cuántos días quedan sin obligar a entrar. Es lo primero que soporte
+	 * quiere saber al abrir la ficha de un negocio que llamó por un problema.
+	 */
+	const trial = useTenantTrial(tenant.id);
+
 	/** Lo que cada sección dice de sí misma en el nav. */
 	const badgeOf = (key: SectionKey): string | null => {
 		if (key === 'location') return draft.location ? 'En el mapa' : null;
 		if (key === 'whatsapp') return tenant.whatsappPhoneId ? 'Conectado' : null;
+		if (key === 'trial') return trialBadge(trial.trial);
 		if (key === 'system')
 			return draft.status === 'inactive' ? 'Inactivo' : null;
 		return null;
@@ -209,11 +232,35 @@ const TenantEditor: React.FC<Props> = ({
 						<WhatsappSection tenant={tenant} onRefresh={onRefresh} />
 					)}
 
+					{section === 'trial' && (
+						<TrialSection
+							trial={trial.trial}
+							loading={trial.loading}
+							pending={trial.pending}
+							error={trial.error}
+							onExtend={trial.extend}
+						/>
+					)}
+
 					{section === 'system' && <SystemSection draft={draft} set={set} />}
 				</div>
 			</div>
 		</div>
 	);
+};
+
+/**
+ * Lo que la solapa dice de la prueba, en el ancho de una etiqueta.
+ *
+ * Sólo los estados que piden mirar: una prueba que corre —con sus días— y una
+ * vencida. Un negocio pago o sin prueba iniciada no tiene nada urgente que
+ * contar acá, y una etiqueta en cada solapa deja de señalar nada.
+ */
+const trialBadge = (trial: TrialSummary | null): string | null => {
+	if (!trial) return null;
+	if (trial.state === 'TRIAL_EXPIRED') return 'Vencida';
+
+	return trial.daysRemaining !== null ? `${trial.daysRemaining} d` : null;
 };
 
 export default TenantEditor;

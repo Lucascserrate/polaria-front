@@ -29,7 +29,8 @@ export interface TenantDraft {
 	aiEnabled: boolean;
 }
 
-export type SectionKey = 'profile' | 'location' | 'whatsapp' | 'system';
+export type SectionKey =
+	'profile' | 'location' | 'whatsapp' | 'trial' | 'system';
 
 export interface DraftIssues {
 	/** Impiden guardar. */
