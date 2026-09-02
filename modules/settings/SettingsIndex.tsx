@@ -7,6 +7,7 @@ import {
 	ChevronRight,
 	Clock,
 	MessageCircle,
+	MessageSquareText,
 	type LucideIcon,
 } from 'lucide-react';
 import BotSwitchCard from '@/modules/settings/BotSwitchCard';
@@ -29,6 +30,8 @@ type SettingsSummary = {
 	whatsappConnected: boolean;
 	whatsappNumber: string | null;
 	reminderOffsets: number[];
+	/** El negocio escribió su propio saludo en lugar de usar el de fábrica. */
+	welcomeCustomized: boolean;
 };
 
 /**
@@ -66,6 +69,14 @@ const SECTIONS: Section[] = [
 				: 'Sin conectar',
 	},
 	{
+		href: ROUTES.settingsWelcome,
+		label: 'Mensaje de bienvenida',
+		description: 'Lo primero que lee un cliente cuando te escribe.',
+		icon: MessageSquareText,
+		status: (settings) =>
+			settings.welcomeCustomized ? 'Personalizado' : 'Texto original',
+	},
+	{
 		href: ROUTES.settingsReminders,
 		label: 'Recordatorios',
 		description: 'El aviso automático antes de cada cita.',
@@ -96,6 +107,7 @@ const SettingsIndex: React.FC = () => {
 		whatsappConnected: data?.whatsappConnection.connected ?? false,
 		whatsappNumber: data?.whatsappConnection.phoneNumber ?? null,
 		reminderOffsets: data?.reminders.offsets ?? [],
+		welcomeCustomized: Boolean(data?.welcomeMessage.text),
 	};
 
 	return (

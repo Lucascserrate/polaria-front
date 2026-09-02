@@ -77,6 +77,28 @@ export type SettingsResponse = {
 	/** Si el negocio activó los avisos automáticos, al equipo y a los clientes. */
 	notificationsEnabled: boolean;
 	/**
+	 * El saludo con el que Polaria recibe a un cliente que no tiene turno.
+	 *
+	 * Es la primera frase que lee alguien que escribe al negocio. El texto viaja
+	 * con el marcador sin resolver: `placeholder` se reemplaza por el nombre del
+	 * negocio recién al enviar, así que renombrarse no deja el saludo con el
+	 * nombre viejo.
+	 */
+	welcomeMessage: {
+		/** Lo que el negocio guardó. `null` significa que usa el de fábrica. */
+		text: string | null;
+		/** El de fábrica, al que siempre se puede volver. */
+		defaultText: string;
+		/** El marcador que se reemplaza al enviar. Lo nombra el backend. */
+		placeholder: string;
+		maxLength: number;
+		/**
+		 * Los botones del menú, en orden. No se editan: son el alcance real de
+		 * Polaria. Van en la vista previa porque son parte de lo que ve el cliente.
+		 */
+		previewButtons: string[];
+	};
+	/**
 	 * Recordatorios del negocio. Aparte de `whatsappConnection` porque es una
 	 * capacidad del negocio y no del canal.
 	 */
@@ -104,6 +126,11 @@ export type UpdateSettingsPayload = {
 	aiEnabled?: boolean;
 	/** Anticipaciones a activar, en minutos. Lista vacía apaga los recordatorios. */
 	reminderOffsets?: number[];
+	/**
+	 * El saludo propio del negocio. `null` vuelve al de fábrica; ausente lo deja
+	 * como está. No se puede dejar en blanco: el menú no sale sin cuerpo.
+	 */
+	welcomeMessage?: string | null;
 };
 
 export const getSettings = async (): Promise<SettingsResponse> => {
