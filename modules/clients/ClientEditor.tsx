@@ -4,6 +4,7 @@ import { cloneElement, useId, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import PhoneField from '@/components/PhoneField';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
@@ -163,19 +164,11 @@ const ClientEditor: React.FC<Props> = ({
 									/>
 								</Field>
 
-								<Field
-									label="Teléfono"
-									required
-									hint={
-										dialCode
-											? `Si no ponés país, se asume +${dialCode}.`
-											: 'Escribilo con el código de país si es del exterior.'
-									}
-								>
-									<Input
+								<Field label="Teléfono" required>
+									<PhoneField
 										value={draft.phone}
-										inputMode="tel"
-										onChange={(event) => set('phone', event.target.value)}
+										defaultDial={dialCode}
+										onChange={(next) => set('phone', next)}
 									/>
 								</Field>
 

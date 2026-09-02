@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import PhoneField from '@/components/PhoneField';
 import type { ClientApi } from '@/types/appointments.types';
 import useCreateClient from '@/services/clients/useCreateClient';
 
@@ -120,20 +121,17 @@ const NewClientForm: React.FC<{
 					/>
 				</Field>
 
-				<Field
-					label="Teléfono"
-					required
-					hint={
-						dialCode
-							? `Si no ponés país, se asume +${dialCode}.`
-							: 'Escribilo con el código de país si es del exterior.'
-					}
-				>
-					<Input
+				{/*
+				 * El país se elige, no se asume. Antes el campo era libre y el backend
+				 * le anteponía el prefijo del negocio salvo que los dígitos
+				 * "parecieran" traer país: una adivinanza que en un negocio argentino
+				 * rompe cualquier número local que empiece con 54.
+				 */}
+				<Field label="Teléfono" required>
+					<PhoneField
 						value={draft.phone}
-						inputMode="tel"
-						placeholder={dialCode ? `+${dialCode} 70123456` : '70123456'}
-						onChange={(event) => set('phone', event.target.value)}
+						defaultDial={dialCode}
+						onChange={(next) => set('phone', next)}
 					/>
 				</Field>
 
