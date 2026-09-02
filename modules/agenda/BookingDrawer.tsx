@@ -7,7 +7,6 @@ import {
 	Drawer,
 	DrawerContent,
 	DrawerDescription,
-	DrawerFooter,
 	DrawerHeader,
 	DrawerTitle,
 } from '@/components/ui/drawer';
@@ -21,15 +20,16 @@ import useGetServices from '@/services/services/useGetServices';
 import useGetStaff from '@/services/staff/useGetStaff';
 import useGetSlotsForBooking from '@/services/availability/useGetSlotsForBooking';
 import { cn } from '@/lib/utils';
-import BookingClientField from './BookingClientField';
-import BookingDateTimeField from './BookingDateTimeField';
+import { formatMoney } from '@/lib/money';
+import { formatDuration } from '@/lib/duration';
+import BookingClientPanel from './BookingClientPanel';
 import BookingNotices from './BookingNotices';
+import BookingServicePicker from './BookingServicePicker';
 import BookingServicesField from './BookingServicesField';
-import BookingSummary from './BookingSummary';
-import BookingTimeStep from './BookingTimeStep';
+import BookingWhenField from './BookingWhenField';
 import useBookingDraft from './useBookingDraft';
 import { describeReminder } from './utils/reminderStatus';
-import { formatMinute, minutesInTimeZone } from './utils/calendarLayout';
+import { eligibleStaffFor } from './utils/eligibleStaff';
 
 interface Props {
 	/** Reserva a editar. `null` deja el panel cerrado. */
@@ -54,23 +54,26 @@ interface EditorProps {
 	onSaved?: (warnings: BookingWarning[]) => void;
 }
 
-/** La hora de un instante, en la zona del negocio. */
-const timeIn = (iso: string, timezone?: string): string => {
-	const minute = minutesInTimeZone(iso, timezone);
-	return minute === null ? '--:--' : formatMinute(minute);
-};
-
 /**
- * La reserva completa, en un panel lateral, editable.
+ * La reserva existente, en el mismo panel de dos columnas que la reserva nueva.
  *
- * Este componente orquesta: sostiene la vista abierta, el guardado y los avisos.
- * Las cuentas del borrador viven en `useBookingDraft` y cada campo en su propio
- * componente.
+ * Comparte con `NewBookingDrawer` todo lo que se ve: la columna del cliente, la
+ * fecha y la hora editables en el encabezado, las filas de servicio y el
+ * buscador del catálogo. No es una casualidad ni una copia — son literalmente
+ * los mismos componentes. Crear y corregir una reserva son la misma pregunta con
+ * distinto punto de partida, y tener dos pantallas que la hacían distinto
+ * obligaba a aprender dos veces lo mismo.
  *
- * Editar es editar: se guarda sobre la misma reserva, con su mismo id e
- * historial. Crear una reserva nueva es otra pantalla —`NewBookingDrawer`—
- * porque es otra forma: allá hay un primer paso, acá está todo elegido y lo que
- * se hace es corregirlo. Las cuentas las siguen compartiendo.
+ * Lo que sí cambia es lo que corresponde a estar editando:
+ *
+ * - **El cliente es de lectura.** Cambiar de quién es una cita no es editarla:
+ *   si es de otra persona, lo que va es cancelar ésta y crear la que
+ *   corresponde, que es lo que deja el historial contando lo que pasó de verdad.
+ * - **Los horarios excluyen a esta reserva.** Sin eso, la cita aparecería
+ *   ocupándose a sí misma y correrla quince minutos sería imposible.
+ * - **Hay algo que descartar.** Se guarda sobre la misma reserva, con su id y su
+ *   historial, así que existe un estado "con cambios sin guardar" que en la
+ *   creación no tiene sentido.
  */
 const BookingEditor: React.FC<EditorProps> = ({
 	appointmentId,
@@ -78,9 +81,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 	onClose,
 	onSaved,
 }) => {
-	const [view, setView] = useState<'detail' | 'time'>('detail');
-	/** Día que se está mirando en el paso de horarios. */
-	const [pickerDate, setPickerDate] = useState<string | null>(null);
+	const [picking, setPicking] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
 
 	const { data: booking, isLoading } = useGetAppointmentDetail(appointmentId);
@@ -97,10 +98,21 @@ const BookingEditor: React.FC<EditorProps> = ({
 
 	const draft = useBookingDraft({ booking, services, timezone });
 
+	/**
+	 * El día que se está mirando.
+	 *
+	 * `null` significa "el de la reserva". Es estado propio porque al abrir el
+	 * calendario y elegir otro día todavía no hay horario nuevo, y el borrador
+	 * sigue apuntando al viejo: sin esto, la pantalla volvería sola al día
+	 * original apenas se suelta el calendario.
+	 */
+	const [day, setDay] = useState<string | null>(null);
+	const shownDay = day ?? draft.dayKey ?? todayKey;
+
 	/*
 	 * Con los servicios cambiados hay que revisar que la hora siga en pie: media
 	 * hora más de trabajo puede no entrar antes del cierre o pisar la cita
-	 * siguiente. Se pregunta al motor por el día que se está mirando.
+	 * siguiente.
 	 */
 	const { startTimes } = useGetSlotsForBooking({
 		date: draft.dayKey ?? todayKey,
@@ -115,6 +127,16 @@ const BookingEditor: React.FC<EditorProps> = ({
 		!draft.servicesChanged ||
 		(draft.startTime !== null && startTimes.includes(draft.startTime));
 
+	/**
+	 * El horario elegido pertenece al día que se está mirando.
+	 *
+	 * Cambiar de día sin elegir hora deja la reserva apuntando a la fecha
+	 * anterior. Guardar ahí adentro escribiría el día viejo mientras el
+	 * encabezado muestra el nuevo, que es la peor forma de fallar: en silencio y
+	 * con la pantalla diciendo otra cosa.
+	 */
+	const timeMatchesDay = draft.dayKey === shownDay;
+
 	/*
 	 * `timeStillFits` no entra en `canSave` a propósito.
 	 *
@@ -124,7 +146,26 @@ const BookingEditor: React.FC<EditorProps> = ({
 	 * botón obligaba a mover a un cliente que ya estaba sentado en la silla.
 	 */
 	const canSave =
-		!busy && draft.hasChanges && draft.summary.unknownServiceIds.length === 0;
+		!busy &&
+		draft.hasChanges &&
+		timeMatchesDay &&
+		draft.summary.unknownServiceIds.length === 0;
+
+	const addService = (serviceId: string) => {
+		const eligible = eligibleStaffFor(staff, serviceId);
+		if (eligible.length === 0) return;
+
+		// Se propone al profesional que ya está en la reserva si puede hacerlo: el
+		// cliente vino a atenderse con alguien.
+		const preferred =
+			eligible.find((member) =>
+				draft.items.some((item) => item.staffId === member.id),
+			) ?? eligible[0];
+
+		draft.setItems([...draft.items, { serviceId, staffId: preferred.id }]);
+		setPicking(false);
+		setSaveError(null);
+	};
 
 	const handleSave = async () => {
 		if (!draft.startTime || !canSave) return;
@@ -151,87 +192,67 @@ const BookingEditor: React.FC<EditorProps> = ({
 		}
 	};
 
+	if (isLoading || !booking) {
+		return (
+			<div className="flex h-full items-center justify-center">
+				<Spinner />
+			</div>
+		);
+	}
+
 	return (
-		<>
-			<DrawerHeader className="border-b border-border">
-				{view === 'time' ? (
-					<div className="flex items-center gap-2">
-						<Button
-							variant="ghost"
-							size="icon-sm"
-							aria-label="Volver a la reserva"
-							onClick={() => setView('detail')}
-						>
-							<ChevronLeft className="h-4 w-4" />
-						</Button>
-						<div>
-							<DrawerDescription className="font-mono text-[10px] tracking-widest uppercase">
-								Reserva · Hora
-							</DrawerDescription>
-							<DrawerTitle className="text-lg">Seleccioná una hora</DrawerTitle>
+		<div className="flex h-full min-h-0">
+			<BookingClientPanel client={draft.client} dialCode={settings?.dialCode} />
+
+			<div className="flex min-w-0 flex-1 flex-col">
+				<header className="border-b border-border px-5 py-4">
+					{picking ? (
+						<div className="flex items-center gap-2">
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								aria-label="Volver a la reserva"
+								onClick={() => setPicking(false)}
+							>
+								<ChevronLeft className="size-4" />
+							</Button>
+							<h2 className="text-2xl font-semibold tracking-tight">
+								Añadir un servicio
+							</h2>
 						</div>
-					</div>
-				) : (
-					<>
-						<DrawerDescription className="font-mono text-[10px] tracking-widest uppercase">
-							Reserva
-						</DrawerDescription>
-						<DrawerTitle className="text-lg">Editar reserva</DrawerTitle>
-					</>
-				)}
-			</DrawerHeader>
-
-			{isLoading || !booking ? (
-				<div className="flex flex-1 items-center justify-center">
-					<Spinner />
-				</div>
-			) : view === 'time' ? (
-				<div className="flex-1 overflow-y-auto p-4">
-					<BookingTimeStep
-						date={pickerDate ?? draft.dayKey ?? todayKey}
-						onDateChange={setPickerDate}
-						todayKey={todayKey}
-						timezone={timezone}
-						items={draft.slotItems}
-						totalMinutes={draft.summary.totalMinutes}
-						excludeAppointmentId={appointmentId}
-						selected={draft.startTime}
-						onSelect={(next) => {
-							draft.setStartTime(next);
-							setSaveError(null);
-							setView('detail');
-						}}
-					/>
-				</div>
-			) : (
-				<div className="flex-1 overflow-y-auto p-4">
-					{/*
-					 * Dos columnas: el cliente al lado, no encima. De quién es la cita se
-					 * lee de un vistazo mientras se corrigen los servicios, que es lo que
-					 * se viene a hacer acá.
-					 */}
-					<div className="grid gap-5 sm:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-						<BookingClientField
-							client={draft.client}
-							dialCode={settings?.dialCode}
+					) : (
+						<BookingWhenField
+							dayKey={shownDay}
+							onDayChange={(next) => {
+								setDay(next);
+								setSaveError(null);
+							}}
+							startTime={draft.startTime}
+							onStartTimeChange={(next) => {
+								draft.setStartTime(next);
+								setSaveError(null);
+							}}
+							todayKey={todayKey}
+							timezone={timezone}
+							items={draft.slotItems}
+							totalMinutes={draft.summary.totalMinutes}
+							excludeAppointmentId={appointmentId}
+							disabled={busy || !draft.canEdit}
 						/>
+					)}
+				</header>
 
+				<div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+					{picking ? (
+						<BookingServicePicker
+							services={services}
+							staff={staff}
+							currency={currency}
+							onPick={addService}
+							pickedIds={draft.items.map((item) => item.serviceId)}
+						/>
+					) : (
 						<div className="space-y-5">
-							<BookingDateTimeField
-								dayKey={draft.dayKey}
-								time={timeIn(draft.startTime ?? '', timezone)}
-								detail={
-									draft.hasChanges
-										? 'Sin guardar'
-										: `Termina ${timeIn(booking.endTime ?? '', timezone)} · ${booking.totalDuration ?? 0} min en total`
-								}
-								editable={draft.canEdit}
-								onOpen={() => {
-									setPickerDate(draft.dayKey ?? todayKey);
-									setView('time');
-								}}
-							/>
-
 							<BookingServicesField
 								items={draft.items}
 								onChange={(next) => {
@@ -246,6 +267,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 								timezone={timezone}
 								editable={draft.canEdit}
 								segments={segments}
+								onAddRequest={() => setPicking(true)}
 								disabled={busy}
 								notices={
 									<BookingNotices
@@ -259,19 +281,23 @@ const BookingEditor: React.FC<EditorProps> = ({
 								}
 							/>
 
+							{!timeMatchesDay && (
+								<p className="text-sm text-amber-600 dark:text-amber-500">
+									Cambiaste el día. Elegí una hora para poder guardar.
+								</p>
+							)}
+
 							{reminder && (
-								<div className="border-t border-border px-2 pt-4">
-									<p
-										className={cn(
-											'text-xs',
-											reminder.tone === 'warning'
-												? 'text-amber-600 dark:text-amber-500'
-												: 'text-muted-foreground',
-										)}
-									>
-										{reminder.label}
-									</p>
-								</div>
+								<p
+									className={cn(
+										'border-t border-border pt-4 text-xs',
+										reminder.tone === 'warning'
+											? 'text-amber-600 dark:text-amber-500'
+											: 'text-muted-foreground',
+									)}
+								>
+									{reminder.label}
+								</p>
 							)}
 
 							{saveError && (
@@ -280,25 +306,30 @@ const BookingEditor: React.FC<EditorProps> = ({
 								</p>
 							)}
 						</div>
-					</div>
+					)}
 				</div>
-			)}
 
-			{view === 'detail' && (
-				<DrawerFooter className="flex-row items-center justify-between border-t border-border">
-					<BookingSummary
-						currency={currency}
-						totalMinutes={
-							draft.hasChanges
-								? draft.summary.totalMinutes
-								: (booking?.totalDuration ?? 0)
-						}
-						totalPrice={
-							draft.hasChanges
-								? draft.summary.totalPrice
-								: (booking?.totalPrice ?? 0)
-						}
-					/>
+				<footer className="flex items-center justify-between gap-4 border-t border-border px-5 py-3">
+					<div>
+						<p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+							Total
+						</p>
+						<p className="text-xl font-semibold tabular-nums">
+							{formatMoney(
+								draft.hasChanges
+									? draft.summary.totalPrice
+									: (booking.totalPrice ?? 0),
+								currency,
+							)}
+						</p>
+						<p className="text-xs tabular-nums text-muted-foreground">
+							{formatDuration(
+								draft.hasChanges
+									? draft.summary.totalMinutes
+									: (booking.totalDuration ?? 0),
+							)}
+						</p>
+					</div>
 
 					{draft.hasChanges ? (
 						<div className="flex items-center gap-2">
@@ -307,13 +338,19 @@ const BookingEditor: React.FC<EditorProps> = ({
 								disabled={busy}
 								onClick={() => {
 									draft.discard();
+									setDay(null);
 									setSaveError(null);
 								}}
 							>
 								Descartar
 							</Button>
-							<Button disabled={!canSave} onClick={() => void handleSave()}>
-								{busy ? 'Guardando...' : 'Guardar cambios'}
+							<Button
+								size="lg"
+								disabled={!canSave}
+								onClick={() => void handleSave()}
+							>
+								{busy && <Spinner className="size-3.5" />}
+								Guardar cambios
 							</Button>
 						</div>
 					) : (
@@ -321,9 +358,9 @@ const BookingEditor: React.FC<EditorProps> = ({
 							Cerrar
 						</Button>
 					)}
-				</DrawerFooter>
-			)}
-		</>
+				</footer>
+			</div>
+		</div>
 	);
 };
 
@@ -350,9 +387,22 @@ const BookingDrawer: React.FC<Props> = ({
 		{/*
 		 * El ancho va con la variante de vaul y no con un `sm:max-w-*` suelto: la
 		 * clase propia de `DrawerContent` lleva un selector de atributo y le gana a
-		 * cualquier `max-w` plano. Con dos columnas eso se nota enseguida.
+		 * cualquier `max-w` plano. El mismo que la reserva nueva: es la misma
+		 * pantalla con otro punto de partida.
 		 */}
 		<DrawerContent className="data-[vaul-drawer-direction=right]:sm:max-w-2xl">
+			{/*
+			 * El título va sólo para el lector de pantalla: en la pantalla ya lo dice
+			 * el encabezado con la fecha. Pero el diálogo necesita uno, o a quien
+			 * navega por voz se le abre un panel sin nombre.
+			 */}
+			<DrawerHeader className="sr-only">
+				<DrawerTitle>Editar reserva</DrawerTitle>
+				<DrawerDescription>
+					Cambiá el horario o los servicios de esta cita.
+				</DrawerDescription>
+			</DrawerHeader>
+
 			{appointmentId !== null && (
 				<BookingEditor
 					key={appointmentId}

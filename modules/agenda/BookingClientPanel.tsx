@@ -6,6 +6,7 @@ import {
 	ExternalLink,
 	Search,
 	UserPlus,
+	UserRound,
 	UserRoundPlus,
 	X,
 } from 'lucide-react';
@@ -26,11 +27,17 @@ const MAX_MATCHES = 8;
 
 interface Props {
 	client: DraftClient;
-	onChange: (client: DraftClient) => void;
+	/**
+	 * Ausente deja la columna en lectura, que es lo que corresponde al editar:
+	 * cambiar de quién es una cita no es editarla. Si la reserva es de otra
+	 * persona, lo que va es cancelar ésta y crear la que corresponde, que es lo
+	 * que deja el historial de cada cliente contando lo que pasó de verdad.
+	 */
+	onChange?: (client: DraftClient) => void;
 	dialCode?: string;
 	/** Abierto muestra el buscador; cerrado, sólo el botón. */
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -52,11 +59,14 @@ const BookingClientPanel: React.FC<Props> = ({
 	client,
 	onChange,
 	dialCode,
-	open,
+	open = false,
 	onOpenChange,
 }) => {
 	const [term, setTerm] = useState('');
 	const [adding, setAdding] = useState(false);
+
+	/** En lectura no hay nada que buscar: la columna es sólo la ficha. */
+	const editable = Boolean(onChange);
 
 	const debouncedTerm = useDebouncedValue(term);
 
@@ -68,7 +78,7 @@ const BookingClientPanel: React.FC<Props> = ({
 	 */
 	const { data, isFetching } = useGetClients(
 		{ search: debouncedTerm.trim(), limit: MAX_MATCHES },
-		{ enabled: open && !client.id },
+		{ enabled: editable && open && !client.id },
 	);
 
 	const matches = data?.items ?? [];
@@ -77,18 +87,22 @@ const BookingClientPanel: React.FC<Props> = ({
 		<aside
 			className={cn(
 				'flex shrink-0 flex-col border-r border-border bg-muted/30 transition-[width] duration-200',
-				open && !client.id ? 'w-72' : 'w-44',
+				editable && open && !client.id ? 'w-72' : 'w-44',
 			)}
 		>
-			{client.id ? (
+			{client.id || !editable ? (
 				<Chosen
 					client={client}
 					dialCode={dialCode}
-					onClear={() => {
-						setTerm('');
-						onChange({ id: null, name: '', phone: null });
-						onOpenChange(true);
-					}}
+					onClear={
+						editable
+							? () => {
+									setTerm('');
+									onChange?.({ id: null, name: '', phone: null });
+									onOpenChange?.(true);
+								}
+							: undefined
+					}
 				/>
 			) : !open ? (
 				/*
@@ -102,7 +116,7 @@ const BookingClientPanel: React.FC<Props> = ({
 				 */
 				<button
 					type="button"
-					onClick={() => onOpenChange(true)}
+					onClick={() => onOpenChange?.(true)}
 					className="flex flex-1 flex-col items-center gap-2 px-4 pt-8 text-center transition-colors hover:bg-muted/60"
 				>
 					<span className="flex size-12 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border">
@@ -131,7 +145,7 @@ const BookingClientPanel: React.FC<Props> = ({
 							variant="ghost"
 							size="icon-sm"
 							aria-label="Cerrar el buscador de clientes"
-							onClick={() => onOpenChange(false)}
+							onClick={() => onOpenChange?.(false)}
 						>
 							<X className="size-4" />
 						</Button>
@@ -168,12 +182,12 @@ const BookingClientPanel: React.FC<Props> = ({
 								key={entry.id}
 								type="button"
 								onClick={() => {
-									onChange({
+									onChange?.({
 										id: entry.id,
 										name: entry.name ?? '',
 										phone: entry.phone,
 									});
-									onOpenChange(false);
+									onOpenChange?.(false);
 								}}
 								className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted"
 							>
@@ -205,37 +219,42 @@ const BookingClientPanel: React.FC<Props> = ({
 				</div>
 			)}
 
-			<NewClientDialog
-				open={adding}
-				dialCode={dialCode}
-				onOpenChange={setAdding}
-				onCreated={(created) => {
-					onChange({
-						id: created.id,
-						name: created.name ?? '',
-						phone: created.phone,
-					});
-					onOpenChange(false);
-				}}
-			/>
+			{editable && (
+				<NewClientDialog
+					open={adding}
+					dialCode={dialCode}
+					onOpenChange={setAdding}
+					onCreated={(created) => {
+						onChange?.({
+							id: created.id,
+							name: created.name ?? '',
+							phone: created.phone,
+						});
+						onOpenChange?.(false);
+					}}
+				/>
+			)}
 		</aside>
 	);
 };
 
-/** El cliente ya elegido: ficha chica, con la salida para cambiarlo. */
+/** El cliente de la reserva. Con `onClear`, además, la salida para cambiarlo. */
 const Chosen: React.FC<{
 	client: DraftClient;
 	dialCode?: string;
-	onClear: () => void;
+	onClear?: () => void;
 }> = ({ client, dialCode, onClear }) => (
 	<div className="flex flex-1 flex-col items-center gap-2 px-4 pt-8 text-center">
-		<ClientAvatar
-			client={{ id: client.id as string, name: client.name }}
-			size="lg"
-		/>
+		{client.id ? (
+			<ClientAvatar client={{ id: client.id, name: client.name }} size="lg" />
+		) : (
+			<span className="flex size-20 items-center justify-center rounded-full bg-muted">
+				<UserRound className="size-7 text-muted-foreground" />
+			</span>
+		)}
 
 		<p className="mt-1 font-semibold break-words">
-			{client.name || 'Sin nombre'}
+			{client.name || 'Sin cliente'}
 		</p>
 		<p className="text-xs tabular-nums text-muted-foreground">
 			{client.phone
@@ -252,20 +271,24 @@ const Chosen: React.FC<{
 		 * le arma el turno, que es justamente cuando interesa saber si suele
 		 * faltar.
 		 */}
-		<a
-			href={clientRoute(client.id as string)}
-			target="_blank"
-			rel="noopener noreferrer"
-			className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-		>
-			Ver ficha
-			<ExternalLink className="size-3" aria-hidden="true" />
-			<span className="sr-only">(se abre en una pestaña nueva)</span>
-		</a>
+		{client.id !== null && (
+			<a
+				href={clientRoute(client.id)}
+				target="_blank"
+				rel="noopener noreferrer"
+				className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+			>
+				Ver ficha
+				<ExternalLink className="size-3" aria-hidden="true" />
+				<span className="sr-only">(se abre en una pestaña nueva)</span>
+			</a>
+		)}
 
-		<Button variant="ghost" size="sm" className="mt-2" onClick={onClear}>
-			Cambiar
-		</Button>
+		{onClear && (
+			<Button variant="ghost" size="sm" className="mt-2" onClick={onClear}>
+				Cambiar
+			</Button>
+		)}
 	</div>
 );
 

@@ -29,6 +29,8 @@ interface Props {
 	segments: AppointmentSegmentApi[];
 	/** Avisos ya resueltos por quien conoce el estado del borrador. */
 	notices?: React.ReactNode;
+	/** Quién resuelve "Añadir servicio". Ver `BookingServicesEditor`. */
+	onAddRequest?: () => void;
 	disabled?: boolean;
 }
 
@@ -59,6 +61,7 @@ const BookingServicesField: React.FC<Props> = ({
 	editable,
 	segments,
 	notices,
+	onAddRequest,
 	disabled = false,
 }) => (
 	<div className="space-y-2 px-2">
@@ -77,6 +80,7 @@ const BookingServicesField: React.FC<Props> = ({
 				offsets={offsets}
 				startMinute={startTime ? minutesInTimeZone(startTime, timezone) : null}
 				preferredStaffId={preferredStaffId}
+				onAddRequest={onAddRequest}
 				disabled={disabled}
 			/>
 		) : (

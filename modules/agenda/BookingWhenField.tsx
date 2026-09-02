@@ -12,7 +12,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import type { BookingSlotItem } from '@/services/availability/useGetSlotsForBooking';
 import { describeDayShort } from './utils/calendarLabels';
-import { formatMinute, minutesInTimeZone } from './utils/calendarLayout';
+import {
+	dateKeyInTimeZone,
+	formatMinute,
+	minutesInTimeZone,
+} from './utils/calendarLayout';
 import useBookingTimeOptions from './useBookingTimeOptions';
 
 interface Props {
@@ -27,6 +31,14 @@ interface Props {
 	timezone?: string;
 	items: BookingSlotItem[];
 	totalMinutes: number;
+	/**
+	 * Reserva que se está editando: sus minutos no cuentan como ocupados.
+	 *
+	 * Sin esto, mover una cita dentro del mismo día no ofrecería su propia hora
+	 * —la reserva aparecería ocupándose a sí misma— y correrla quince minutos
+	 * sería imposible.
+	 */
+	excludeAppointmentId?: string;
 	disabled?: boolean;
 }
 
@@ -52,12 +64,23 @@ const BookingWhenField: React.FC<Props> = ({
 	timezone,
 	items,
 	totalMinutes,
+	excludeAppointmentId,
 	disabled = false,
 }) => {
 	const [dayOpen, setDayOpen] = useState(false);
 	const [timeOpen, setTimeOpen] = useState(false);
 
-	const minute = startTime ? minutesInTimeZone(startTime, timezone) : null;
+	/*
+	 * La hora sólo se muestra si pertenece al día que se está mirando.
+	 *
+	 * Al cambiar de día, el horario elegido queda apuntando a otra fecha:
+	 * mostrarlo igual diría "Mar 9 sep · 18:00" cuando esas 18:00 son del lunes.
+	 * Se pide de nuevo, que es lo que realmente falta hacer.
+	 */
+	const minute =
+		startTime && dateKeyInTimeZone(startTime, timezone) === dayKey
+			? minutesInTimeZone(startTime, timezone)
+			: null;
 
 	return (
 		<div className="space-y-1">
@@ -126,6 +149,7 @@ const BookingWhenField: React.FC<Props> = ({
 						timezone={timezone}
 						items={items}
 						totalMinutes={totalMinutes}
+						excludeAppointmentId={excludeAppointmentId}
 						selected={startTime}
 						onSelect={(next) => {
 							onStartTimeChange(next);
@@ -144,6 +168,7 @@ interface TimeListProps {
 	timezone?: string;
 	items: BookingSlotItem[];
 	totalMinutes: number;
+	excludeAppointmentId?: string;
 	selected: string | null;
 	onSelect: (startTime: string) => void;
 }
@@ -163,6 +188,7 @@ const TimeList: React.FC<TimeListProps> = ({
 	timezone,
 	items,
 	totalMinutes,
+	excludeAppointmentId,
 	selected,
 	onSelect,
 }) => {
@@ -174,6 +200,7 @@ const TimeList: React.FC<TimeListProps> = ({
 		timezone,
 		items,
 		totalMinutes,
+		excludeAppointmentId,
 	});
 
 	/*
