@@ -1,28 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import useGetSlotsForBooking, {
-	type BookingSlotItem,
-} from '@/services/availability/useGetSlotsForBooking';
-import useGetAppointmentsRange from '@/services/appointments/useGetAppointmentsRange';
-import useGetSettings from '@/services/settings/useGetSettings';
-import {
-	dateKeyInTimeZone,
-	dayMinutesOf,
-	formatMinute,
-	instantAtMinute,
-	minutesInTimeZone,
-	openRangesForWeekday,
-	shiftDateKey,
-	weekdayOf,
-	type MinuteRange,
-} from './utils/calendarLayout';
-import { buildHistoricalSlots } from './utils/panelSlots';
+import type { BookingSlotItem } from '@/services/availability/useGetSlotsForBooking';
+import { formatMinute, shiftDateKey } from './utils/calendarLayout';
 import { dayNumber, weekdayLabel } from './utils/calendarLabels';
+import useBookingTimeOptions from './useBookingTimeOptions';
 
 /** Días que muestra la tira. Una semana entra sin scroll horizontal. */
 const STRIP_DAYS = 7;
@@ -38,36 +24,23 @@ interface Props {
 	items: BookingSlotItem[];
 	/** Duración total de la reserva, para saber qué tramos entran. */
 	totalMinutes: number;
-	/** Reserva que se edita: sus minutos no cuentan como ocupados. Ausente al crear. */
+	/** Reserva que se edita: sus minutos no cuentan como ocupados. */
 	excludeAppointmentId?: string;
 	/** Inicio elegido, en ISO. */
 	selected: string | null;
 	onSelect: (startTime: string) => void;
 }
 
-/** Una opción de horario, ya resuelta a instante. */
-interface TimeOption {
-	startTime: string;
-	minute: number;
-	/** Por qué el horario es inusual, o `null` si no lo es. */
-	notice: string | null;
-}
-
 /**
- * Elegir cuándo.
+ * Elegir cuándo, como paso propio del panel de edición.
  *
- * Tiene dos fuentes, y la diferencia no es un detalle de implementación:
+ * Una tira de días y una grilla de horarios, que es lo que entra cuando hay
+ * pantalla entera para gastar. La reserva nueva no usa esto: ahí el día y la
+ * hora se cambian en el lugar donde se leen, con dos desplegables.
  *
- * - **Hoy y de acá en adelante**, los horarios salen del motor de disponibilidad
- *   —el mismo que usa WhatsApp— con la salvedad de que el panel no aplica la
- *   anticipación mínima. Lo que se ofrece es lo que se puede reservar.
- * - **Fechas pasadas** se ofrecen completas, en tramos de 15 minutos. Ahí no se
- *   está reservando: se está registrando lo que pasó, y el motor —que solo genera
- *   candidatos dentro de la jornada y hacia adelante— no tiene nada que decir.
- *
- * En el pasado, los horarios ocupados o fuera de horario se ofrecen **marcados**
- * en lugar de esconderse: el dueño necesita saber por qué un horario es raro, no
- * que desaparezca.
+ * De dónde salen los horarios —el motor para lo que viene, la grilla histórica
+ * para el pasado— lo resuelve `useBookingTimeOptions`, que es el mismo que
+ * alimenta a la reserva nueva.
  */
 const BookingTimeStep: React.FC<Props> = ({
 	date,
@@ -83,95 +56,18 @@ const BookingTimeStep: React.FC<Props> = ({
 	// La tira arranca en el día abierto y se pagina de a semana.
 	const [stripStart, setStripStart] = useState(date);
 
-	const isPast = date < todayKey;
-
 	const days = Array.from({ length: STRIP_DAYS }, (_, index) =>
 		shiftDateKey(stripStart, index),
 	);
 
-	const { data: settings } = useGetSettings();
-
-	const {
-		startTimes,
-		isLoading: loadingSlots,
-		isError,
-	} = useGetSlotsForBooking({
+	const { options, isPast, isLoading, isError } = useBookingTimeOptions({
 		date,
-		items,
-		excludeAppointmentId,
-		scope: 'panel',
-		enabled: !isPast && items.length > 0,
-	});
-
-	/*
-	 * En el pasado hace falta saber qué había agendado ese día para poder marcar
-	 * los horarios ocupados. Es la misma consulta que dibuja la agenda, así que
-	 * suele venir de la caché.
-	 */
-	const { data: dayBookings, isLoading: loadingDay } = useGetAppointmentsRange(
-		date,
-		date,
-	);
-
-	const options = useMemo<TimeOption[]>(() => {
-		if (!isPast) {
-			return startTimes.flatMap((startTime) => {
-				const minute = minutesInTimeZone(startTime, timezone);
-
-				// El motor devuelve instantes: si alguno cayera en otro día, se omite
-				// en lugar de mostrarlo bajo la fecha equivocada.
-				if (minute === null || dateKeyInTimeZone(startTime, timezone) !== date) {
-					return [];
-				}
-
-				return [{ startTime, minute, notice: null }];
-			});
-		}
-
-		const busyRanges: MinuteRange[] = (dayBookings?.items ?? []).flatMap(
-			(appointment) =>
-				appointment.segments
-					.filter((segment) =>
-						items.some((item) => item.staffId === segment.staffId),
-					)
-					.flatMap((segment) => {
-						const range = dayMinutesOf({
-							startTime: segment.startTime,
-							endTime: segment.endTime,
-							timezone,
-						});
-						return range ? [range] : [];
-					}),
-		);
-
-		return buildHistoricalSlots({
-			durationMinutes: totalMinutes,
-			busyRanges,
-			openRanges: openRangesForWeekday(
-				settings?.businessHours,
-				weekdayOf(date),
-			),
-		}).map((slot) => ({
-			startTime: instantAtMinute(date, slot.minute, timezone),
-			minute: slot.minute,
-			notice: slot.busy
-				? 'ocupado'
-				: slot.outsideHours
-					? 'fuera de horario'
-					: null,
-		}));
-	}, [
-		isPast,
-		startTimes,
+		todayKey,
 		timezone,
-		date,
-		dayBookings?.items,
 		items,
 		totalMinutes,
-		settings?.businessHours,
-	]);
-
-	const isLoading = isPast ? loadingDay : loadingSlots;
+		excludeAppointmentId,
+	});
 
 	return (
 		<div className="space-y-4">

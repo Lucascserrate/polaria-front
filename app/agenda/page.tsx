@@ -12,9 +12,10 @@ import CalendarGrid, {
 import AddAppointmentFab from '@/modules/agenda/AddAppointmentFab';
 import FloatingAttention from '@/modules/agenda/FloatingAttention';
 import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
-import BookingDrawer, {
+import BookingDrawer from '@/modules/agenda/BookingDrawer';
+import NewBookingDrawer, {
 	type BookingSeed,
-} from '@/modules/agenda/BookingDrawer';
+} from '@/modules/agenda/NewBookingDrawer';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import {
 	buildStaffColumns,
@@ -417,14 +418,14 @@ const AgendaPage = () => {
 					 * tocar, así que una "X" acá sería una salida que no funciona.
 					 */
 					bottomNav ? undefined : (
-					<Button
-						variant="ghost"
-						size="icon"
-						aria-label="Abrir menú"
-						onClick={() => toggleMobileSidebar()}
-					>
-						<Menu className="h-5 w-5" />
-					</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label="Abrir menú"
+							onClick={() => toggleMobileSidebar()}
+						>
+							<Menu className="h-5 w-5" />
+						</Button>
 					)
 				}
 			/>
@@ -472,17 +473,21 @@ const AgendaPage = () => {
 			</div>
 
 			{/*
-			 * El mismo panel para las dos cosas: crear y editar son la misma
-			 * operación con distinto punto de partida.
+			 * Un panel por operación. Comparten las cuentas del borrador, pero no la
+			 * forma: la reserva nueva es una secuencia que arranca en el servicio, y
+			 * editar es una ficha donde ya está todo elegido y sólo se corrige.
 			 */}
 			<BookingDrawer
 				appointmentId={editingId}
+				todayKey={todayKey}
+				onClose={() => setEditingId(null)}
+				onSaved={setSaveWarnings}
+			/>
+
+			<NewBookingDrawer
 				seed={editingId === null ? draftSlot : null}
 				todayKey={todayKey}
-				onClose={() => {
-					setEditingId(null);
-					setDraftSlot(null);
-				}}
+				onClose={() => setDraftSlot(null)}
 				onSaved={setSaveWarnings}
 			/>
 

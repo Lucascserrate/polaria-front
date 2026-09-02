@@ -8,6 +8,7 @@ import BookingServicesEditor, {
 } from './BookingServicesEditor';
 import type { DraftItem } from './utils/bookingDraft';
 import { formatMoney } from '@/lib/money';
+import { formatDuration } from '@/lib/duration';
 import { formatMinute, minutesInTimeZone } from './utils/calendarLayout';
 
 interface Props {
@@ -79,26 +80,35 @@ const BookingServicesField: React.FC<Props> = ({
 				disabled={disabled}
 			/>
 		) : (
-			<ul className="space-y-2">
+			<ul className="space-y-4">
 				{segments.map((segment, index) => (
+					/* Misma barra al costado que la lista editable: es la misma cosa
+					 * mirada sin poder tocarla, y dos formas distintas de dibujar un
+					 * servicio se leen como dos cosas distintas. */
 					<li
 						key={`${segment.serviceId}-${index}`}
-						className="flex items-center gap-3"
+						className="flex items-stretch gap-3"
 					>
-						<span className="w-11 shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-							{timeIn(segment.startTime, timezone)}
-						</span>
-						<div className="min-w-0 flex-1 rounded-lg border border-border bg-card p-3">
-							<div className="flex items-baseline justify-between gap-2">
-								<p className="truncate text-sm font-medium">
+						<span
+							aria-hidden="true"
+							className="w-[3px] shrink-0 rounded-full bg-primary"
+						/>
+						<div className="min-w-0 flex-1">
+							<div className="flex items-baseline justify-between gap-3">
+								<p className="truncate font-medium">
 									{segment.serviceName ?? 'Servicio'}
 								</p>
-								<p className="shrink-0 text-sm tabular-nums">
+								<p className="shrink-0 tabular-nums">
 									{formatMoney(segment.price, currency)}
 								</p>
 							</div>
-							<p className="truncate text-xs text-muted-foreground">
-								{segment.durationMinutes} min ·{' '}
+							<p className="truncate text-sm text-muted-foreground">
+								<span className="tabular-nums">
+									{timeIn(segment.startTime, timezone)}
+								</span>
+								{' · '}
+								{formatDuration(segment.durationMinutes)}
+								{' · '}
 								{segment.staffName ?? 'Sin profesional'}
 							</p>
 						</div>

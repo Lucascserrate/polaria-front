@@ -14,6 +14,7 @@ import { eligibleStaffFor } from './utils/eligibleStaff';
 import type { StaffMember } from '@/types/staff.types';
 import type { DraftItem } from './utils/bookingDraft';
 import { formatMoney } from '@/lib/money';
+import { formatDuration } from '@/lib/duration';
 import { formatMinute } from './utils/calendarLayout';
 
 /**
@@ -48,6 +49,16 @@ interface Props {
 	 * quién atiende: preguntarlo otra vez sería pedir un dato que ya se dio.
 	 */
 	preferredStaffId?: string | null;
+	/**
+	 * Quién resuelve "Añadir servicio".
+	 *
+	 * Presente, el editor sólo avisa y el padre muestra su propio selector: la
+	 * reserva nueva agrega con el mismo buscador grande con el que eligió el
+	 * primer servicio, y tener dos formas distintas de elegir lo mismo en la
+	 * misma pantalla se lee como dos funciones distintas. Ausente, el editor abre
+	 * su lista corta, que es lo que le sirve al panel de edición.
+	 */
+	onAddRequest?: () => void;
 	disabled?: boolean;
 }
 
@@ -72,11 +83,14 @@ const BookingServicesEditor: React.FC<Props> = ({
 	offsets,
 	startMinute,
 	preferredStaffId,
+	onAddRequest,
 	disabled = false,
 }) => {
 	const [adding, setAdding] = useState(false);
 
-	const activeServices = services.filter((service) => service.isActive !== false);
+	const activeServices = services.filter(
+		(service) => service.isActive !== false,
+	);
 
 	const timeOf = (index: number): string => {
 		if (startMinute === null) return '--:--';
@@ -115,27 +129,36 @@ const BookingServicesEditor: React.FC<Props> = ({
 
 	return (
 		<div className="space-y-2">
-			<ul className="space-y-2">
+			<ul className="space-y-4">
 				{items.map((item, index) => {
 					const service = services.find((entry) => entry.id === item.serviceId);
 					const eligible = eligibleStaffFor(staff, item.serviceId);
 
 					return (
+						/*
+						 * Una barra al costado, no una caja.
+						 *
+						 * La fila encajonada dibujaba un borde alrededor de cada servicio y
+						 * otro alrededor de la lista, y con dos o tres servicios eso son
+						 * cuatro rectángulos anidados donde hay un solo dato. La barra marca
+						 * dónde empieza cada uno sin cerrar nada.
+						 */
 						<li
 							key={`${item.serviceId}-${index}`}
-							className="flex items-start gap-3"
+							className="flex items-stretch gap-3"
 						>
-							<span className="mt-3 w-11 shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-								{timeOf(index)}
-							</span>
+							<span
+								aria-hidden="true"
+								className="w-[3px] shrink-0 rounded-full bg-primary"
+							/>
 
-							<div className="min-w-0 flex-1 space-y-2 rounded-lg border border-border bg-card p-3">
-								<div className="flex items-baseline justify-between gap-2">
-									<p className="truncate text-sm font-medium">
+							<div className="min-w-0 flex-1">
+								<div className="flex items-baseline justify-between gap-3">
+									<p className="truncate font-medium">
 										{service?.name ?? 'Servicio que ya no existe'}
 									</p>
-									<div className="flex shrink-0 items-center gap-2">
-										<p className="text-sm tabular-nums">
+									<div className="flex shrink-0 items-center gap-1">
+										<p className="tabular-nums">
 											{formatMoney(service?.price ?? 0, currency)}
 										</p>
 										<Button
@@ -155,34 +178,54 @@ const BookingServicesEditor: React.FC<Props> = ({
 									</div>
 								</div>
 
-								<Select
-									value={item.staffId}
-									disabled={disabled || eligible.length === 0}
-									onValueChange={(value) => replaceStaff(index, value)}
-								>
-									<SelectTrigger size="sm" className="w-full">
-										<SelectValue placeholder="Elegir profesional" />
-									</SelectTrigger>
-									<SelectContent>
-										{eligible.map((member) => (
-											<SelectItem key={member.id} value={member.id}>
-												{member.name}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+								{/*
+								 * Hora, duración y profesional en un solo renglón, separados
+								 * por puntos. La hora dejó de tener columna propia: con la
+								 * barra al costado ya se ve dónde empieza cada servicio, y una
+								 * columna de ancho fijo para cuatro caracteres se comía el
+								 * espacio del nombre.
+								 */}
+								<div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+									<span className="tabular-nums">{timeOf(index)}</span>
+									<span aria-hidden="true">·</span>
+									<span>{formatDuration(service?.durationMinutes ?? 0)}</span>
+									<span aria-hidden="true">·</span>
 
-								<p className="text-xs text-muted-foreground">
-									{service?.durationMinutes ?? 0} min
-								</p>
+									{/*
+									 * El profesional se lee como parte de la línea y se cambia
+									 * ahí mismo. Con el aspecto de un campo de formulario —borde,
+									 * fondo, su propio renglón— pesaba más que el nombre del
+									 * servicio, que es lo que la fila viene a decir.
+									 */}
+									<Select
+										value={item.staffId}
+										disabled={disabled || eligible.length === 0}
+										onValueChange={(value) => replaceStaff(index, value)}
+									>
+										<SelectTrigger
+											size="sm"
+											aria-label="Profesional"
+											className="h-auto gap-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none data-[size=sm]:h-auto dark:bg-transparent dark:hover:bg-transparent"
+										>
+											<SelectValue placeholder="Elegir profesional" />
+										</SelectTrigger>
+										<SelectContent>
+											{eligible.map((member) => (
+												<SelectItem key={member.id} value={member.id}>
+													{member.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
 							</div>
 						</li>
 					);
 				})}
 			</ul>
 
-			{adding ? (
-				<div className="ml-14 space-y-2 rounded-lg border border-dashed border-border p-3">
+			{adding && !onAddRequest ? (
+				<div className="space-y-2 rounded-lg border border-dashed border-border p-3">
 					<p className="text-xs text-muted-foreground">
 						¿Qué servicio se agrega?
 					</p>
@@ -224,9 +267,9 @@ const BookingServicesEditor: React.FC<Props> = ({
 				<Button
 					variant="outline"
 					size="sm"
-					className="ml-14 w-[calc(100%-3.5rem)] border-dashed"
+					className="w-full border-dashed"
 					disabled={disabled}
-					onClick={() => setAdding(true)}
+					onClick={() => (onAddRequest ? onAddRequest() : setAdding(true))}
 				>
 					<Plus className="h-4 w-4" />
 					Añadir servicio

@@ -67,7 +67,14 @@ export interface BookingDraftState {
 	canEdit: boolean;
 	setClient: (client: DraftClient) => void;
 	setItems: (items: DraftItem[]) => void;
-	setStartTime: (startTime: string) => void;
+	/**
+	 * `null` suelta el horario elegido.
+	 *
+	 * Lo necesita cambiar de día en la reserva nueva: los horarios libres del día
+	 * nuevo son otros, así que conservar el anterior dejaría la reserva apuntando
+	 * a un instante que ya no pertenece al día que se está mirando.
+	 */
+	setStartTime: (startTime: string | null) => void;
 	/** Vuelve todo a lo guardado. */
 	discard: () => void;
 }
