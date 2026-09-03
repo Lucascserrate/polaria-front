@@ -153,7 +153,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 		<ContextMenu>
 			<ContextMenuTrigger
 				className={cn(
-					'group relative block h-full overflow-hidden rounded-md border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
+					'group relative block h-full overflow-hidden rounded border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
 					colors.surface,
 				)}
 				/*
@@ -175,15 +175,6 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 						: undefined
 				}
 			>
-				<span
-					aria-hidden="true"
-					className={cn(
-						'absolute top-0 left-0 h-full w-0.75',
-						!staffScheme && colors.accent,
-					)}
-					style={staffScheme ? { backgroundColor: staffScheme.hex } : undefined}
-				/>
-
 				<CardFace
 					onOpen={onEdit ? () => onEdit(appointment.id) : undefined}
 					detail={
