@@ -114,7 +114,7 @@ const ClientsPage = () => {
 			</div>
 
 			{error && (
-				<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+				<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-destructive">
 					{error}
 				</p>
 			)}
@@ -233,7 +233,8 @@ const Pagination: React.FC<{
 	return (
 		<div className="flex items-center justify-between gap-4">
 			<p className="text-sm text-muted-foreground">
-				{from}–{from + shown - 1} de <span className="font-medium">{total}</span>
+				{from}–{from + shown - 1} de{' '}
+				<span className="font-medium">{total}</span>
 			</p>
 
 			<div className="flex gap-2">

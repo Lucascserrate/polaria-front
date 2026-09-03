@@ -44,7 +44,7 @@ const RemindersSection: React.FC = () => {
 			/>
 
 			{isError && (
-				<p className="text-sm text-red-600">
+				<p className="text-sm text-destructive">
 					No se pudo guardar. Intentá de nuevo.
 				</p>
 			)}

@@ -81,7 +81,7 @@ const LocationSection: React.FC<Props> = ({ draft, set, warnings = [] }) => (
 		</div>
 
 		{warnings.map((warning) => (
-			<p key={warning} className="text-sm text-amber-600 dark:text-amber-500">
+			<p key={warning} className="text-sm text-warning">
 				{warning}
 			</p>
 		))}

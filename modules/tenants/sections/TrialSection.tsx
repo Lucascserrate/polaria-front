@@ -27,11 +27,11 @@ interface Props {
  */
 const STATES: Record<string, { label: string; tone: string }> = {
 	NOT_STARTED: { label: 'Sin iniciar', tone: 'text-muted-foreground' },
-	TRIAL_ACTIVE: { label: 'Prueba en curso', tone: 'text-green-600' },
-	TRIAL_EXPIRED: { label: 'Prueba vencida', tone: 'text-amber-600' },
-	ACTIVE: { label: 'Suscripción paga', tone: 'text-green-600' },
-	EXPIRED: { label: 'Suscripción vencida', tone: 'text-red-600' },
-	CANCELED: { label: 'Cancelada', tone: 'text-red-600' },
+	TRIAL_ACTIVE: { label: 'Prueba en curso', tone: 'text-success' },
+	TRIAL_EXPIRED: { label: 'Prueba vencida', tone: 'text-warning' },
+	ACTIVE: { label: 'Suscripción paga', tone: 'text-success' },
+	EXPIRED: { label: 'Suscripción vencida', tone: 'text-destructive' },
+	CANCELED: { label: 'Cancelada', tone: 'text-destructive' },
 };
 
 const dateFormatter = new Intl.DateTimeFormat('es', {
@@ -190,14 +190,14 @@ const TrialSection: React.FC<Props> = ({
 			)}
 
 			{extended && !error && (
-				<p className="flex items-center gap-2 text-sm text-green-600">
+				<p className="flex items-center gap-2 text-sm text-success">
 					<Check className="size-4" />
 					Prueba extendida. El negocio ya tiene el vencimiento nuevo.
 				</p>
 			)}
 
 			{error && (
-				<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+				<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-destructive">
 					{error}
 				</p>
 			)}

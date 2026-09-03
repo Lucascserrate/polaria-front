@@ -102,7 +102,7 @@ const WelcomeMessageCard: React.FC<Props> = ({
 					<span
 						className={cn(
 							'text-xs tabular-nums',
-							remaining === 0 ? 'text-amber-600' : 'text-muted-foreground',
+							remaining === 0 ? 'text-warning' : 'text-muted-foreground',
 						)}
 					>
 						{value.length} / {maxLength}
@@ -160,9 +160,9 @@ const WelcomeMessageCard: React.FC<Props> = ({
 				 * información. El ancho está acotado porque un mensaje de WhatsApp
 				 * nunca ocupa toda la pantalla.
 				 */}
-				<div className="rounded-xl bg-neutral-100 p-4 sm:p-5">
-					<div className="max-w-88 overflow-hidden rounded-2xl rounded-tl-sm bg-white shadow-sm ring-1 ring-black/5">
-						<p className="px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-line text-neutral-800">
+				<div className="rounded-xl bg-muted p-4 sm:p-5">
+					<div className="max-w-88 overflow-hidden rounded-2xl rounded-tl-sm bg-card shadow-sm ring-1 ring-border">
+						<p className="px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-line text-card-foreground">
 							{rendered}
 						</p>
 
@@ -175,16 +175,16 @@ const WelcomeMessageCard: React.FC<Props> = ({
 						{previewButtons.length > 0 && (
 							<div
 								className={cn(
-									'border-t border-neutral-100',
+									'border-t border-border',
 									previewButtons.length > 2
-										? 'divide-y divide-neutral-100'
-										: 'flex divide-x divide-neutral-100',
+										? 'divide-y divide-border'
+										: 'flex divide-x divide-border',
 								)}
 							>
 								{previewButtons.map((button) => (
 									<span
 										key={button}
-										className="flex-1 py-2 text-center text-[13px] font-medium text-sky-600"
+										className="flex-1 py-2 text-center text-[13px] font-medium text-sky-600 dark:text-sky-400"
 									>
 										{button}
 									</span>
@@ -193,7 +193,7 @@ const WelcomeMessageCard: React.FC<Props> = ({
 						)}
 					</div>
 
-					<p className="mt-3 text-xs text-neutral-500">
+					<p className="mt-3 text-xs text-muted-foreground">
 						Los botones no se editan: son lo que Polaria sabe hacer. Quien ya
 						tiene un turno recibe otro mensaje, con su cita.
 					</p>

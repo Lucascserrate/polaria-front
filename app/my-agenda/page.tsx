@@ -193,7 +193,7 @@ const MyAgendaPage = () => {
 			/>
 
 			{isError && (
-				<p className="shrink-0 border-b border-border bg-red-50 px-3 py-1.5 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-400">
+				<p className="shrink-0 border-b border-border bg-red-50 px-3 py-1.5 text-xs text-destructive dark:bg-red-950/40">
 					No se pudieron cargar tus citas. Se vuelve a intentar solo.
 				</p>
 			)}

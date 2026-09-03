@@ -69,7 +69,7 @@ const AccessSection: React.FC<Props> = ({ member }) => {
 					{state === 'ACTIVE' ? (
 						<CircleCheck className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-500" />
 					) : (
-						<Clock className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-500" />
+						<Clock className="mt-0.5 size-5 shrink-0 text-warning" />
 					)}
 
 					<div className="min-w-0 flex-1">
@@ -141,7 +141,7 @@ const AccessSection: React.FC<Props> = ({ member }) => {
 				</div>
 			)}
 
-			{error && <p className="text-sm text-red-600">{error}</p>}
+			{error && <p className="text-sm text-destructive">{error}</p>}
 
 			{state !== 'NONE' && (
 				<p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">

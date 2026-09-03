@@ -23,7 +23,7 @@ const TrialStatus: React.FC = () => {
 		const days = subscription.trialDaysRemaining ?? 0;
 
 		return (
-			<div className="flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2 text-neutral-600">
+			<div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-muted-foreground">
 				<Clock className="h-3.5 w-3.5 shrink-0" />
 				<span className="text-xs">
 					Prueba gratuita ·{' '}
@@ -38,7 +38,7 @@ const TrialStatus: React.FC = () => {
 	if (subscription.state === 'TRIAL_EXPIRED') {
 		return (
 			<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2">
-				<p className="text-xs font-medium text-amber-700 dark:text-amber-500">
+				<p className="text-xs font-medium text-warning">
 					Tu prueba gratuita terminó
 				</p>
 				<p className="mt-0.5 text-xs text-muted-foreground">

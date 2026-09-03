@@ -28,7 +28,7 @@ const BotSwitchCard: React.FC = () => {
 				<Power
 					className={cn(
 						'w-5 h-5 mt-0.5 shrink-0',
-						enabled ? 'text-sky-700' : 'text-amber-600 dark:text-amber-500',
+						enabled ? 'text-sky-700 dark:text-sky-400' : 'text-warning',
 					)}
 				/>
 
@@ -42,7 +42,7 @@ const BotSwitchCard: React.FC = () => {
 							: 'No responde ningún mensaje de WhatsApp. Los mensajes se siguen guardando y podés contestarlos a mano desde WhatsApp.'}
 					</p>
 					{isError && (
-						<p className="text-sm text-red-600">
+						<p className="text-sm text-destructive">
 							No se pudo cambiar el estado. Intenta de nuevo.
 						</p>
 					)}

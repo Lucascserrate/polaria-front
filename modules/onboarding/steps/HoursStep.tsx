@@ -38,10 +38,13 @@ interface Props {
  * pastillas, que es la información que uno busca al mirar.
  */
 const HoursStep: React.FC<Props> = ({ value, onChange, error }) => {
-	const [selectedDay, setSelectedDay] = useState<number>(DAY_PILLS[0].dayOfWeek);
+	const [selectedDay, setSelectedDay] = useState<number>(
+		DAY_PILLS[0].dayOfWeek,
+	);
 
 	const selected = useMemo(
-		() => DAY_PILLS.find((day) => day.dayOfWeek === selectedDay) ?? DAY_PILLS[0],
+		() =>
+			DAY_PILLS.find((day) => day.dayOfWeek === selectedDay) ?? DAY_PILLS[0],
 		[selectedDay],
 	);
 
@@ -177,7 +180,7 @@ const HoursStep: React.FC<Props> = ({ value, onChange, error }) => {
 				)}
 			</div>
 
-			{error && <p className="text-sm text-red-600">{error}</p>}
+			{error && <p className="text-sm text-destructive">{error}</p>}
 		</div>
 	);
 };

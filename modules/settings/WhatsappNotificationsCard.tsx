@@ -213,7 +213,7 @@ const WhatsappNotificationsCard: React.FC = () => {
 				/>
 			</label>
 
-			{error && <p className="text-sm text-red-600">{error}</p>}
+			{error && <p className="text-sm text-destructive">{error}</p>}
 		</section>
 	);
 };
@@ -229,7 +229,7 @@ const StatusRow: React.FC<{
 		{state === 'ok' ? (
 			<CircleCheck className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-500" />
 		) : state === 'warn' ? (
-			<TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-500" />
+			<TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
 		) : (
 			<CircleDashed className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 		)}
@@ -239,7 +239,7 @@ const StatusRow: React.FC<{
 				className={cn(
 					'block',
 					state === 'off' && 'text-muted-foreground',
-					state === 'warn' && 'text-amber-700 dark:text-amber-500',
+					state === 'warn' && 'text-warning',
 				)}
 			>
 				{label}

@@ -26,9 +26,9 @@ const HumanAttentionCard: React.FC = () => {
 	return (
 		<div className="bg-card border border-amber-500/50 rounded-lg shrink-0 overflow-hidden">
 			<div className="flex items-center gap-2 px-4 py-3 bg-amber-500/10">
-				<UserRound className="w-4 h-4 text-amber-600 dark:text-amber-500 shrink-0" />
+				<UserRound className="w-4 h-4 text-warning shrink-0" />
 				<span className="text-sm font-medium">Atención humana</span>
-				<span className="ml-auto text-sm font-semibold text-amber-600 dark:text-amber-500">
+				<span className="ml-auto text-sm font-semibold text-warning">
 					{pending.length}
 				</span>
 			</div>

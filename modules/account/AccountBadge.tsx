@@ -11,7 +11,7 @@ const AccountBadge: React.FC = () => {
 		<div className="flex items-center">
 			<div className="min-w-0 collapsed:hidden">
 				{data.email && (
-					<p className="truncate text-xs text-neutral-500">{data.email}</p>
+					<p className="truncate text-xs text-muted-foreground">{data.email}</p>
 				)}
 			</div>
 		</div>

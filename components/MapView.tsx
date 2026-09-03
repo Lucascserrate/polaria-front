@@ -6,6 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { useEffect, useRef } from 'react';
 import Map, { NavigationControl, type MapRef } from 'react-map-gl/mapbox';
 import { MAPBOX_STYLE, MAPBOX_TOKEN } from '@/constants/env';
+import { useIsDarkTheme } from '@/components/use-theme-preference';
 import { cn } from '@/lib/utils';
 
 export interface Coordinates {
@@ -45,8 +46,19 @@ const DEFAULT_ZOOM = 16;
  *
  * Existe para que la falta de `NEXT_PUBLIC_MAPBOX_STYLE` no deje el mapa en blanco:
  * sin estilo, Mapbox no dibuja nada y parece un fallo de red.
+ *
+ * Son dos porque el mapa es lo único de la pantalla que no se pinta con CSS: el
+ * canvas lo dibuja Mapbox y las variables del tema no lo alcanzan. Sin esto, en
+ * oscuro queda un rectángulo blanco en medio del formulario, que es la clase de
+ * detalle por la que un modo oscuro se siente a medio hacer.
+ *
+ * Solo aplica al estilo por defecto. Si el negocio configuró el suyo, se respeta:
+ * eligió ese mapa, no "el mapa que combine".
  */
-const DEFAULT_STYLE = 'mapbox://styles/mapbox/streets-v12';
+const DEFAULT_STYLE = {
+	light: 'mapbox://styles/mapbox/streets-v12',
+	dark: 'mapbox://styles/mapbox/dark-v11',
+} as const;
 
 /**
  * El mapa, y solo el mapa.
@@ -74,6 +86,8 @@ export const MapView: React.FC<Props> = ({
 	flyTo,
 	fallbackMessage = 'El mapa no está configurado en este entorno.',
 }) => {
+	const dark = useIsDarkTheme();
+
 	const mapRef = useRef<MapRef | null>(null);
 
 	useEffect(() => {
@@ -110,7 +124,7 @@ export const MapView: React.FC<Props> = ({
 			<Map
 				ref={mapRef}
 				mapboxAccessToken={MAPBOX_TOKEN}
-				mapStyle={MAPBOX_STYLE || DEFAULT_STYLE}
+				mapStyle={MAPBOX_STYLE || DEFAULT_STYLE[dark ? 'dark' : 'light']}
 				initialViewState={{
 					latitude: initialCenter.latitude,
 					longitude: initialCenter.longitude,

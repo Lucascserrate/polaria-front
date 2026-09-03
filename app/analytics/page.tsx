@@ -103,7 +103,7 @@ const AnalyticsPage = () => {
 			)}
 
 			{isError && (
-				<p className="py-12 text-center text-red-600">
+				<p className="py-12 text-center text-destructive">
 					No se pudieron cargar las analíticas. Intentá de nuevo.
 				</p>
 			)}

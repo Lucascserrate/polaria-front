@@ -27,7 +27,7 @@ const BookingNotices: React.FC<Props> = ({
 }) => (
 	<>
 		{hasInactiveService && (
-			<p className="text-xs text-amber-600 dark:text-amber-500">
+			<p className="text-xs text-warning">
 				Hay un servicio de esta reserva que ya no está activo. Para guardar
 				cambios hay que quitarlo.
 			</p>
@@ -41,7 +41,7 @@ const BookingNotices: React.FC<Props> = ({
 		 * jornada, pisado con otra cita— y eso se muestra en la agenda.
 		 */}
 		{timeNoLongerFits && (
-			<p className="text-xs text-amber-600 dark:text-amber-500">
+			<p className="text-xs text-warning">
 				Con estos servicios ese horario deja de estar disponible. Se puede
 				guardar igual: al hacerlo te decimos qué queda fuera.
 			</p>
@@ -54,7 +54,7 @@ const BookingNotices: React.FC<Props> = ({
 		)}
 
 		{locked && (
-			<p className="text-xs text-amber-600 dark:text-amber-500">
+			<p className="text-xs text-warning">
 				Esta reserva tiene un servicio sin profesional asignado, así que no se
 				puede editar desde acá.
 			</p>

@@ -21,6 +21,7 @@ import {
 	type NavItem,
 } from '@/components/nav-items';
 import { ROUTES } from '@/constants/routes';
+import ThemeToggle from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { useSessionActor } from '@/modules/auth/hooks/useAuth';
 import { useLogout } from '@/modules/auth/hooks/useLogout';
@@ -221,7 +222,7 @@ const MoreSheet: React.FC<MoreSheetProps> = ({ items, setup, pathname }) => {
 					{showSetup && setup && (
 						<>
 							<SheetLink href={ROUTES.setup} icon={Rocket} label="Empezar">
-								<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-700 dark:text-amber-500">
+								<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-warning">
 									{setup.completed} de {setup.total}
 								</span>
 							</SheetLink>
@@ -241,6 +242,22 @@ const MoreSheet: React.FC<MoreSheetProps> = ({ items, setup, pathname }) => {
 
 					{hasItems && (
 						<div className="my-2 border-t border-border" aria-hidden="true" />
+					)}
+
+					{/*
+					 * El tema vive en Configuración, así que acá aparece solo para quien
+					 * no la tiene: el profesional, cuyo menú son Mi agenda y Mis
+					 * estadísticas y para quien esta hoja es toda su cuenta. Al negocio
+					 * no se le repite —tenerlo en dos lugares invita a que uno de los dos
+					 * quede viejo—.
+					 */}
+					{!hasItems && (
+						<div className="px-3 pt-1 pb-3">
+							<p className="pb-2 text-xs font-medium text-muted-foreground">
+								Tema
+							</p>
+							<ThemeToggle className="p-1" />
+						</div>
 					)}
 
 					<Button

@@ -310,7 +310,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 							/>
 
 							{!timeMatchesDay && (
-								<p className="text-sm text-amber-600 dark:text-amber-500">
+								<p className="text-sm text-warning">
 									Cambiaste el día. Elegí una hora para poder guardar.
 								</p>
 							)}
@@ -320,7 +320,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 									className={cn(
 										'border-t border-border pt-4 text-xs',
 										reminder.tone === 'warning'
-											? 'text-amber-600 dark:text-amber-500'
+											? 'text-warning'
 											: 'text-muted-foreground',
 									)}
 								>
@@ -329,7 +329,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 							)}
 
 							{saveError && (
-								<p className="rounded-md border border-red-500/50 bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">
+								<p className="rounded-md border border-red-500/50 bg-red-50 p-3 text-sm text-destructive dark:bg-red-950/40">
 									{saveError}
 								</p>
 							)}

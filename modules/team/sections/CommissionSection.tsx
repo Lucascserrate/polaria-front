@@ -51,7 +51,7 @@ const CommissionSection: React.FC<Props> = ({
 			</div>
 
 			{error ? (
-				<p className="text-sm text-red-600">{error}</p>
+				<p className="text-sm text-destructive">{error}</p>
 			) : (
 				<p className="text-xs text-muted-foreground">
 					Porcentaje de lo que factura. Dejalo vacío si no trabaja a comisión.

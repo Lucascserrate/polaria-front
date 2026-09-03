@@ -102,7 +102,7 @@ const ServicesSection: React.FC<Props> = ({
 			{warnings.map((warning) => (
 				<p
 					key={warning}
-					className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-500"
+					className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-warning"
 				>
 					{warning}
 				</p>

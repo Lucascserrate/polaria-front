@@ -405,7 +405,10 @@ const WhatsappEmbeddedSignupButton: React.FC<
 							<p className="text-sm text-foreground">
 								{phoneNumber ?? 'Número no disponible'}
 								{verifiedName ? (
-									<span className="text-muted-foreground"> · {verifiedName}</span>
+									<span className="text-muted-foreground">
+										{' '}
+										· {verifiedName}
+									</span>
 								) : null}
 							</p>
 							<p className="text-xs text-muted-foreground">
@@ -458,9 +461,9 @@ const WhatsappEmbeddedSignupButton: React.FC<
 						: {describeUnavailableReason(unavailableReason)}.
 					</p>
 					<p className="mt-1 text-xs text-muted-foreground">
-						Polaria no está recibiendo mensajes en este número. Algunas causas se
-						resuelven solas cuando el teléfono vuelve a conectarse; si no, volvé
-						a conectar desde acá.
+						Polaria no está recibiendo mensajes en este número. Algunas causas
+						se resuelven solas cuando el teléfono vuelve a conectarse; si no,
+						volvé a conectar desde acá.
 					</p>
 				</div>
 			) : null}
@@ -524,7 +527,7 @@ const WhatsappEmbeddedSignupButton: React.FC<
 				</div>
 			) : null}
 
-			{error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}
+			{error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
 		</Card>
 	);
 };

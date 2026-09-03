@@ -55,7 +55,7 @@ function ContextMenuItem({
 				'data-disabled:pointer-events-none data-disabled:opacity-50',
 				"[&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
 				variant === 'destructive' &&
-					'text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:focus:bg-red-950/40 dark:focus:text-red-300',
+					'text-destructive focus:bg-destructive/10 focus:text-destructive dark:focus:bg-destructive/20',
 				className,
 			)}
 			{...props}

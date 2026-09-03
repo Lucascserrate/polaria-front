@@ -85,9 +85,7 @@ const ClientProfilePanel: React.FC<Props> = ({ client, dialCode }) => (
 				/>
 				<Field
 					label="Llegó por"
-					value={
-						client.createdVia ? SOURCE_LABELS[client.createdVia] : null
-					}
+					value={client.createdVia ? SOURCE_LABELS[client.createdVia] : null}
 				/>
 				<Field label="Cliente desde" value={formatDay(client.createdAt)} />
 			</dl>
@@ -114,7 +112,7 @@ const Field: React.FC<{
 		<dt className="text-xs text-muted-foreground">{label}</dt>
 		<dd className="mt-0.5 truncate text-sm">{value || '—'}</dd>
 		{warning && (
-			<p className="mt-1 flex items-start gap-1 text-xs text-amber-600 dark:text-amber-500">
+			<p className="mt-1 flex items-start gap-1 text-xs text-warning">
 				<AlertCircle className="mt-0.5 size-3 shrink-0" />
 				{warning}
 			</p>

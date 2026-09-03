@@ -29,8 +29,8 @@ const itemClasses = (isActive: boolean) =>
 		'flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
 		'collapsed:justify-center collapsed:px-0',
 		isActive
-			? 'bg-neutral-100 text-neutral-900 border border-neutral-300'
-			: 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50',
+			? 'bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border'
+			: 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60',
 	);
 
 interface Props {
@@ -107,13 +107,13 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 			{/* Sidebar */}
 			<aside
 				className={cn(
-					'fixed top-0 left-0 h-screen w-(--sidebar-width) bg-white border-r border-neutral-200 transition-all duration-200 z-40',
+					'fixed top-0 left-0 h-screen w-(--sidebar-width) bg-sidebar border-r border-sidebar-border transition-all duration-200 z-40',
 					isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
 				)}
 			>
 				<div className="flex flex-col h-full">
 					{/* Header */}
-					<div className="p-6 border-b border-neutral-200 collapsed:px-2 collapsed:py-4">
+					<div className="p-6 border-b border-sidebar-border collapsed:px-2 collapsed:py-4">
 						<div className="flex items-center justify-between gap-3 collapsed:flex-col collapsed:gap-3">
 							{/*
 							 * Dos versiones en lugar de una con el texto oculto: así el
@@ -133,7 +133,7 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 							<button
 								type="button"
 								onClick={() => toggleSidebarPreference()}
-								className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-50 hover:text-neutral-900 md:inline-flex"
+								className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:inline-flex"
 							>
 								<PanelLeftClose className="w-4 h-4 collapsed:hidden" />
 								<PanelLeftOpen className="hidden w-4 h-4 collapsed:block" />
@@ -164,7 +164,7 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 								<span className="text-sm font-medium collapsed:hidden">
 									Empezar
 								</span>
-								<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-700 collapsed:hidden dark:text-amber-500">
+								<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-warning collapsed:hidden">
 									{setup.completed} de {setup.total}
 								</span>
 							</Link>
@@ -173,7 +173,7 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 						{/* "Empezar" no es una sección del producto: el separador lo dice. */}
 						{setup.pending && (
 							<div
-								className="my-2 border-t border-neutral-200"
+								className="my-2 border-t border-sidebar-border"
 								aria-hidden="true"
 							/>
 						)}
@@ -198,7 +198,7 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 					</nav>
 
 					{/* Footer */}
-					<div className="space-y-3 px-4 py-6 border-t border-neutral-200 collapsed:px-2">
+					<div className="space-y-3 px-4 py-6 border-t border-sidebar-border collapsed:px-2">
 						<AccountBadge />
 
 						{/* Solo dice algo durante la prueba y cuando venció. */}

@@ -287,7 +287,7 @@ const AgendaPage = () => {
 					{/* Tiene citas pero no le toca trabajar: si no se dice, su columna
 					    cerrada parece un error de horario. */}
 					{column.offDuty && (
-						<span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-500">
+						<span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-warning">
 							Fuera de turno
 						</span>
 					)}
@@ -453,7 +453,7 @@ const AgendaPage = () => {
 			)}
 
 			{(isError || statusError || deleteError) && (
-				<p className="shrink-0 border-b border-border bg-red-50 px-3 py-1.5 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-400">
+				<p className="shrink-0 border-b border-border bg-red-50 px-3 py-1.5 text-xs text-destructive dark:bg-red-950/40">
 					{isError
 						? 'No se pudieron cargar las citas. Se vuelve a intentar solo.'
 						: deleteError

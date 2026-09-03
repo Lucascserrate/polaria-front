@@ -10,6 +10,7 @@ import {
 	MessageSquareText,
 	type LucideIcon,
 } from 'lucide-react';
+import AppearanceCard from '@/modules/settings/AppearanceCard';
 import BotSwitchCard from '@/modules/settings/BotSwitchCard';
 import { ROUTES } from '@/constants/routes';
 import { describeReminderOffsets } from '@/modules/settings/utils/reminders';
@@ -95,6 +96,11 @@ const SECTIONS: Section[] = [
  * El interruptor de Polaria se queda en el índice: no es una categoría, es el
  * estado general del producto, y esconderlo dentro de una sección haría más
  * difícil llegar a lo que es un corte de emergencia.
+ *
+ * Apariencia va al final y también sin pantalla propia, por lo contrario: es lo
+ * único de acá que no configura el negocio sino cómo se ve el panel en este
+ * navegador, así que no compite por el lugar de arriba con lo que sí cambia
+ * cómo atiende el negocio.
  */
 const SettingsIndex: React.FC = () => {
 	const { data } = useGetSettings();
@@ -145,6 +151,8 @@ const SettingsIndex: React.FC = () => {
 					);
 				})}
 			</div>
+
+			<AppearanceCard />
 		</div>
 	);
 };

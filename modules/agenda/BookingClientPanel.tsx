@@ -207,7 +207,7 @@ const BookingClientPanel: React.FC<Props> = ({
 											{formatClientPhone(entry.phone, dialCode)}
 										</span>
 									) : (
-										<span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500">
+										<span className="flex items-center gap-1 text-xs text-warning">
 											<AlertCircle className="size-3 shrink-0" />
 											Sin teléfono
 										</span>

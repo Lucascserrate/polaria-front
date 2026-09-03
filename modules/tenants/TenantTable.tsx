@@ -226,7 +226,7 @@ const WhatsappCell: React.FC<{ tenant: Tenant }> = ({ tenant }) =>
 	tenant.whatsappPhoneNumber ? (
 		<span className="tabular-nums">{tenant.whatsappPhoneNumber}</span>
 	) : (
-		<span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-500">
+		<span className="inline-flex items-center gap-1 text-warning">
 			<AlertCircle className="size-3 shrink-0" />
 			Sin conectar
 		</span>

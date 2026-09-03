@@ -86,7 +86,7 @@ const TeamTable: React.FC<Props> = ({ members, onToggleActive, onDelete }) => {
 											 * vacía deja de leerse justo cuando importa.
 											 */}
 											{accessStateOf(member) === 'INVITED' ? (
-												<span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500">
+												<span className="flex items-center gap-1 text-xs text-warning">
 													<Clock className="size-3 shrink-0" />
 													Invitación pendiente
 												</span>
@@ -204,9 +204,7 @@ const RoleCell: React.FC<{ member: StaffMember }> = ({ member }) => {
 			<span
 				className={cn(
 					'block text-xs',
-					provides
-						? 'text-muted-foreground'
-						: 'text-amber-600 dark:text-amber-500',
+					provides ? 'text-muted-foreground' : 'text-warning',
 				)}
 			>
 				{provides ? 'Atiende clientes' : 'No atiende'}

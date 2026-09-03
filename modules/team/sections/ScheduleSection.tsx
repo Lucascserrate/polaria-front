@@ -63,10 +63,10 @@ const ScheduleSection: React.FC<Props> = ({
 					emptyDayLabel="No trabaja"
 				/>
 
-				{error && <p className="text-sm text-red-600">{error}</p>}
+				{error && <p className="text-sm text-destructive">{error}</p>}
 
 				{warnings.map((warning) => (
-					<p key={warning} className="text-sm text-amber-600">
+					<p key={warning} className="text-sm text-warning">
 						{warning}
 					</p>
 				))}

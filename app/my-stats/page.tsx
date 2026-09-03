@@ -158,7 +158,7 @@ const MyStatsPage = () => {
 					</div>
 
 					{isError ? (
-						<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+						<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-destructive">
 							No se pudieron cargar tus números. Se vuelve a intentar solo.
 						</p>
 					) : !data ? (

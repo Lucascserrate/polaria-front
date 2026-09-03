@@ -129,9 +129,7 @@ const BusinessInfoSection: React.FC = () => {
 	};
 
 	if (isLoading) {
-		return (
-			<p className="text-sm text-muted-foreground">Cargando...</p>
-		);
+		return <p className="text-sm text-muted-foreground">Cargando...</p>;
 	}
 
 	return (
@@ -201,7 +199,7 @@ const BusinessInfoSection: React.FC = () => {
 			</div>
 
 			{isError && (
-				<p className="text-sm text-red-600">
+				<p className="text-sm text-destructive">
 					No se pudo guardar. Intentá de nuevo.
 				</p>
 			)}

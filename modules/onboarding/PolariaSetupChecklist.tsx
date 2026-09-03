@@ -78,7 +78,7 @@ const PolariaSetupChecklist: React.FC = () => {
 	if (data.nextStep === null) {
 		return (
 			<div className="rounded-lg border border-border bg-card p-6 text-center">
-				<Check className="mx-auto h-6 w-6 text-green-600 dark:text-green-400" />
+				<Check className="mx-auto h-6 w-6 text-success" />
 				<p className="mt-2 text-sm font-medium">Polaria está lista</p>
 				<p className="mt-1 text-sm text-muted-foreground">
 					Ya podés recibir reservas por WhatsApp.
@@ -115,9 +115,9 @@ const PolariaSetupChecklist: React.FC = () => {
 						<li key={step} className="px-4 py-3">
 							<div className="flex items-start gap-2.5">
 								{complete ? (
-									<Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+									<Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
 								) : (
-									<AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-500" />
+									<AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
 								)}
 
 								<div className="min-w-0 flex-1">

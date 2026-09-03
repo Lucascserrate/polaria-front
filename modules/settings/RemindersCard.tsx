@@ -115,13 +115,13 @@ const RemindersCard: React.FC<Props> = ({
 				</button>
 
 				{previewOpen && (
-					<div className="rounded-xl bg-neutral-100 p-4 sm:p-5">
+					<div className="rounded-xl bg-muted p-4 sm:p-5">
 						{/*
 						 * Se dice arriba y no al pie: quien abre esto está por leer un
 						 * mensaje con un nombre y una hora que no existen, y tiene que
 						 * saberlo antes de creerlos.
 						 */}
-						<p className="mb-3 font-mono text-[10px] tracking-[0.12em] text-neutral-500 uppercase">
+						<p className="mb-3 font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase">
 							Ejemplo · lo que recibe tu cliente
 						</p>
 
@@ -131,17 +131,17 @@ const RemindersCard: React.FC<Props> = ({
 						 * llegar es la mitad de la vista previa. El ancho está acotado porque
 						 * un mensaje de WhatsApp nunca ocupa toda la pantalla.
 						 */}
-						<div className="max-w-88 overflow-hidden rounded-2xl rounded-tl-sm bg-white shadow-sm ring-1 ring-black/5">
-							<p className="px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-line text-neutral-800">
+						<div className="max-w-88 overflow-hidden rounded-2xl rounded-tl-sm bg-card shadow-sm ring-1 ring-border">
+							<p className="px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-line text-card-foreground">
 								{previewText}
 							</p>
 
 							{previewButtons.length > 0 && (
-								<div className="flex divide-x divide-neutral-100 border-t border-neutral-100">
+								<div className="flex divide-x divide-border border-t border-border">
 									{previewButtons.map((button) => (
 										<span
 											key={button}
-											className="flex-1 py-2 text-center text-[13px] font-medium text-sky-600"
+											className="flex-1 py-2 text-center text-[13px] font-medium text-sky-600 dark:text-sky-400"
 										>
 											{button}
 										</span>
@@ -150,7 +150,7 @@ const RemindersCard: React.FC<Props> = ({
 							)}
 						</div>
 
-						<p className="mt-3 text-xs text-neutral-500">
+						<p className="mt-3 text-xs text-muted-foreground">
 							El nombre, el servicio, el profesional y la hora salen de cada
 							cita. Desde los botones el cliente reagenda o cancela sin escribir
 							nada.

@@ -126,7 +126,7 @@ const BookingWhenField: React.FC<Props> = ({
 							className={cn(
 								'tabular-nums',
 								minute === null
-									? 'text-amber-600'
+									? 'text-warning'
 									: 'font-medium text-foreground',
 							)}
 						>
@@ -253,7 +253,7 @@ const TimeList: React.FC<TimeListProps> = ({
 
 	if (isError) {
 		return (
-			<p className="p-3 text-sm text-red-600">
+			<p className="p-3 text-sm text-destructive">
 				No se pudieron cargar los horarios.
 			</p>
 		);

@@ -215,7 +215,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 								<p
 									className={`border-t border-border pt-3 text-xs ${
 										reminder.tone === 'warning'
-											? 'text-amber-600 dark:text-amber-500'
+											? 'text-warning'
 											: 'text-muted-foreground'
 									}`}
 								>
@@ -237,7 +237,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 
 						{isCompleted && (
 							<Check
-								className="h-3 w-3 shrink-0 text-green-600 dark:text-green-400"
+								className="h-3 w-3 shrink-0 text-success"
 								aria-label="Atendida"
 							/>
 						)}

@@ -56,7 +56,7 @@ const AnalyticsSummary: React.FC<Props> = ({
 					{summary.cancelledCount > 0 && (
 						<>
 							<span aria-hidden="true">·</span>
-							<span className="text-amber-600 dark:text-amber-500">
+							<span className="text-warning">
 								<span className="font-medium tabular-nums">
 									{summary.cancelledCount}
 								</span>{' '}

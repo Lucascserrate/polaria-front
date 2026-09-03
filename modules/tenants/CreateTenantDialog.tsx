@@ -95,7 +95,7 @@ export function CreateTenantDialog({
 							aria-invalid={Boolean(errors.name)}
 						/>
 						{errors.name && (
-							<p className="text-sm text-red-600">{errors.name}</p>
+							<p className="text-sm text-destructive">{errors.name}</p>
 						)}
 					</div>
 
@@ -110,7 +110,7 @@ export function CreateTenantDialog({
 							aria-invalid={Boolean(errors.email)}
 						/>
 						{errors.email && (
-							<p className="text-sm text-red-600">{errors.email}</p>
+							<p className="text-sm text-destructive">{errors.email}</p>
 						)}
 						<p className="text-xs text-muted-foreground">
 							Es lo que vincula el negocio con su cuenta de Google la primera
@@ -119,7 +119,7 @@ export function CreateTenantDialog({
 					</div>
 
 					{error && (
-						<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+						<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-destructive">
 							{error}
 						</p>
 					)}

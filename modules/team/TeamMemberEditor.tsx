@@ -151,7 +151,7 @@ const TeamMemberEditor: React.FC<Props> = ({
 			</div>
 
 			{error && (
-				<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+				<p className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-destructive">
 					{error}
 				</p>
 			)}
@@ -191,7 +191,7 @@ const TeamMemberEditor: React.FC<Props> = ({
 
 											{hasError ? (
 												<AlertCircle
-													className="size-3.5 text-red-600"
+													className="size-3.5 text-destructive"
 													aria-label="Falta resolver algo en esta sección"
 												/>
 											) : (

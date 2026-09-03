@@ -56,10 +56,10 @@ const BusinessHoursSection: React.FC = () => {
 		<div className="space-y-6">
 			<WeeklyScheduleFields draft={schedule} onChange={setDraft} />
 
-			{error && <p className="text-sm text-red-600">{error}</p>}
+			{error && <p className="text-sm text-destructive">{error}</p>}
 
 			{isError && (
-				<p className="text-sm text-red-600">
+				<p className="text-sm text-destructive">
 					No se pudo guardar. Intentá de nuevo.
 				</p>
 			)}
