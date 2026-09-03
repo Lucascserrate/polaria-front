@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import axios from 'axios';
-import { ChevronLeft } from 'lucide-react';
+import { Check, ChevronLeft } from 'lucide-react';
 import {
 	Drawer,
 	DrawerContent,
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import useGetAppointmentDetail from '@/services/appointments/useGetAppointmentDetail';
 import useEditBooking from '@/services/appointments/useEditBooking';
+import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useGetSettings from '@/services/settings/useGetSettings';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import useGetServices from '@/services/services/useGetServices';
@@ -28,6 +29,7 @@ import BookingServicePicker from './BookingServicePicker';
 import BookingServicesField from './BookingServicesField';
 import BookingWhenField from './BookingWhenField';
 import useBookingDraft from './useBookingDraft';
+import { getAppointmentStatusText } from '@/modules/appointments/utils/constants';
 import { describeReminder } from './utils/reminderStatus';
 import { eligibleStaffFor } from './utils/eligibleStaff';
 
@@ -88,7 +90,11 @@ const BookingEditor: React.FC<EditorProps> = ({
 	const { data: services = [] } = useGetServices();
 	const { data: staff = [] } = useGetStaff();
 	const { data: settings } = useGetSettings();
-	const { mutateAsync: save, isPending: busy } = useEditBooking();
+	const { mutateAsync: save, isPending: saving } = useEditBooking();
+	const { mutateAsync: setStatus, isPending: finishing } =
+		useUpdateAppointmentStatus();
+
+	const busy = saving || finishing;
 
 	const timezone = booking?.timezone ?? settings?.timezone;
 	// Sin configuración todavía, el código ISO es el del negocio por defecto.
@@ -165,6 +171,28 @@ const BookingEditor: React.FC<EditorProps> = ({
 		draft.setItems([...draft.items, { serviceId, staffId: preferred.id }]);
 		setPicking(false);
 		setSaveError(null);
+	};
+
+	/**
+	 * Estados en los que la cita todavía espera una resolución.
+	 *
+	 * Sólo ahí tiene sentido ofrecer "Finalizar": una atendida ya lo está, y una
+	 * cancelada no se resuelve marcándola como atendida.
+	 */
+	const isPendingResolution =
+		booking?.status === 'pending' || booking?.status === 'confirmed';
+
+	const handleFinish = async () => {
+		if (!booking) return;
+
+		setSaveError(null);
+
+		try {
+			await setStatus({ id: appointmentId, status: 'completed' });
+			onClose();
+		} catch {
+			setSaveError('No se pudo marcar como atendida. Intentá de nuevo.');
+		}
 	};
 
 	const handleSave = async () => {
@@ -354,9 +382,41 @@ const BookingEditor: React.FC<EditorProps> = ({
 							</Button>
 						</div>
 					) : (
-						<Button variant="outline" onClick={onClose}>
-							Cerrar
-						</Button>
+						<div className="flex items-center gap-2">
+							{/*
+							 * Finalizar vive acá y no en un menú aparte porque es lo que se
+							 * viene a hacer: se abre la cita del cliente que está sentado en
+							 * la silla, se corrige algo si hace falta, y se cierra. Antes
+							 * había que salir del panel y buscar la acción en el menú del
+							 * click derecho.
+							 *
+							 * No aparece con cambios sin guardar: ahí "finalizar" no dice si
+							 * los guarda o los tira, y una acción que resuelve una cita no
+							 * puede ser ambigua. Primero se guarda o se descarta.
+							 */}
+							{isPendingResolution ? (
+								<Button
+									size="lg"
+									disabled={busy}
+									onClick={() => void handleFinish()}
+								>
+									{finishing ? (
+										<Spinner className="size-3.5" />
+									) : (
+										<Check className="size-4" />
+									)}
+									Finalizar
+								</Button>
+							) : (
+								<span className="text-sm text-muted-foreground">
+									{getAppointmentStatusText(booking.status)}
+								</span>
+							)}
+
+							<Button variant="outline" onClick={onClose}>
+								Cerrar
+							</Button>
+						</div>
 					)}
 				</footer>
 			</div>

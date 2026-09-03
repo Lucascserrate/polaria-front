@@ -184,99 +184,97 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 					style={staffScheme ? { backgroundColor: staffScheme.hex } : undefined}
 				/>
 
-				<Popover>
-					<PopoverTrigger asChild>
-						<button
-							type="button"
-							className="block h-full w-full rounded-sm text-left leading-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-						>
+				<CardFace
+					onOpen={onEdit ? () => onEdit(appointment.id) : undefined}
+					detail={
+						<>
+							<div className="space-y-1">
+								<p className="text-sm font-semibold">
+									{appointment.clientName}
+								</p>
+								<p className="text-xs tabular-nums text-muted-foreground">
+									{timeRange}
+								</p>
+							</div>
+
+							<div className="space-y-1 text-xs">
+								<p className="flex items-center gap-2">
+									<User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+									{appointment.staff}
+								</p>
+								<p className="flex items-center gap-2">
+									<BookOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+									{appointment.service}
+								</p>
+								<p className="text-muted-foreground">
+									{getAppointmentStatusText(appointment.status)}
+								</p>
+							</div>
+
+							{reminder && (
+								<p
+									className={`border-t border-border pt-3 text-xs ${
+										reminder.tone === 'warning'
+											? 'text-amber-600 dark:text-amber-500'
+											: 'text-muted-foreground'
+									}`}
+								>
+									{reminder.label}
+								</p>
+							)}
+						</>
+					}
+				>
+					<span
+						className={cn(
+							'flex min-w-0 items-center gap-1',
+							!inline && 'flex-wrap',
+						)}
+					>
+						<span className="shrink-0 font-mono text-[10px] tabular-nums text-foreground">
+							{formatMinute(startMinute)}
+						</span>
+
+						{isCompleted && (
+							<Check
+								className="h-3 w-3 shrink-0 text-green-600 dark:text-green-400"
+								aria-label="Atendida"
+							/>
+						)}
+
+						{inline && (
 							<span
 								className={cn(
-									'flex min-w-0 items-center gap-1',
-									!inline && 'flex-wrap',
+									'min-w-0 flex-1 truncate text-[11px] font-medium',
+									isCancelled
+										? 'text-muted-foreground line-through'
+										: 'text-foreground',
 								)}
 							>
-								<span className="shrink-0 font-mono text-[10px] tabular-nums text-foreground">
-									{formatMinute(startMinute)}
-								</span>
-
-								{isCompleted && (
-									<Check
-										className="h-3 w-3 shrink-0 text-green-600 dark:text-green-400"
-										aria-label="Atendida"
-									/>
-								)}
-
-								{inline && (
-									<span
-										className={cn(
-											'min-w-0 flex-1 truncate text-[11px] font-medium',
-											isCancelled
-												? 'text-muted-foreground line-through'
-												: 'text-foreground',
-										)}
-									>
-										{appointment.clientName}
-									</span>
-								)}
+								{appointment.clientName}
 							</span>
-
-							{!inline && (
-								<span
-									className={cn(
-										'block truncate text-[11px] font-medium',
-										isCancelled
-											? 'text-muted-foreground line-through'
-											: 'text-foreground',
-									)}
-								>
-									{appointment.clientName}
-								</span>
-							)}
-
-							{showDetail && (
-								<span className="block truncate text-[10px] text-muted-foreground">
-									{detail ?? `${appointment.staff} · ${appointment.service}`}
-								</span>
-							)}
-						</button>
-					</PopoverTrigger>
-
-					<PopoverContent align="start" className="w-64 space-y-3">
-						<div className="space-y-1">
-							<p className="text-sm font-semibold">{appointment.clientName}</p>
-							<p className="text-xs text-muted-foreground tabular-nums">
-								{timeRange}
-							</p>
-						</div>
-
-						<div className="space-y-1 text-xs">
-							<p className="flex items-center gap-2">
-								<User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-								{appointment.staff}
-							</p>
-							<p className="flex items-center gap-2">
-								<BookOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-								{appointment.service}
-							</p>
-							<p className="text-muted-foreground">
-								{getAppointmentStatusText(appointment.status)}
-							</p>
-						</div>
-
-						{reminder && (
-							<p
-								className={`border-t border-border pt-3 text-xs ${
-									reminder.tone === 'warning'
-										? 'text-amber-600 dark:text-amber-500'
-										: 'text-muted-foreground'
-								}`}
-							>
-								{reminder.label}
-							</p>
 						)}
-					</PopoverContent>
-				</Popover>
+					</span>
+
+					{!inline && (
+						<span
+							className={cn(
+								'block truncate text-[11px] font-medium',
+								isCancelled
+									? 'text-muted-foreground line-through'
+									: 'text-foreground',
+							)}
+						>
+							{appointment.clientName}
+						</span>
+					)}
+
+					{showDetail && (
+						<span className="block truncate text-[10px] text-muted-foreground">
+							{detail ?? `${appointment.staff} · ${appointment.service}`}
+						</span>
+					)}
+				</CardFace>
 
 				{/*
 				 * Atajo para la acción más frecuente. Aparece con el hover y con el foco
@@ -423,6 +421,53 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 				</AlertDialogContent>
 			</AlertDialog>
 		</ContextMenu>
+	);
+};
+
+/**
+ * La cara de la card, y qué pasa al tocarla.
+ *
+ * Son dos comportamientos y la diferencia no es de gusto: **quien puede editar
+ * entra a editar; quien no, mira el detalle.**
+ *
+ * Con permiso para editar, el click abre el panel de la reserva. Antes abría un
+ * popover con el cliente, la hora, el profesional y el servicio —y el panel
+ * muestra todo eso y además deja resolverla—, así que el popover era un paso de
+ * más entre ver algo y hacer algo con eso.
+ *
+ * Sin permiso —la agenda de un profesional, que mira su día pero no lo decide—
+ * el popover se queda: es la única forma de leer el detalle de una cita desde
+ * una pantalla táctil, donde el menú del click derecho no existe.
+ */
+const CardFace: React.FC<{
+	/** Ausente deja la card en modo detalle. */
+	onOpen?: () => void;
+	detail: React.ReactNode;
+	children: React.ReactNode;
+}> = ({ onOpen, detail, children }) => {
+	const className =
+		'block h-full w-full rounded-sm text-left leading-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+	if (onOpen) {
+		return (
+			<button type="button" className={className} onClick={onOpen}>
+				{children}
+			</button>
+		);
+	}
+
+	return (
+		<Popover>
+			<PopoverTrigger asChild>
+				<button type="button" className={className}>
+					{children}
+				</button>
+			</PopoverTrigger>
+
+			<PopoverContent align="start" className="w-64 space-y-3">
+				{detail}
+			</PopoverContent>
+		</Popover>
 	);
 };
 
