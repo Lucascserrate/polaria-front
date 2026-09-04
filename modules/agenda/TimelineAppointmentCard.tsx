@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { BookOpen, Check, Pencil, Trash2, User, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
 	Popover,
 	PopoverContent,
@@ -36,11 +35,7 @@ import { formatMinute } from './utils/calendarLayout';
 import { blockSchemeOf } from './utils/blockColor';
 import { describeReminder } from './utils/reminderStatus';
 import { cn } from '@/lib/utils';
-import {
-	DETAIL_HEIGHT,
-	QUICK_ACTIONS_HEIGHT,
-	SINGLE_LINE_HEIGHT,
-} from './utils/constants';
+import { DETAIL_HEIGHT, SINGLE_LINE_HEIGHT } from './utils/constants';
 
 /**
  * Estados en los que la cita todavía espera una resolución. Solo ahí tiene
@@ -60,8 +55,8 @@ interface Props {
 	 *
 	 * La usa así la agenda de un profesional, que muestra su día pero no lo edita:
 	 * resolver o cancelar una cita sigue siendo del negocio. Pasar funciones vacías
-	 * habría dibujado los mismos botones sin que hicieran nada, que es peor que no
-	 * tenerlos —ofrece algo y después no responde—.
+	 * habría llenado el menú con los mismos ítems sin que hicieran nada, que es peor
+	 * que no tenerlos —ofrece algo y después no responde—.
 	 */
 	onMarkAttended?: (id: string) => void;
 	onCancel?: (id: string) => void;
@@ -89,8 +84,9 @@ interface Props {
  *
  * La card muestra solo información porque **ni el ancho ni el alto son suyos**:
  * el ancho lo reparten las citas simultáneas y el alto es la duración, o sea
- * 30px para media hora. Por eso el contenido se adapta en tres escalones —una
- * línea, dos, y con botones— en vez de dibujar siempre lo mismo y recortarlo.
+ * 30px para media hora. Por eso el contenido se adapta en tres escalones —hora y
+ * cliente en una línea, en dos, y con el servicio— en vez de dibujar siempre lo
+ * mismo y recortarlo.
  *
  * Lo que nunca se cae es la hora y el cliente: es lo que se busca al barrer la
  * agenda con la vista. El servicio es información de segundo orden y el detalle
@@ -145,7 +141,6 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 	const isCompleted = appointment.status === 'completed';
 	const inline = height < SINGLE_LINE_HEIGHT;
 	const showDetail = height >= DETAIL_HEIGHT;
-	const showQuickActions = height >= QUICK_ACTIONS_HEIGHT;
 	const reminder = describeReminder(appointment.reminder);
 	const timeRange = `${formatMinute(startMinute)}–${formatMinute(endMinute)}`;
 
@@ -153,7 +148,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 		<ContextMenu>
 			<ContextMenuTrigger
 				className={cn(
-					'group relative block h-full overflow-hidden rounded border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
+					'block h-full overflow-hidden rounded border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
 					colors.surface,
 				)}
 				/*
@@ -266,38 +261,6 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 						</span>
 					)}
 				</CardFace>
-
-				{/*
-				 * Atajo para la acción más frecuente. Aparece con el hover y con el foco
-				 * de teclado, así que no queda fuera del alcance de quien no usa mouse; en
-				 * táctil, el camino es el popover.
-				 */}
-				{isOpen && showQuickActions && onMarkAttended && onCancel && (
-					<div className="absolute top-1 right-1 hidden gap-0.5 group-hover:flex group-focus-within:flex">
-						<Button
-							type="button"
-							size="sm"
-							variant="secondary"
-							className="h-6 w-6 p-0 shadow-sm"
-							aria-label={`Marcar como atendida la cita de ${appointment.clientName}`}
-							disabled={isUpdating}
-							onClick={() => onMarkAttended(appointment.id)}
-						>
-							<Check className="h-3.5 w-3.5" />
-						</Button>
-						<Button
-							type="button"
-							size="sm"
-							variant="secondary"
-							className="h-6 w-6 p-0 shadow-sm"
-							aria-label={`Cancelar la cita de ${appointment.clientName}`}
-							disabled={isUpdating}
-							onClick={() => setConfirming('cancel')}
-						>
-							<X className="h-3.5 w-3.5" />
-						</Button>
-					</div>
-				)}
 			</ContextMenuTrigger>
 
 			<ContextMenuContent>
