@@ -41,7 +41,7 @@ const ImpersonationBanner: React.FC = () => {
 			<p className="min-w-0">
 				Estás dentro de{' '}
 				<span className="font-semibold">{account.businessName}</span> como
-				soporte. Polaria no va a enviar ningún WhatsApp mientras dure.
+				soporte. Lo que hagas le cambia la agenda de verdad.
 			</p>
 			<Button
 				type="button"
