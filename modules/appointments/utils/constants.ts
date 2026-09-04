@@ -8,6 +8,21 @@ export const APPOINTMENT_STATUS = {
 } as const;
 
 /**
+ * Estados en los que la cita todavía espera una resolución.
+ *
+ * Marca dos cosas distintas que resultan ser la misma pregunta. En el menú de la
+ * card, solo ahí tiene sentido ofrecer las acciones: una cita ya atendida o
+ * cancelada no se toca desde la agenda, se corrige en la pantalla de citas. Y en
+ * la card, es mientras la cita está abierta que el fondo lleva el color del
+ * profesional; atendida y cancelada tienen su propio tratamiento y lo conservan.
+ *
+ * Vive acá, y no junto a la card, porque la comparten la card y su menú: tenerla
+ * en uno de los dos obligaba al otro a importar del primero, y esa dependencia
+ * cruzada entre dos módulos que ya se importan es como se arma un ciclo.
+ */
+export const OPEN_STATUSES: AppointmentStatus[] = ['pending', 'confirmed'];
+
+/**
  * Color por estado.
  *
  * `surface` es el tratamiento de la card en la agenda diaria, y se agregó acá en
