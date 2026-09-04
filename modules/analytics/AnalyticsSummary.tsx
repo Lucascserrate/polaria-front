@@ -72,6 +72,25 @@ const AnalyticsSummary: React.FC<Props> = ({
 						` Quedan ${summary.pendingCount} por atender.`}
 				</p>
 			)}
+
+			{/*
+			 * Por qué el total puede parecer bajo.
+			 *
+			 * Solo las citas atendidas facturan —ver `billedSegments` en el
+			 * servidor—, así que una cita que quedó en pendiente vale cero acá y cero
+			 * en la comisión de quien la hizo. Es el hueco que el dueño nota y no
+			 * puede explicar, y decirlo al lado del número es lo que lo vuelve
+			 * accionable.
+			 *
+			 * Dice "sin atender" y no "sin cerrar" porque el período puede incluir
+			 * días que todavía no llegaron: esas citas no están sumadas y está bien
+			 * que no lo estén.
+			 */}
+			{hasActivity && summary.pendingCount > 0 && (
+				<p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+					{`${summary.pendingCount} ${summary.pendingCount === 1 ? 'cita' : 'citas'} del período ${summary.pendingCount === 1 ? 'sigue' : 'siguen'} sin atender, así que no ${summary.pendingCount === 1 ? 'está' : 'están'} sumada${summary.pendingCount === 1 ? '' : 's'} en este total ni en las comisiones.`}
+				</p>
+			)}
 		</div>
 	);
 };

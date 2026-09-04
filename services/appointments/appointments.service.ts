@@ -58,7 +58,6 @@ export interface SaveBookingResponse {
 	warnings: BookingWarning[];
 }
 
-
 /**
  * Las citas de varios días, para la agenda.
  *
@@ -71,6 +70,29 @@ export const getAppointmentsRange = async (
 ): Promise<AppointmentApiRange> => {
 	const { data } = await axiosInstance.get('/appointments/range', {
 		params: { from, to },
+	});
+	return data;
+};
+
+/** Lo que devuelve la cola de citas sin cerrar. */
+export interface UnresolvedAppointments {
+	/** Las más viejas primero, recortadas al `limit` pedido. */
+	items: AppointmentApi[];
+	/** Cuántas hay en total, que puede ser mucho más que `items.length`. */
+	total: number;
+	timezone: string;
+}
+
+/**
+ * Las citas de días ya cerrados que siguen en pendiente o confirmado.
+ *
+ * @param limit Cuántas traer. El tope real lo pone el servidor.
+ */
+export const getUnresolvedAppointments = async (
+	limit: number,
+): Promise<UnresolvedAppointments> => {
+	const { data } = await axiosInstance.get('/appointments/unresolved', {
+		params: { limit },
 	});
 	return data;
 };

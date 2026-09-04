@@ -26,3 +26,12 @@ export const APPOINTMENTS_KEY = ['appointments'] as const;
 export const rangeAppointmentsKey = (from: string, to: string) =>
 	[...APPOINTMENTS_KEY, 'range', from, to] as const;
 
+/**
+ * Las citas de días cerrados que siguen sin resolverse.
+ *
+ * Cuelga de `APPOINTMENTS_KEY` a propósito: cerrar una cita ya invalida esa raíz
+ * —ver `useUpdateAppointmentStatus`—, así que la cola se descuenta sola sin que
+ * nadie tenga que acordarse de invalidarla también acá.
+ */
+export const unresolvedAppointmentsKey = (limit: number) =>
+	[...APPOINTMENTS_KEY, 'unresolved', limit] as const;
