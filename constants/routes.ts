@@ -6,6 +6,7 @@ export const ROUTES = {
 	chat: '/chat',
 	analytics: '/analytics',
 	services: '/services',
+	servicesNew: '/services/new',
 	settings: '/settings',
 	settingsBusiness: '/settings/business',
 	settingsHours: '/settings/hours',

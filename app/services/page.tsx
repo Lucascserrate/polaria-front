@@ -1,119 +1,69 @@
 'use client';
 
-import ServiceForm from '@/modules/services/ServiceForm';
-import ServicesTable from '@/modules/services/ServiceTable';
-import useServicesPage from '../../modules/services/hooks/useServicesPage';
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ROUTES } from '@/constants/routes';
+import ServicesTable from '@/modules/services/ServicesTable';
+import useGetServices from '@/services/services/useGetServices';
+import useGetSettings from '@/services/settings/useGetSettings';
 
+/**
+ * El catálogo de servicios.
+ *
+ * Ya no hay tarjetas de resumen arriba. Eran tres —total, duración promedio,
+ * precio promedio— y ninguna se usaba para decidir nada: el total ya lo dice la
+ * lista, y los promedios de un catálogo de cinco servicios no describen al negocio
+ * ni a ninguno de ellos. Ocupaban la primera pantalla completa antes de mostrar lo
+ * que se venía a ver.
+ */
 const ServicesPage = () => {
-	const {
-		services,
-		isPending,
-		isError,
-		error,
-		stats,
-		addOpen,
-		setAddOpen,
-		editOpen,
-		handleEditOpenChange,
-		editingService,
-		handleDelete,
-		handleAddService,
-		handleEdit,
-		handleUpdateService,
-		createServiceMutation,
-		updateServiceMutation,
-		deleteServiceMutation,
-	} = useServicesPage();
+	const { data: services = [], isPending, isError, error } = useGetServices();
+	const { data: settings } = useGetSettings();
+
+	// Sin configuración todavía, el código ISO es el del negocio por defecto.
+	const currency = settings?.currency ?? 'BOB';
 
 	if (isPending) {
 		return (
-			<div className="flex items-center justify-center h-64">
-				<div className="text-lg">Cargando servicios...</div>
-			</div>
+			<p className="py-16 text-center text-muted-foreground">
+				Cargando los servicios…
+			</p>
 		);
 	}
 
 	if (isError) {
 		return (
-			<div className="flex items-center justify-center h-64">
-				<div className="text-lg text-destructive">
-					{error?.message ?? 'No se pudieron cargar los servicios.'}
-				</div>
-			</div>
+			<p className="py-16 text-center text-destructive">
+				{error?.message ?? 'No se pudieron cargar los servicios.'}
+			</p>
 		);
 	}
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-wrap items-start justify-between gap-4">
 				<div>
-					<h1 className="text-3xl font-bold tracking-tight">
-						Gestión de Servicios
+					<h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight sm:text-3xl">
+						Servicios
+						<span className="rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium tabular-nums text-muted-foreground">
+							{services.length}
+						</span>
 					</h1>
-					<p className="text-muted-foreground mt-1">
-						Gestiona los servicios y precios de tu negocio
+					<p className="mt-1 text-muted-foreground">
+						Qué ofrece el negocio, cuánto dura y cuánto cuesta.
 					</p>
 				</div>
-				<ServiceForm
-					onSubmit={handleAddService}
-					open={addOpen}
-					onOpenChange={setAddOpen}
-					isSubmitting={createServiceMutation.isPending}
-					errorMessage={
-						createServiceMutation.isError
-							? createServiceMutation.error?.message
-							: undefined
-					}
-				/>
+
+				<Button asChild className="gap-2">
+					<Link href={ROUTES.servicesNew}>
+						<Plus className="size-4" />
+						Nuevo
+					</Link>
+				</Button>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Total de Servicios</p>
-					<p className="text-2xl font-bold mt-1">{services.length}</p>
-				</div>
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Duración Promedio</p>
-					<p className="text-2xl font-bold mt-1">{stats.averageDuration} min</p>
-				</div>
-				<div className="bg-card border border-border rounded-lg p-4">
-					<p className="text-sm text-muted-foreground">Precio Promedio</p>
-					<p className="text-2xl font-bold mt-1">
-						BOB {stats.averagePrice.toFixed(2)}
-					</p>
-				</div>
-			</div>
-
-			<div className="bg-card border border-border rounded-lg p-6">
-				<ServicesTable
-					services={services}
-					onDelete={handleDelete}
-					onEdit={handleEdit}
-					onAddClick={() => setAddOpen(true)}
-					disableActions={
-						createServiceMutation.isPending ||
-						updateServiceMutation.isPending ||
-						deleteServiceMutation.isPending
-					}
-				/>
-			</div>
-
-			<ServiceForm
-				showTrigger={false}
-				onSubmit={handleUpdateService}
-				initialValues={editingService ?? undefined}
-				title="Editar Servicio"
-				description="Actualiza los datos del servicio"
-				submitLabel="Guardar cambios"
-				open={editOpen}
-				onOpenChange={handleEditOpenChange}
-				isSubmitting={updateServiceMutation.isPending}
-				errorMessage={
-					updateServiceMutation.isError
-						? updateServiceMutation.error?.message
-						: undefined
-				}
-			/>
+			<ServicesTable services={services} currency={currency} />
 		</div>
 	);
 };
