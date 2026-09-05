@@ -1,0 +1,40 @@
+import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { SectionEyebrow } from './Section';
+
+export function Hero() {
+	return (
+		<section className="relative overflow-hidden">
+			<div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.06),_transparent_42%),linear-gradient(to_bottom,rgba(255,255,255,1),rgba(250,250,250,1))]" />
+			<div className="mx-auto max-w-7xl px-4 pb-10 pt-16 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8 lg:pb-20 lg:pt-28">
+				<div className="mx-auto max-w-4xl text-center">
+					<SectionEyebrow>
+						El nuevo estándar para negocios de turnos
+					</SectionEyebrow>
+					<h1 className="mx-auto mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.06em] text-neutral-950 sm:text-6xl lg:text-7xl">
+						Tu negocio, organizado.
+						<br />
+						Tus clientes, atendidos.
+					</h1>
+					<p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-neutral-600 sm:text-base">
+						Polaria ayuda a salones de belleza, barberías, spas, clínicas y más
+						a automatizar sus reservas, gestionar sus equipos de trabajo y
+						fidelizar clientes desde una sola herramienta premium.
+					</p>
+					<div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+						<Button className="h-11 rounded-full bg-neutral-950 px-6 text-white hover:bg-neutral-800">
+							Empezar gratis
+							<ArrowRight className="ml-1 size-4" />
+						</Button>
+						<Button
+							variant="outline"
+							className="h-11 rounded-full border-neutral-300 px-6"
+						>
+							Ver demo en vivo
+						</Button>
+					</div>
+				</div>
+			</div>
+		</section>
+	);
+}
