@@ -9,15 +9,14 @@ import {
 } from 'lucide-react';
 
 export const businessTypes = [
-	'Barberías',
+	'Barberias',
 	'Salones de Belleza',
 	'Spas & Bienestar',
-	'Clínicas Dentales',
-	'Medicina Estética',
-	'Cosmética',
-	'Y más...',
+	'Clinicas Dentales',
+	'Medicina Estetica',
+	'Cosmetica',
+	'Y mas...',
 ];
-
 export const features: {
 	icon: LucideIcon;
 	title: string;
@@ -26,60 +25,72 @@ export const features: {
 	{
 		icon: CalendarDays,
 		title: 'Agenda de citas',
-		description:
-			'Agenda ágil, visual y sincronizada en tiempo real para evitar solapamientos.',
+		description: 'Agenda agil, visual y sincronizada en tiempo real.',
 	},
 	{
 		icon: Users,
 		title: 'Profesionales y servicios',
-		description:
-			'Asigna roles, comisiones, horarios personalizados y gestiona tu equipo fácilmente.',
+		description: 'Gestiona roles, horarios y servicios facilmente.',
 	},
 	{
 		icon: NotebookPen,
-		title: 'Gestión de clientes',
-		description:
-			'Historial detallado de visitas, preferencias y contacto directo en un clic.',
+		title: 'Gestion de clientes',
+		description: 'Historial detallado y contacto directo en un clic.',
 	},
 	{
 		icon: Clock3,
 		title: 'Disponibilidad de horarios',
-		description:
-			'Configura tus horas de trabajo, pausas, feriados y vacaciones con total flexibilidad.',
+		description: 'Configura horas de trabajo, pausas y vacaciones.',
 	},
 	{
 		icon: MessageCircle,
-		title: 'Recordatorios automáticos',
-		description:
-			'Envío automático de notificaciones para reducir inasistencias en más de un 85%.',
+		title: 'Recordatorios automaticos',
+		description: 'Notificaciones automaticas para reducir inasistencias.',
 	},
 	{
 		icon: BarChart3,
-		title: 'Analíticas del negocio',
-		description:
-			'Visualiza ingresos, servicios más demandados y estadísticas de rendimiento.',
+		title: 'Analiticas del negocio',
+		description: 'Visualiza ingresos y estadisticas de rendimiento.',
 	},
 ];
-
 export type AppointmentStatus =
 	| 'pending'
 	| 'confirmed'
 	| 'cancelled'
 	| 'completed';
-
+export type AgendaSection =
+	| 'agenda'
+	| 'clientes'
+	| 'servicios'
+	| 'personal'
+	| 'analiticas'
+	| 'configuracion';
+export type AgendaSidebarItem = { id: AgendaSection; label: string };
+export type MockClient = {
+	id: string;
+	name: string;
+	phone: string;
+	origin: string;
+	joinedAt: string;
+};
 export type MockStaff = {
 	id: string;
 	name: string;
+	initials: string;
 	role: string;
 	color: string;
+	services: string[];
+	commission: string;
+	active: boolean;
 };
-
 export type MockService = {
 	id: string;
 	name: string;
+	description: string;
 	duration: number;
+	price: number;
+	appointments: number;
 };
-
 export type MockAppointment = {
 	id: string;
 	client: string;
@@ -88,213 +99,220 @@ export type MockAppointment = {
 	start: string;
 	end: string;
 	status: AppointmentStatus;
+	weekday: number;
 };
 
+export const mockClients: MockClient[] = [
+	{
+		id: 'juan',
+		name: 'Juan Perez',
+		phone: '+591 712 34001',
+		origin: 'Reserva online',
+		joinedAt: '12 ago 2026',
+	},
+	{
+		id: 'carlos',
+		name: 'Carlos Rodriguez',
+		phone: '+591 712 34002',
+		origin: 'WhatsApp',
+		joinedAt: '14 ago 2026',
+	},
+	{
+		id: 'andres',
+		name: 'Andres Gomez',
+		phone: '+591 712 34003',
+		origin: 'Sin registrar',
+		joinedAt: '15 ago 2026',
+	},
+	{
+		id: 'mateo',
+		name: 'Mateo Sanchez',
+		phone: '+591 712 34004',
+		origin: 'WhatsApp',
+		joinedAt: '16 ago 2026',
+	},
+	{
+		id: 'sebastian',
+		name: 'Sebastian Torres',
+		phone: '+591 712 34005',
+		origin: 'Reserva online',
+		joinedAt: '17 ago 2026',
+	},
+	{
+		id: 'daniel',
+		name: 'Daniel Martinez',
+		phone: '+591 712 34006',
+		origin: 'Sin registrar',
+		joinedAt: '18 ago 2026',
+	},
+];
 export const mockStaff: MockStaff[] = [
 	{
-		id: 'staff-carlos',
-		name: 'Carlos M.',
-		role: 'Barbero Senior',
-		color: '#111827',
+		id: 'carlos-staff',
+		name: 'Carlos',
+		initials: 'CR',
+		role: 'Barbero senior',
+		color: '#6d78d9',
+		services: ['Corte clasico', 'Corte + barba'],
+		commission: '35%',
+		active: true,
 	},
-	{ id: 'staff-juan', name: 'Juan P.', role: 'Barbero', color: '#4b5563' },
 	{
-		id: 'staff-sofia',
-		name: 'Sofía V.',
-		role: 'Estilista Senior',
-		color: '#b7791f',
+		id: 'diego-staff',
+		name: 'Diego',
+		initials: 'DS',
+		role: 'Barbero',
+		color: '#b875d8',
+		services: ['Corte clasico', 'Barba'],
+		commission: '28%',
+		active: true,
 	},
-	{ id: 'staff-mateo', name: 'Mateo R.', role: 'Colorista', color: '#0f766e' },
+	{
+		id: 'sofia-staff',
+		name: 'Sofia',
+		initials: 'SV',
+		role: 'Barbera',
+		color: '#dc78c8',
+		services: ['Corte premium', 'Barba'],
+		commission: '40%',
+		active: true,
+	},
 ];
-
 export const mockServices: MockService[] = [
-	{ id: 'service-cut', name: 'Corte clásico', duration: 30 },
-	{ id: 'service-beard', name: 'Barba', duration: 30 },
-	{ id: 'service-color', name: 'Corte & Color', duration: 60 },
+	{
+		id: 'classic',
+		name: 'Corte clasico',
+		description: 'Corte masculino clasico con perfilado basico.',
+		duration: 30,
+		price: 45,
+		appointments: 18,
+	},
+	{
+		id: 'combo',
+		name: 'Corte + barba',
+		description: 'Servicio combinado de corte y barba.',
+		duration: 45,
+		price: 78,
+		appointments: 12,
+	},
+	{
+		id: 'beard',
+		name: 'Barba',
+		description: 'Perfilado, recorte y acabado de barba.',
+		duration: 30,
+		price: 35,
+		appointments: 9,
+	},
+	{
+		id: 'premium',
+		name: 'Corte premium',
+		description: 'Corte + lavado + acabado con styling.',
+		duration: 60,
+		price: 65,
+		appointments: 7,
+	},
 ];
-
 export const mockAppointments: MockAppointment[] = [
 	{
-		id: 'appointment-1',
-		client: 'Diego P.',
-		serviceId: 'service-cut',
-		staffId: 'staff-carlos',
+		id: 'a1',
+		client: 'Juan Perez',
+		serviceId: 'classic',
+		staffId: 'carlos-staff',
 		start: '09:30',
 		end: '10:00',
 		status: 'confirmed',
+		weekday: 0,
 	},
 	{
-		id: 'appointment-2',
-		client: 'Matías G.',
-		serviceId: 'service-beard',
-		staffId: 'staff-carlos',
+		id: 'a2',
+		client: 'Carlos Rodriguez',
+		serviceId: 'combo',
+		staffId: 'carlos-staff',
 		start: '10:30',
-		end: '11:00',
+		end: '11:15',
 		status: 'pending',
+		weekday: 4,
 	},
 	{
-		id: 'appointment-3',
-		client: 'Lucía R.',
-		serviceId: 'service-color',
-		staffId: 'staff-sofia',
-		start: '13:30',
-		end: '14:30',
+		id: 'a3',
+		client: 'Andres Gomez',
+		serviceId: 'premium',
+		staffId: 'carlos-staff',
+		start: '13:00',
+		end: '14:00',
 		status: 'confirmed',
+		weekday: 5,
 	},
 	{
-		id: 'appointment-4',
-		client: 'Ana C.',
-		serviceId: 'service-color',
-		staffId: 'staff-mateo',
-		start: '14:00',
-		end: '15:00',
+		id: 'a4',
+		client: 'Mateo Sanchez',
+		serviceId: 'beard',
+		staffId: 'diego-staff',
+		start: '09:00',
+		end: '09:30',
 		status: 'completed',
+		weekday: 1,
 	},
 	{
-		id: 'appointment-5',
-		client: 'Laura S.',
-		serviceId: 'service-cut',
-		staffId: 'staff-juan',
-		start: '09:30',
-		end: '10:00',
-		status: 'completed',
-	},
-	{
-		id: 'appointment-6',
-		client: 'Emma V.',
-		serviceId: 'service-beard',
-		staffId: 'staff-juan',
+		id: 'a5',
+		client: 'Sebastian Torres',
+		serviceId: 'classic',
+		staffId: 'diego-staff',
 		start: '10:00',
 		end: '10:30',
 		status: 'confirmed',
+		weekday: 4,
 	},
 	{
-		id: 'appointment-7',
-		client: 'Tomas R.',
-		serviceId: 'service-color',
-		staffId: 'staff-juan',
-		start: '13:00',
-		end: '14:00',
+		id: 'a6',
+		client: 'Juan Perez',
+		serviceId: 'premium',
+		staffId: 'diego-staff',
+		start: '14:00',
+		end: '15:00',
 		status: 'pending',
+		weekday: 3,
 	},
 	{
-		id: 'appointment-8',
-		client: 'Sofia D.',
-		serviceId: 'service-cut',
-		staffId: 'staff-sofia',
+		id: 'a7',
+		client: 'Carlos Rodriguez',
+		serviceId: 'combo',
+		staffId: 'sofia-staff',
+		start: '09:30',
+		end: '10:15',
+		status: 'confirmed',
+		weekday: 5,
+	},
+	{
+		id: 'a8',
+		client: 'Andres Gomez',
+		serviceId: 'classic',
+		staffId: 'sofia-staff',
 		start: '11:00',
 		end: '11:30',
 		status: 'confirmed',
+		weekday: 2,
 	},
 	{
-		id: 'appointment-9',
-		client: 'Marta L.',
-		serviceId: 'service-color',
-		staffId: 'staff-sofia',
-		start: '14:30',
-		end: '15:30',
-		status: 'confirmed',
-	},
-	{
-		id: 'appointment-10',
-		client: 'Pedro N.',
-		serviceId: 'service-color',
-		staffId: 'staff-mateo',
-		start: '10:00',
-		end: '11:00',
+		id: 'a9',
+		client: 'Mateo Sanchez',
+		serviceId: 'premium',
+		staffId: 'sofia-staff',
+		start: '15:00',
+		end: '16:00',
 		status: 'completed',
-	},
-	{
-		id: 'appointment-11',
-		client: 'Marta L.',
-		serviceId: 'service-beard',
-		staffId: 'staff-mateo',
-		start: '13:30',
-		end: '14:00',
-		status: 'confirmed',
-	},
-	{
-		id: 'appointment-12',
-		client: 'Pedro N.',
-		serviceId: 'service-color',
-		staffId: 'staff-mateo',
-		start: '15:30',
-		end: '17:00',
-		status: 'pending',
+		weekday: 5,
 	},
 ];
-
-export const whatsappMessages = [
-	{
-		from: 'Cliente',
-		text: 'Hola, quiero reservar para mañana',
-		bubble: 'bubble-white',
-	},
-	{
-		from: 'Polaria',
-		text: '¡Hola! 👋 ¿Qué servicio te gustaría agendar?',
-		bubble: 'bubble-green',
-	},
-	{ from: 'Cliente', text: 'Corte clásico', bubble: 'bubble-white' },
-	{
-		from: 'Polaria',
-		text: 'Estos son los horarios disponibles:\n10:00 · 12:30 · 16:30',
-		bubble: 'bubble-green',
-	},
-	{ from: 'Cliente', text: '16:30', bubble: 'bubble-white' },
-	{
-		from: 'Polaria',
-		text: '¡Listo! Tu turno quedó agendado. ✅\nCorte clásico · mañana 16:30',
-		bubble: 'bubble-green',
-	},
-] as const;
-
-export const steps = [
-	{
-		index: '01',
-		title: 'El cliente escribe',
-		description: 'Consultando disponibilidad por WhatsApp.',
-	},
-	{
-		index: '02',
-		title: 'Polaria ofrece horarios',
-		description:
-			'El bot inteligente lee tu agenda real y propone opciones en segundos.',
-	},
-	{
-		index: '03',
-		title: 'El cliente elige',
-		description: 'Solo tiene que responder con la hora o servicio preferido.',
-	},
-	{
-		index: '04',
-		title: 'Cita organizada',
-		description:
-			'Se crea automáticamente en tu agenda y el cliente recibe confirmación.',
-	},
+export const weekDays = [
+	{ label: 'LUN', date: '31' },
+	{ label: 'MAR', date: '1' },
+	{ label: 'MIE', date: '2' },
+	{ label: 'JUE', date: '3' },
+	{ label: 'VIE', date: '4' },
+	{ label: 'SAB', date: '5' },
+	{ label: 'DOM', date: '6' },
 ];
-
-export const simpleSteps = [
-	{
-		index: '01',
-		title: 'Configurá tu negocio',
-		description:
-			'Registra tus servicios, añade a los miembros de tu equipo y establece sus horarios de trabajo.',
-	},
-	{
-		index: '02',
-		title: 'Compartí tu link o WhatsApp',
-		description:
-			'Coloca tu link de reservas en Instagram o conecta el bot de WhatsApp para recibir turnos en piloto automático.',
-	},
-	{
-		index: '03',
-		title: 'Gestioná todo en un solo lugar',
-		description:
-			'Controla tu flujo diario desde el panel administrativo. Visualiza analíticas, historial y agiliza las operaciones.',
-	},
-];
-
 export const scheduleTimeSlots = [
 	'09:00',
 	'10:00',
@@ -305,18 +323,74 @@ export const scheduleTimeSlots = [
 	'15:00',
 	'16:00',
 ];
-
-export const agendaSidebarItems = [
-	'Agenda',
-	'Equipo',
-	'Clientes',
-	'Servicios',
-	'Analíticas',
+export const agendaSidebarItems: AgendaSidebarItem[] = [
+	{ id: 'agenda', label: 'Agenda' },
+	{ id: 'personal', label: 'Equipo' },
+	{ id: 'clientes', label: 'Clientes' },
+	{ id: 'servicios', label: 'Servicios' },
+	{ id: 'analiticas', label: 'Analiticas' },
+	{ id: 'configuracion', label: 'Configuracion' },
 ];
-
-export const appointmentStatuses: AppointmentStatus[] = [
-	'pending',
-	'confirmed',
-	'cancelled',
-	'completed',
+export const whatsappMessages = [
+	{
+		from: 'Cliente',
+		text: 'Hola, quiero reservar para manana',
+		bubble: 'bubble-white',
+	},
+	{
+		from: 'Polaria',
+		text: 'Hola! Que servicio te gustaria agendar?',
+		bubble: 'bubble-green',
+	},
+	{ from: 'Cliente', text: 'Corte clasico', bubble: 'bubble-white' },
+	{
+		from: 'Polaria',
+		text: 'Estos son los horarios disponibles:\n10:00 · 12:30 · 16:30',
+		bubble: 'bubble-green',
+	},
+	{ from: 'Cliente', text: '16:30', bubble: 'bubble-white' },
+	{
+		from: 'Polaria',
+		text: 'Listo! Tu turno quedo agendado.\nCorte clasico · manana 16:30',
+		bubble: 'bubble-green',
+	},
+] as const;
+export const steps = [
+	{
+		index: '01',
+		title: 'El cliente escribe',
+		description: 'Consultando disponibilidad por WhatsApp.',
+	},
+	{
+		index: '02',
+		title: 'Polaria ofrece horarios',
+		description: 'El bot lee tu agenda real y propone opciones en segundos.',
+	},
+	{
+		index: '03',
+		title: 'El cliente elige',
+		description: 'Solo tiene que responder con la hora o servicio preferido.',
+	},
+	{
+		index: '04',
+		title: 'Cita organizada',
+		description: 'Se crea automaticamente en tu agenda y recibe confirmacion.',
+	},
+];
+export const simpleSteps = [
+	{
+		index: '01',
+		title: 'Configura tu negocio',
+		description: 'Registra servicios, equipo y horarios de trabajo.',
+	},
+	{
+		index: '02',
+		title: 'Comparte tu link o WhatsApp',
+		description: 'Recibe turnos en piloto automatico.',
+	},
+	{
+		index: '03',
+		title: 'Gestiona todo en un solo lugar',
+		description: 'Controla tu flujo diario desde el panel administrativo.',
+	},
 ];

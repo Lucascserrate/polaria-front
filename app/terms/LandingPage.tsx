@@ -6,7 +6,6 @@ import { FinalCTA } from './FinalCTA';
 import { Footer } from './Footer';
 import { Hero } from './Hero';
 import { NavBar } from './NavBar';
-import { ProfessionalAgenda } from './ProfessionalAgenda';
 import { SimpleSteps } from './SimpleSteps';
 import { WhatsAppFlow } from './WhatsAppFlow';
 import { WhatsAppSection } from './WhatsAppSection';
@@ -19,7 +18,6 @@ export default function LandingPage() {
 				<Hero />
 				<AgendaMockup />
 				<BusinessTypes />
-				<ProfessionalAgenda />
 				<Features />
 				<WhatsAppSection />
 				<WhatsAppFlow />
