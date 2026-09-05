@@ -21,7 +21,24 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="es" className="h-full">
+		/*
+		 * `suppressHydrationWarning` va acá porque los dos scripts de abajo escriben
+		 * atributos de **este** elemento antes de que React hidrate: el tema agrega
+		 * la clase `dark` y el menú colapsado agrega `data-sidebar`. El servidor
+		 * manda `class="h-full"` y sin nada más; el cliente, cuando React compara,
+		 * ya tiene otra cosa. React lo reporta como desajuste de hidratación y
+		 * además avisa que no lo va a corregir —tiene razón: no debe corregirlo, ese
+		 * es el valor bueno—.
+		 *
+		 * Solo silencia los atributos y el contenido de texto de este elemento, no
+		 * del árbol: un desajuste real dentro de la app sigue avisando.
+		 *
+		 * La alternativa sería mover las preferencias a cookies para que el servidor
+		 * ya mande la clase correcta, y está descartada a propósito —ver el
+		 * comentario en `theme-preference`—: volvería dinámicas pantallas que hoy se
+		 * sirven estáticas.
+		 */
+		<html lang="es" className="h-full" suppressHydrationWarning>
 			<body
 				className={`${geistSans.className} antialiased h-full flex flex-col`}
 			>

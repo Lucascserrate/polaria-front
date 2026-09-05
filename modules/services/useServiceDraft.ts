@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { Service } from '@/types/services.types';
+import type { Service, ServiceBookingPolicy } from '@/types/services.types';
 
-export type ServiceSection = 'details' | 'pricing';
+export type ServiceSection = 'details' | 'pricing' | 'booking';
 
 export interface ServiceDraft {
 	name: string;
@@ -11,6 +11,7 @@ export interface ServiceDraft {
 	/** Como texto porque viene de un `input`: vacío es distinto de cero. */
 	duration: string;
 	price: string;
+	bookingPolicy: ServiceBookingPolicy;
 }
 
 /** Lo que se manda a guardar. Sin `timezone`, que lo resuelve la pantalla. */
@@ -19,6 +20,7 @@ export interface ServicePayload {
 	description?: string;
 	durationMinutes: number;
 	price: number;
+	bookingPolicy: ServiceBookingPolicy;
 }
 
 /**
@@ -54,6 +56,8 @@ const useServiceDraft = (service?: Service | null) => {
 				? ''
 				: String(service.durationMinutes),
 		price: service?.price === undefined ? '' : String(Number(service.price)),
+		// Los servicios viejos no traen el campo, y siempre fueron reservables.
+		bookingPolicy: service?.bookingPolicy ?? 'CLIENT_BOOKS',
 	}));
 
 	const set = <K extends keyof ServiceDraft>(key: K, value: ServiceDraft[K]) =>
@@ -101,6 +105,7 @@ const useServiceDraft = (service?: Service | null) => {
 		description: draft.description.trim() || undefined,
 		durationMinutes: Number(draft.duration.trim()),
 		price: Number(draft.price.trim()),
+		bookingPolicy: draft.bookingPolicy,
 	});
 
 	return { draft, set, errors, canSave, toPayload };

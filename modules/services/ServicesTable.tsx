@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	Table,
@@ -28,6 +28,10 @@ interface Props {
  * no un diálogo que hubiera que abrir desde un lápiz— y eliminar vive adentro,
  * como en clientes: sacar un servicio del catálogo no debería estar a un click de
  * paso mientras alguien recorre la lista.
+ *
+ * Los que necesitan consulta previa se marcan bajo el nombre. Es información de la
+ * fila y no una columna propia: sería una columna casi siempre vacía, que es la
+ * clase de columna que se deja de leer justo cuando dice algo.
  */
 const ServicesTable: React.FC<Props> = ({ services, currency }) => {
 	if (services.length === 0) {
@@ -69,10 +73,14 @@ const ServicesTable: React.FC<Props> = ({ services, currency }) => {
 										<span className="block truncate font-medium group-hover:underline">
 											{service.name}
 										</span>
-										{service.description && (
-											<span className="block truncate text-xs text-muted-foreground">
-												{service.description}
-											</span>
+										{service.bookingPolicy === 'CONSULTATION_FIRST' ? (
+											<ConsultationFirst />
+										) : (
+											service.description && (
+												<span className="block truncate text-xs text-muted-foreground">
+													{service.description}
+												</span>
+											)
 										)}
 									</Link>
 								</TableCell>
@@ -103,6 +111,9 @@ const ServicesTable: React.FC<Props> = ({ services, currency }) => {
 								<span className="mt-0.5 block text-xs text-muted-foreground">
 									{`${service.durationMinutes} min`}
 								</span>
+								{service.bookingPolicy === 'CONSULTATION_FIRST' && (
+									<ConsultationFirst />
+								)}
 							</span>
 							<span className="shrink-0 font-medium tabular-nums">
 								{formatMoney(Number(service.price), currency)}
@@ -114,5 +125,19 @@ const ServicesTable: React.FC<Props> = ({ services, currency }) => {
 		</>
 	);
 };
+
+/**
+ * Que este servicio no lo reserva el cliente.
+ *
+ * Se dice bajo el nombre y desplaza a la descripción cuando hay que elegir: entre
+ * saber qué incluye el servicio y saber que no se puede reservar solo, lo segundo
+ * es lo que cambia lo que el negocio hace con la fila.
+ */
+const ConsultationFirst: React.FC = () => (
+	<span className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+		<Stethoscope className="size-3 shrink-0" />
+		Requiere consulta previa
+	</span>
+);
 
 export default ServicesTable;

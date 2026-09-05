@@ -19,6 +19,7 @@ import DeleteServiceDialog from './DeleteServiceDialog';
 const SECTIONS: Array<{ key: ServiceSection; label: string }> = [
 	{ key: 'details', label: 'Detalles' },
 	{ key: 'pricing', label: 'Duración y precio' },
+	{ key: 'booking', label: 'Reserva' },
 ];
 
 interface Props {
@@ -43,9 +44,10 @@ interface Props {
  * elegir entre un alto incómodo o un scroll interno cada vez que se agregara un
  * campo.
  *
- * Son dos secciones y no cuatro campos sueltos porque responden dos preguntas
- * distintas: qué es el servicio, y cuánto cuesta y cuánto ocupa en la agenda. La
- * segunda es la que se ajusta seguido.
+ * Son tres secciones y no un formulario largo porque responden tres preguntas
+ * distintas: qué es el servicio, cuánto cuesta y cuánto ocupa en la agenda, y
+ * quién puede reservarlo. La segunda es la que se ajusta seguido; la tercera se
+ * decide una vez y casi nunca se toca, y por eso está última.
  *
  * El guardado es uno solo, en la cabecera, y manda el servicio entero: la
  * pantalla se recorre por secciones pero el servicio es uno.
@@ -185,7 +187,7 @@ const ServiceEditor: React.FC<Props> = ({
 
 							{errors.details && <SectionError message={errors.details} />}
 						</div>
-					) : (
+					) : section === 'pricing' ? (
 						<div className="space-y-4">
 							<div>
 								<h2 className="text-lg font-semibold">Duración y precio</h2>
@@ -236,6 +238,51 @@ const ServiceEditor: React.FC<Props> = ({
 
 							{errors.pricing && <SectionError message={errors.pricing} />}
 						</div>
+					) : (
+						<div className="space-y-4">
+							<div>
+								<h2 className="text-lg font-semibold">Reserva</h2>
+								<p className="text-sm text-muted-foreground">
+									Quién puede poner este servicio en la agenda.
+								</p>
+							</div>
+
+							<PolicyOption
+								name="bookingPolicy"
+								value="CLIENT_BOOKS"
+								checked={draft.bookingPolicy === 'CLIENT_BOOKS'}
+								onSelect={() => set('bookingPolicy', 'CLIENT_BOOKS')}
+								label="El cliente lo reserva"
+								description="Aparece entre las opciones al reservar por WhatsApp y en tu página. Es lo habitual."
+							/>
+
+							<PolicyOption
+								name="bookingPolicy"
+								value="CONSULTATION_FIRST"
+								checked={draft.bookingPolicy === 'CONSULTATION_FIRST'}
+								onSelect={() => set('bookingPolicy', 'CONSULTATION_FIRST')}
+								label="Requiere una consulta previa"
+								description="El cliente no puede reservarlo solo. Lo agendás vos desde la agenda, después de verlo."
+							/>
+
+							{/*
+							 * Lo que **no** cambia, que es la duda que deja la opción de
+							 * arriba: se parece a dar de baja el servicio, y no lo es.
+							 */}
+							<div className="border-t border-border pt-3 text-xs text-muted-foreground">
+								<p>Con consulta previa, el servicio sigue existiendo:</p>
+								<ul className="mt-1.5 list-disc space-y-1 pl-4">
+									<li>
+										Se muestra en tu página, con su precio, sin poder elegirlo.
+									</li>
+									<li>
+										Si un cliente pregunta por WhatsApp, Polaria le explica que
+										hace falta coordinar una consulta.
+									</li>
+									<li>Vos lo agendás normalmente desde la agenda.</li>
+								</ul>
+							</div>
+						</div>
 					)}
 				</div>
 			</div>
@@ -252,6 +299,47 @@ const ServiceEditor: React.FC<Props> = ({
 		</div>
 	);
 };
+
+/**
+ * Una opción de política, como tarjeta y no como radio suelto.
+ *
+ * El control nativo va adentro de la etiqueta y no al lado: así toda la tarjeta
+ * —título y explicación incluidos— selecciona la opción, y el teclado sigue
+ * recorriendo el grupo con las flechas como en cualquier radio, que es lo que se
+ * pierde al dibujarlo con `div`s y un `onClick`.
+ */
+const PolicyOption: React.FC<{
+	name: string;
+	value: string;
+	checked: boolean;
+	onSelect: () => void;
+	label: string;
+	description: string;
+}> = ({ name, value, checked, onSelect, label, description }) => (
+	<label
+		className={cn(
+			'flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors',
+			checked
+				? 'border-primary bg-primary/5'
+				: 'border-border hover:bg-muted/50',
+		)}
+	>
+		<input
+			type="radio"
+			name={name}
+			value={value}
+			checked={checked}
+			onChange={onSelect}
+			className="mt-0.5 size-4 shrink-0 accent-primary"
+		/>
+		<span className="min-w-0">
+			<span className="block text-sm font-medium">{label}</span>
+			<span className="mt-0.5 block text-xs text-muted-foreground">
+				{description}
+			</span>
+		</span>
+	</label>
+);
 
 const SectionError: React.FC<{ message: string }> = ({ message }) => (
 	<p className="flex items-center gap-1.5 text-sm text-destructive">
