@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { Logo } from '@/app/logo';
 
 export function Footer() {
@@ -7,19 +9,13 @@ export function Footer() {
 				<div>
 					<Logo tone="dark" className="text-[15px]" />
 					<p className="mt-4 max-w-md text-sm leading-6 text-neutral-600">
-						Desarrollado con pasión para hispanoamérica.
+						Desarrollado con pasión para Hispanoamérica.
 					</p>
 				</div>
 				<div className="flex flex-wrap gap-5 text-sm text-neutral-600">
-					<a href="#!" className="hover:text-neutral-950">
-						Términos de servicio
-					</a>
-					<a href="#!" className="hover:text-neutral-950">
-						Privacidad
-					</a>
-					<a href="#!" className="hover:text-neutral-950">
-						Soporte
-					</a>
+					<Link href="/terms-and-conditions" className="hover:text-neutral-950">Términos de servicio</Link>
+					<Link href="/privacy" className="hover:text-neutral-950">Privacidad</Link>
+					<Link href="/support" className="hover:text-neutral-950">Soporte</Link>
 				</div>
 			</div>
 			<div className="mx-auto mt-8 flex max-w-7xl flex-col gap-2 border-t border-neutral-200 pt-6 text-xs text-neutral-500 md:flex-row md:items-center md:justify-between">

@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 import { BadgeCheck, CircleCheckBig } from 'lucide-react';
@@ -11,6 +13,7 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { SectionTitle } from './Section';
+import { useReveal } from './useReveal';
 
 const plans = [
 	{
@@ -67,9 +70,25 @@ export function PricingSection() {
 					description="Elige el nivel que acompaña a tu negocio hoy y cambia de plan cuando necesites más volumen o automatización."
 				/>
 				<div className="mt-10 grid gap-4 lg:grid-cols-3">
-					{plans.map((plan) => (
+					{plans.map((plan, index) => (
+						<PricingCard key={plan.name} plan={plan} index={index} />
+					))}
+				</div>
+			</div>
+		</section>
+	);
+}
+
+function PricingCard({ plan, index }: { plan: (typeof plans)[number]; index: number }) {
+	const { ref, isVisible } = useReveal<HTMLDivElement>();
+
+	return (
+		<div
+			ref={ref}
+			className={`transition-all duration-[400ms] ease-out motion-reduce:transition-none ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-[10px] opacity-0'}`}
+			style={{ transitionDelay: `${index * 70}ms` }}
+		>
 						<Card
-							key={plan.name}
 							className={`rounded-[2rem] border-neutral-200 bg-white shadow-sm ${plan.featured ? 'border-neutral-950 shadow-[0_24px_70px_rgba(0,0,0,0.08)]' : ''}`}
 						>
 							<CardHeader className="space-y-4 px-5 pt-5">
@@ -121,9 +140,6 @@ export function PricingSection() {
 								)}
 							</CardContent>
 						</Card>
-					))}
-				</div>
-			</div>
-		</section>
+		</div>
 	);
 }

@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button';
 
+
 export function FinalCTA() {
 	return (
 		<section className="px-4 py-14 sm:px-6 lg:px-8">
-			<div className="mx-auto max-w-7xl overflow-hidden rounded-[2.25rem] border border-neutral-200 bg-neutral-950 px-6 py-14 text-center text-white sm:px-10 lg:px-16">
+			<div className="final-cta mx-auto max-w-7xl overflow-hidden rounded-[2.25rem] border border-neutral-200 bg-neutral-950 px-6 py-14 text-center text-white sm:px-10 lg:px-16">
 				<p className="text-[11px] font-medium uppercase tracking-[0.24em] text-white/45">
 					Empezá hoy
 				</p>
@@ -20,6 +21,21 @@ export function FinalCTA() {
 					</Button>
 				</div>
 			</div>
+			<style>{`
+				.final-cta {
+					background-image: radial-gradient(circle at 50% 115%, rgba(255,255,255,0.08), transparent 34%);
+					animation: ctaGlow 8s ease-in-out infinite;
+				}
+
+				@keyframes ctaGlow {
+					0%, 100% { background-position: 50% 115%; }
+					50% { background-position: 50% 108%; }
+				}
+
+				@media (prefers-reduced-motion: reduce) {
+					.final-cta { animation: none; }
+				}
+			`}</style>
 		</section>
 	);
 }
