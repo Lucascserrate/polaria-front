@@ -5,7 +5,7 @@ import { SectionEyebrow } from './Section';
 export function Hero() {
 	return (
 		<section className="relative overflow-hidden">
-			<div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.06),_transparent_42%),linear-gradient(to_bottom,rgba(255,255,255,1),rgba(250,250,250,1))]" />
+			<div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.06),transparent_42%),linear-gradient(to_bottom,rgba(255,255,255,1),rgba(250,250,250,1))]" />
 			<div className="mx-auto max-w-7xl px-4 pb-10 pt-16 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8 lg:pb-20 lg:pt-28">
 				<div className="mx-auto max-w-4xl text-center">
 					<SectionEyebrow>
