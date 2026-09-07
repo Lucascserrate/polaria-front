@@ -13,6 +13,7 @@ import {
 import AppearanceCard from '@/modules/settings/AppearanceCard';
 import BotSwitchCard from '@/modules/settings/BotSwitchCard';
 import { ROUTES } from '@/constants/routes';
+import { businessTypeLabel } from '@/modules/onboarding/constants';
 import { describeReminderOffsets } from '@/modules/settings/utils/reminders';
 import useGetSettings from '@/services/settings/useGetSettings';
 
@@ -47,7 +48,15 @@ const SECTIONS: Section[] = [
 		label: 'Información del negocio',
 		description: 'Nombre, rubro, zona horaria y ubicación.',
 		icon: Building2,
-		status: (settings) => (settings.businessType ? null : 'Falta el rubro'),
+		/*
+		 * Se muestra el rubro, no se avisa que falta.
+		 *
+		 * Antes decía "Falta el rubro", y ahora que no se edita acá eso sería
+		 * mandar al negocio a una pantalla donde no puede resolverlo. Falta solo
+		 * en fichas viejas —la configuración inicial lo pide— y ahí lo corrige
+		 * soporte.
+		 */
+		status: (settings) => businessTypeLabel(settings.businessType),
 	},
 	{
 		href: ROUTES.settingsHours,

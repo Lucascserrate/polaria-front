@@ -19,7 +19,7 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { formatDate } from '@/lib/date-utils';
-import { businessTypeLabel } from './businessType';
+import { businessTypeLabel } from '@/modules/onboarding/constants';
 import type { Tenant } from '@/types/tenant.types';
 
 interface TenantTableProps {

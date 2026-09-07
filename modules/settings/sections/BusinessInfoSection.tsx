@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check } from 'lucide-react';
-import BusinessTypeStep from '@/modules/onboarding/steps/BusinessTypeStep';
+import { businessTypeLabel } from '@/modules/onboarding/constants';
 import TimezoneSelect from '@/modules/settings/TimezoneSelect';
 import useGetSettings from '@/services/settings/useGetSettings';
 import useUpdateSettings from '@/services/settings/useUpdateSettings';
@@ -24,11 +24,13 @@ const LocationPicker = dynamic(
 );
 
 /**
- * Información del negocio: los mismos cuatro datos que pide el onboarding.
+ * Información del negocio: casi los mismos datos que pide el onboarding.
  *
- * Reutiliza `BusinessTypeStep` y `LocationPicker` del wizard en lugar de tener
- * una versión "de configuración": son el mismo dato y la misma interacción, y dos
+ * Reutiliza `LocationPicker` del wizard en lugar de tener una versión "de
+ * configuración": es el mismo dato y la misma interacción, y dos
  * implementaciones significarían que un arreglo en una no llega a la otra.
+ *
+ * El rubro es la excepción y acá solo se lee. Ver el bloque que lo muestra.
  *
  * A diferencia del wizard, acá se guarda esta sección sola. En el onboarding se
  * guarda todo al final porque abandonar a mitad de camino dejaría el negocio
@@ -99,28 +101,25 @@ const BusinessInfoSection: React.FC = () => {
 	} = useUpdateSettings();
 
 	const [name, setName] = useState<string | null>(null);
-	const [businessType, setBusinessType] = useState<string | null>(null);
 	const [timezone, setTimezone] = useState<string | null>(null);
 	const [address, setAddress] = useState<string | null>(null);
 	const [location, setLocation] = useState<Coordinates | null>(null);
 	const [locationTouched, setLocationTouched] = useState(false);
 
 	const currentName = name ?? settings?.polariaName ?? '';
-	const currentType = businessType ?? settings?.businessType ?? '';
 	const currentTimezone = timezone ?? settings?.timezone ?? '';
 	const currentAddress = address ?? settings?.address ?? '';
 	const currentLocation = locationTouched
 		? location
 		: (settings?.location ?? null);
 
-	const canSave = currentName.trim().length > 0 && Boolean(currentType);
+	const canSave = currentName.trim().length > 0;
 
 	const handleSave = async () => {
 		if (!canSave) return;
 
 		await save({
 			polariaName: currentName.trim(),
-			businessType: currentType,
 			timezone: currentTimezone || undefined,
 			// Vacío borra la dirección: es lo que significa haber limpiado el campo.
 			address: currentAddress.trim() || null,
@@ -150,9 +149,25 @@ const BusinessInfoSection: React.FC = () => {
 
 			<PublicPageLink url={settings?.publicBookingUrl ?? null} />
 
+			{/*
+			 * El rubro se lee y no se edita.
+			 *
+			 * No es un dato de preferencia como el nombre o la dirección: de él
+			 * dependen los servicios que Polaria sugiere y el tono con el que
+			 * contesta, y va a alimentar la comparación entre negocios del mismo
+			 * rubro. Un formulario acá invita a probar rubros a ver qué cambia, y
+			 * cada prueba mueve esos números para todos.
+			 *
+			 * Cambiarlo de verdad es raro —un negocio no se pasa de barbería a
+			 * clínica— y es una conversación con soporte, que lo corrige por
+			 * `/tenants`. El backend rechaza el cambio igual, así que esto no es la
+			 * única defensa. Ver `SettingsService.updateSettings`.
+			 */}
 			<div className="space-y-2">
 				<Label>Tipo de negocio</Label>
-				<BusinessTypeStep value={currentType} onChange={setBusinessType} />
+				<p className="rounded-md border border-border bg-muted px-3 py-2 text-sm">
+					{businessTypeLabel(settings?.businessType) ?? 'Sin definir'}
+				</p>
 			</div>
 
 			<TimezoneSelect

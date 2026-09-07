@@ -19,6 +19,29 @@ export const BUSINESS_TYPE_OPTIONS = [
 ] as const;
 
 /**
+ * El rubro, escrito como lo lee una persona.
+ *
+ * Lo guardado es un código estable (`BARBERSHOP`) justamente para que la
+ * etiqueta pueda cambiar sin migrar nada; el precio es que en pantalla hay que
+ * traducirlo. Se usa la misma lista de arriba: dos listas serían dos rubros con
+ * nombres distintos según por dónde se mire.
+ *
+ * Vive con las opciones y no en el módulo que lo muestra porque lo muestran
+ * tres: la configuración del negocio, la ficha de soporte y el listado.
+ *
+ * Un código desconocido se muestra tal cual, sin romper: puede venir de una
+ * ficha vieja, de cuando esto era un campo de texto libre.
+ */
+export const businessTypeLabel = (value?: string | null): string | null => {
+	if (!value) return null;
+
+	return (
+		BUSINESS_TYPE_OPTIONS.find((option) => option.value === value)?.label ??
+		value
+	);
+};
+
+/**
  * Zona horaria que informa el navegador.
  *
  * El negocio nace con la de Bolivia porque Google no informa la del usuario, y
