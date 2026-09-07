@@ -1,15 +1,20 @@
-/**
- * Rubros, con la etiqueta que ve el dueño.
- *
- * El código es el que viaja al backend y la etiqueta vive acá: el texto va a
- * cambiar y no queremos migrar filas por una palabra.
- */
 export const BUSINESS_TYPE_OPTIONS = [
-	{ value: 'BARBERSHOP', label: 'Barbería' },
+	{ value: 'HAIR_SALON', label: 'Peluquería' },
+	{ value: 'NAIL_SALON', label: 'Salón de uñas' },
+	{ value: 'BROWS_LASHES', label: 'Cejas y pestañas' },
 	{ value: 'SALON', label: 'Salón de belleza' },
-	{ value: 'SPA', label: 'Spa' },
 	{ value: 'AESTHETIC_MEDICINE', label: 'Medicina estética' },
+	{ value: 'BARBERSHOP', label: 'Barbería' },
+	{ value: 'MASSAGE', label: 'Masajes' },
+	{ value: 'SPA', label: 'Spa y sauna' },
+	{ value: 'WAXING', label: 'Centro de depilación' },
+	{ value: 'TATTOO_PIERCING', label: 'Tatuajes y piercings' },
+	{ value: 'TANNING', label: 'Centro de bronceado' },
+	{ value: 'FITNESS', label: 'Fitness y recuperación' },
+	{ value: 'PHYSIOTHERAPY', label: 'Fisioterapia' },
+	{ value: 'HEALTH_CLINIC', label: 'Consultorio médico' },
 	{ value: 'DENTAL_CLINIC', label: 'Clínica dental' },
+	{ value: 'PET_GROOMING', label: 'Peluquería de mascotas' },
 	{ value: 'OTHER', label: 'Otro' },
 ] as const;
 

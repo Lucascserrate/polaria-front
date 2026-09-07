@@ -1,29 +1,45 @@
 'use client';
 
 import {
+	Activity,
+	Armchair,
+	Brush,
+	Dog,
+	Dumbbell,
+	Eye,
 	Flower2,
+	HandHelping,
+	LayoutGrid,
+	PenTool,
 	Scissors,
 	Smile,
 	Sparkles,
-	Store,
+	Stethoscope,
+	Sun,
 	Syringe,
+	Zap,
 	type LucideIcon,
 } from 'lucide-react';
 import { BUSINESS_TYPE_OPTIONS } from '../constants';
 
-/**
- * Un icono por rubro.
- *
- * Vive acá y no en las constantes compartidas porque es presentación: el código
- * del rubro viaja al backend, el dibujo no sale de esta pantalla.
- */
 const ICONS: Record<string, LucideIcon> = {
-	BARBERSHOP: Scissors,
+	HAIR_SALON: Scissors,
+	NAIL_SALON: Brush,
+	BROWS_LASHES: Eye,
 	SALON: Sparkles,
-	SPA: Flower2,
 	AESTHETIC_MEDICINE: Syringe,
+	BARBERSHOP: Armchair,
+	MASSAGE: HandHelping,
+	SPA: Flower2,
+	WAXING: Zap,
+	TATTOO_PIERCING: PenTool,
+	TANNING: Sun,
+	FITNESS: Dumbbell,
+	PHYSIOTHERAPY: Activity,
+	HEALTH_CLINIC: Stethoscope,
 	DENTAL_CLINIC: Smile,
-	OTHER: Store,
+	PET_GROOMING: Dog,
+	OTHER: LayoutGrid,
 };
 
 interface Props {
@@ -31,18 +47,11 @@ interface Props {
 	onChange: (value: string) => void;
 }
 
-/**
- * Rubro del negocio, como tarjetas.
- *
- * Tarjetas y no un desplegable: son seis opciones conocidas y la elección es de
- * reconocimiento, no de búsqueda. Un `select` esconde las opciones detrás de un
- * toque y obliga a leerlas en fila; acá se ven todas juntas y se elige de una.
- */
 const BusinessTypeStep: React.FC<Props> = ({ value, onChange }) => {
 	return (
-		<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+		<div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
 			{BUSINESS_TYPE_OPTIONS.map((option) => {
-				const Icon = ICONS[option.value] ?? Store;
+				const Icon = ICONS[option.value] ?? LayoutGrid;
 				const selected = option.value === value;
 
 				return (
@@ -51,18 +60,18 @@ const BusinessTypeStep: React.FC<Props> = ({ value, onChange }) => {
 						type="button"
 						aria-pressed={selected}
 						onClick={() => onChange(option.value)}
-						className={`flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border p-3 text-center transition-colors ${
+						className={`flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
 							selected
 								? 'border-foreground bg-accent'
 								: 'border-border bg-card hover:border-foreground/40'
 						}`}
 					>
 						<Icon
-							className={`h-7 w-7 ${
+							className={`h-5 w-5 shrink-0 ${
 								selected ? 'text-foreground' : 'text-muted-foreground'
 							}`}
 						/>
-						<span className="text-sm font-medium leading-tight">
+						<span className="text-xs font-medium leading-tight">
 							{option.label}
 						</span>
 					</button>
