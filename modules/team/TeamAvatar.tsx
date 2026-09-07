@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { colorOf, fillStyleOf } from './utils/colors';
 import { initialsOf } from './utils/initials';
@@ -9,6 +10,7 @@ interface Props {
 		lastName?: string | null;
 		name?: string;
 		calendarColor?: string | null;
+		photoUrl?: string | null;
 	};
 	size?: 'sm' | 'md' | 'lg';
 	className?: string;
@@ -21,13 +23,14 @@ const SIZES = {
 } as const;
 
 /**
- * El avatar de un miembro del equipo: sus iniciales sobre su color.
+ * Cuántos píxeles mide cada tamaño, para `next/image`.
  *
- * No hay foto todavía y esto no es un placeholder esperándola. Las iniciales
- * sobre el color del calendario hacen el trabajo que importa —reconocer a alguien
- * de un golpe de vista en una lista o en la agenda— y lo hacen con el mismo color
- * con el que van a aparecer sus citas, que es información que una foto no daría.
+ * Es la misma medida que las clases de `SIZES`, escrita en números porque el
+ * optimizador necesita saber el tamaño de entrega para pedirle a Cloudinary la
+ * imagen justa: sin esto se descargarían 512px para un círculo de 32.
  */
+const PIXELS = { sm: 32, md: 40, lg: 80 } as const;
+
 const TeamAvatar: React.FC<Props> = ({ member, size = 'md', className }) => (
 	<span
 		aria-hidden="true"
@@ -35,12 +38,22 @@ const TeamAvatar: React.FC<Props> = ({ member, size = 'md', className }) => (
 		// propios, no tonos de Tailwind: no existe una clase que los nombre.
 		style={fillStyleOf(colorOf(member))}
 		className={cn(
-			'inline-flex shrink-0 items-center justify-center rounded-full font-semibold',
+			'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold',
 			SIZES[size],
 			className,
 		)}
 	>
-		{initialsOf(member)}
+		{member.photoUrl ? (
+			<Image
+				src={member.photoUrl}
+				alt=""
+				width={PIXELS[size]}
+				height={PIXELS[size]}
+				className="size-full object-cover"
+			/>
+		) : (
+			initialsOf(member)
+		)}
 	</span>
 );
 

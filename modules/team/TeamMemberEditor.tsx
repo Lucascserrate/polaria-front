@@ -218,6 +218,8 @@ const TeamMemberEditor: React.FC<Props> = ({
 							error={issues.errors.profile}
 							warnings={issues.warnings.profile}
 							roleLocked={isOwner}
+							memberId={member?.id}
+							photoUrl={member?.photoUrl}
 						/>
 					)}
 

@@ -76,6 +76,37 @@ export const grantStaffAccess = async (
 	return data;
 };
 
+/**
+ * Sube la foto de un miembro del equipo y devuelve su ficha ya actualizada.
+ *
+ * `FormData` sin `Content-Type` a mano: el navegador tiene que poner el suyo,
+ * que incluye el `boundary` con el que se delimita el archivo. Escribirlo
+ * nosotros lo deja sin `boundary` y el backend recibe un cuerpo que no puede
+ * partir.
+ */
+export const uploadStaffPhoto = async (
+	id: string,
+	file: File,
+): Promise<StaffMember> => {
+	const form = new FormData();
+	form.append('file', file);
+
+	const { data } = await axiosInstance.post<StaffMember>(
+		`/staff/${id}/photo`,
+		form,
+	);
+
+	return data;
+};
+
+/** Quita la foto: borra el archivo y la referencia. */
+export const deleteStaffPhoto = async (id: string): Promise<StaffMember> => {
+	const { data } = await axiosInstance.delete<StaffMember>(
+		`/staff/${id}/photo`,
+	);
+	return data;
+};
+
 /** Quita el acceso. La ficha y su historial quedan intactos. */
 export const revokeStaffAccess = async (id: string): Promise<StaffMember> => {
 	const { data } = await axiosInstance.delete(`/staff/${id}/access`);

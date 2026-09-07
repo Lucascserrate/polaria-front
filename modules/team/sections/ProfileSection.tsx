@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import TeamAvatar from '../TeamAvatar';
+import TeamPhotoField from '../TeamPhotoField';
 import SectionHeader from '../SectionHeader';
 import { ASSIGNABLE_ROLES, PHONE_CODES, ROLE_LABELS } from '../utils/roles';
 import { fillStyleOf, TEAM_COLOR_LABELS, TEAM_COLORS } from '../utils/colors';
@@ -21,8 +21,9 @@ interface Props {
 	setRole: (role: StaffAccessRole) => void;
 	error?: string;
 	warnings?: string[];
-	/** El dueño no puede dejar de serlo desde esta pantalla. */
 	roleLocked?: boolean;
+	memberId?: string;
+	photoUrl?: string | null;
 }
 
 const ProfileSection: React.FC<Props> = ({
@@ -32,6 +33,8 @@ const ProfileSection: React.FC<Props> = ({
 	error,
 	warnings = [],
 	roleLocked = false,
+	memberId,
+	photoUrl,
 }) => (
 	<div className="space-y-8">
 		<SectionHeader
@@ -39,20 +42,15 @@ const ProfileSection: React.FC<Props> = ({
 			description="Quién es la persona y cómo se la reconoce en la agenda."
 		/>
 
-		<div className="flex items-center gap-4">
-			<TeamAvatar
-				member={{
-					firstName: draft.firstName,
-					lastName: draft.lastName,
-					calendarColor: draft.calendarColor,
-				}}
-				size="lg"
-			/>
-			<p className="text-sm text-muted-foreground">
-				Las iniciales sobre el color que elijas abajo. Así aparece en la lista
-				del equipo y en la agenda.
-			</p>
-		</div>
+		<TeamPhotoField
+			memberId={memberId}
+			photoUrl={photoUrl}
+			preview={{
+				firstName: draft.firstName,
+				lastName: draft.lastName,
+				calendarColor: draft.calendarColor,
+			}}
+		/>
 
 		<div className="grid gap-4 sm:grid-cols-2">
 			<Field label="Nombre" htmlFor="firstName" required>
