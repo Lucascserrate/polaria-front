@@ -6,6 +6,7 @@ import {
 	Building2,
 	ChevronRight,
 	Clock,
+	Images,
 	MessageCircle,
 	MessageSquareText,
 	type LucideIcon,
@@ -16,6 +17,7 @@ import { ROUTES } from '@/constants/routes';
 import { businessTypeLabel } from '@/modules/onboarding/constants';
 import { describeReminderOffsets } from '@/modules/settings/utils/reminders';
 import useGetSettings from '@/services/settings/useGetSettings';
+import useGetBusinessPhotos from '@/services/settings/useGetBusinessPhotos';
 
 type Section = {
 	href: string;
@@ -32,6 +34,7 @@ type SettingsSummary = {
 	whatsappConnected: boolean;
 	whatsappNumber: string | null;
 	reminderOffsets: number[];
+	photoCount: number;
 	/** El negocio escribió su propio saludo en lugar de usar el de fábrica. */
 	welcomeCustomized: boolean;
 };
@@ -57,6 +60,21 @@ const SECTIONS: Section[] = [
 		 * soporte.
 		 */
 		status: (settings) => businessTypeLabel(settings.businessType),
+	},
+	{
+		href: ROUTES.settingsPhotos,
+		label: 'Fotos del negocio',
+		description: 'Lo que ve un cliente en tu página antes de reservar.',
+		icon: Images,
+		/*
+		 * "Sin fotos" y no "Faltan fotos": son opcionales, y la página se ve bien
+		 * sin ellas. Un aviso de pendiente acá convertiría una mejora en una tarea
+		 * que el negocio no pidió.
+		 */
+		status: (settings) =>
+			settings.photoCount > 0
+				? `${settings.photoCount} ${settings.photoCount === 1 ? 'foto' : 'fotos'}`
+				: 'Sin fotos',
 	},
 	{
 		href: ROUTES.settingsHours,
@@ -113,6 +131,12 @@ const SECTIONS: Section[] = [
  */
 const SettingsIndex: React.FC = () => {
 	const { data } = useGetSettings();
+	/*
+	 * La galería se pide aparte y no viaja en `/settings`: son dos peticiones,
+	 * pero también dos cachés, y así subir una foto no invalida el estado de la
+	 * conexión con Meta ni el de facturación.
+	 */
+	const { data: photos } = useGetBusinessPhotos();
 
 	const summary: SettingsSummary = {
 		businessType: data?.businessType ?? null,
@@ -122,6 +146,7 @@ const SettingsIndex: React.FC = () => {
 		whatsappConnected: data?.whatsappConnection.connected ?? false,
 		whatsappNumber: data?.whatsappConnection.phoneNumber ?? null,
 		reminderOffsets: data?.reminders.offsets ?? [],
+		photoCount: photos?.photos.length ?? 0,
 		welcomeCustomized: Boolean(data?.welcomeMessage.text),
 	};
 

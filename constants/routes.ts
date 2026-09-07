@@ -9,6 +9,7 @@ export const ROUTES = {
 	servicesNew: '/services/new',
 	settings: '/settings',
 	settingsBusiness: '/settings/business',
+	settingsPhotos: '/settings/photos',
 	settingsHours: '/settings/hours',
 	settingsWhatsapp: '/settings/whatsapp',
 	settingsReminders: '/settings/reminders',
