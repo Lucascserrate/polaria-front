@@ -211,9 +211,9 @@ export const useTeamMemberDraft = (member?: StaffMember | null) => {
 
 	const toPayload = (): TeamMemberPayload => ({
 		firstName: draft.firstName.trim(),
-		lastName: draft.lastName.trim() || undefined,
-		jobTitle: draft.jobTitle.trim() || undefined,
-		email: draft.email.trim() || undefined,
+		lastName: draft.lastName.trim(),
+		jobTitle: draft.jobTitle.trim(),
+		email: draft.email.trim(),
 		phone: joinPhone(draft.phoneCode, draft.phone),
 		calendarColor: draft.calendarColor ?? undefined,
 		accessRole: draft.accessRole,

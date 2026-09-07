@@ -91,10 +91,10 @@ export type UpdateStaffDto = Partial<CreateStaffDto>;
  */
 export interface TeamMemberPayload {
 	firstName: string;
-	lastName?: string;
-	jobTitle?: string;
-	email?: string;
-	phone?: string;
+	lastName: string;
+	jobTitle: string;
+	email: string;
+	phone: string;
 	calendarColor?: string;
 	accessRole: StaffAccessRole;
 	providesServices: boolean;
