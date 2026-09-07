@@ -1,5 +1,5 @@
-import AnimatedWhatsappDemo from '@/app/terms/AnimatedWhatsappDemo';
-import { SectionEyebrow } from './Section';
+import AnimatedWhatsappDemo from '../mockups/AnimatedWhatsappDemo';
+import { SectionEyebrow } from '../shared/Section';
 
 export function WhatsAppSection() {
 	return (

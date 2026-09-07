@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-import { SectionEyebrow } from './Section';
+import { SectionEyebrow } from '../shared/Section';
 
 export function Hero() {
 	return (

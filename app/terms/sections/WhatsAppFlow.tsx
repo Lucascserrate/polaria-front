@@ -4,9 +4,9 @@ import { Workflow } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 
-import { steps } from './data';
-import { SectionTitle } from './shared/Section';
-import { useReveal } from './shared/useReveal';
+import { steps } from '../data';
+import { SectionTitle } from '../shared/Section';
+import { useReveal } from '../shared/useReveal';
 
 function FlowCard({
 	index,

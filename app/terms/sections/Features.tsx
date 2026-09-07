@@ -7,9 +7,9 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 
-import { features } from './data';
-import { SectionTitle } from './Section';
-import { useReveal } from './useReveal';
+import { features } from '../data';
+import { SectionTitle } from '../shared/Section';
+import { useReveal } from '../shared/useReveal';
 
 function FeatureCard({ index, feature }: { index: number; feature: (typeof features)[number] }) {
 	const { ref, isVisible, reduceMotion } = useReveal<HTMLDivElement>();
@@ -18,7 +18,7 @@ function FeatureCard({ index, feature }: { index: number; feature: (typeof featu
 	return (
 		<Card
 			ref={ref}
-			className={`rounded-[1.75rem] border-neutral-200 bg-white shadow-sm transition-all duration-[400ms] ease-out motion-reduce:transition-none ${isVisible || reduceMotion ? 'translate-y-0 opacity-100' : 'translate-y-[10px] opacity-0'}`}
+			className={`rounded-[1.75rem] border-neutral-200 bg-white shadow-sm transition-all duration-400 ease-out motion-reduce:transition-none ${isVisible || reduceMotion ? 'translate-y-0 opacity-100' : 'translate-y-2.5 opacity-0'}`}
 			style={{ transitionDelay: `${index * 70}ms` }}
 		>
 			<CardHeader className="space-y-4 px-5 pt-5">

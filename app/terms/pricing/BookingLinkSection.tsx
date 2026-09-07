@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { SectionTitle } from './Section';
+import { SectionTitle } from '../shared/Section';
 
 export function BookingLinkSection() {
 	return (

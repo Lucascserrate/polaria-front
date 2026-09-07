@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { SectionTitle } from './Section';
+import { SectionTitle } from '../shared/Section';
 
 const faqs = [
 	{

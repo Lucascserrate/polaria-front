@@ -1,16 +1,14 @@
-import { AgendaMockup } from './AgendaMockup';
-import { BusinessTypes } from './BusinessTypes';
-import { Features } from './Features';
-import { FinalCTA } from './FinalCTA';
-import { Footer } from './Footer';
-import { Hero } from './Hero';
-import { NavBar } from './NavBar';
-import { FaqSection } from './FaqSection';
-// import { PricingSection } from './PricingSection';
-// import { SocialProofSection } from './SocialProofSection';
-import { SimpleSteps } from './SimpleSteps';
-import { WhatsAppFlow } from './WhatsAppFlow';
-import { WhatsAppSection } from './WhatsAppSection';
+import { AgendaMockup } from './mockups/AgendaMockup';
+import { BusinessTypes } from './sections/BusinessTypes';
+import { Features } from './sections/Features';
+import { FinalCTA } from './sections/FinalCTA';
+import { Footer } from './sections/Footer';
+import { Hero } from './sections/Hero';
+import { NavBar } from './sections/NavBar';
+import { FaqSection } from './sections/FaqSection';
+import { SimpleSteps } from './sections/SimpleSteps';
+import { WhatsAppFlow } from './sections/WhatsAppFlow';
+import { WhatsAppSection } from './sections/WhatsAppSection';
 
 export default function LandingPage() {
 	return (
@@ -23,8 +21,6 @@ export default function LandingPage() {
 				<Features />
 				<WhatsAppSection />
 				<WhatsAppFlow />
-				{/* <PricingSection /> */}
-				{/* <SocialProofSection /> */}
 				<FaqSection />
 				<SimpleSteps />
 				<FinalCTA />

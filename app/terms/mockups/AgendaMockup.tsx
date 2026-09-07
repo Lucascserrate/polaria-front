@@ -26,7 +26,7 @@ import {
 	mockStaff,
 	weekDays,
 	type AgendaSection,
-} from './data';
+} from '../data';
 
 const icons = {
 	inicio: Home,
@@ -235,7 +235,10 @@ function AgendaView() {
 							Semana
 						</button>
 					</div>
-					<button className="rounded-md bg-neutral-950 px-2.5 py-1.5 text-[10px] font-medium text-white">
+					<button
+						type="button"
+						className="cursor-default rounded-md bg-neutral-950 px-2.5 py-1.5 text-[10px] font-medium text-white"
+					>
 						<span aria-hidden="true">+</span> Agregar cita
 					</button>
 				</div>
@@ -540,7 +543,10 @@ function DashboardView({
 					<p className="mt-1 text-xs text-neutral-500">{description}</p>
 				</div>
 				{!hideAdd && (
-					<button className="rounded-md bg-neutral-950 px-2.5 py-1.5 text-[10px] font-medium text-white">
+					<button
+						type="button"
+						className="cursor-default rounded-md bg-neutral-950 px-2.5 py-1.5 text-[10px] font-medium text-white"
+					>
 						+ Añadir
 					</button>
 				)}
@@ -569,7 +575,7 @@ export function AgendaMockup() {
 	return (
 		<section className="px-4 pb-14 sm:px-6 lg:px-8 lg:pb-20">
 			<div className="mx-auto max-w-7xl">
-				<div className="h-680px overflow-hidden rounded-[2rem] border border-neutral-200 bg-white p-3 shadow-[0_30px_80px_rgba(0,0,0,0.08)] sm:h-180 sm:p-4">
+				<div className="h-170 overflow-hidden rounded-[2rem] border border-neutral-200 bg-white p-3 shadow-[0_30px_80px_rgba(0,0,0,0.08)] sm:h-180 sm:p-4">
 					<div className="grid h-full gap-3 sm:grid-cols-[185px_minmax(0,1fr)]">
 						<aside className="flex h-auto flex-col rounded-[1.5rem] border border-neutral-200 bg-white p-3 text-neutral-950 shadow-sm sm:h-full">
 							<div className="flex shrink-0 items-center gap-3">
@@ -616,3 +622,4 @@ export function AgendaMockup() {
 		</section>
 	);
 }
+

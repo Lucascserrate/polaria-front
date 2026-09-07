@@ -12,8 +12,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
-import { SectionTitle } from './Section';
-import { useReveal } from './useReveal';
+import { SectionTitle } from '../shared/Section';
+import { useReveal } from '../shared/useReveal';
 
 const plans = [
 	{
@@ -85,7 +85,7 @@ function PricingCard({ plan, index }: { plan: (typeof plans)[number]; index: num
 	return (
 		<div
 			ref={ref}
-			className={`transition-all duration-[400ms] ease-out motion-reduce:transition-none ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-[10px] opacity-0'}`}
+			className={`transition-all duration-400 ease-out motion-reduce:transition-none ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-2.5 opacity-0'}`}
 			style={{ transitionDelay: `${index * 70}ms` }}
 		>
 						<Card

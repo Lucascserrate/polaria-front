@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { SectionTitle } from './Section';
+import { SectionTitle } from '../shared/Section';
 
 const testimonials = [
 	{

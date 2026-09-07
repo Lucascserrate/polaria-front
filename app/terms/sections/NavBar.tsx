@@ -35,12 +35,6 @@ export function NavBar() {
 					>
 						Integraciones
 					</a>
-					<a
-						href="#precios"
-						className="transition-colors hover:text-neutral-950"
-					>
-						Precios
-					</a>
 				</nav>
 				<div className="hidden items-center gap-2 md:flex">
 					<Button variant="ghost" size="sm" className="rounded-full px-4">
@@ -59,7 +53,7 @@ export function NavBar() {
 						aria-expanded={isMenuOpen}
 						aria-controls="mobile-navigation"
 						onClick={() => setIsMenuOpen((open) => !open)}
-						className="flex size-9 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
+						className="flex size-9 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
 					>
 						<Menu className="size-4" />
 						<span className="sr-only">{isMenuOpen ? 'Cerrar menu' : 'Abrir menu'}</span>
@@ -74,7 +68,6 @@ export function NavBar() {
 								['Reservas', '#reservas'],
 								['Automatizaciones', '#automatizaciones'],
 								['Integraciones', '#integraciones'],
-								['Precios', '#precios'],
 							].map(([label, href]) => (
 								<a
 									key={label}
@@ -115,3 +108,4 @@ export function NavBar() {
 		</header>
 	);
 }
+
