@@ -15,7 +15,6 @@ interface Props {
 	staff: StaffMember[];
 	currency: string;
 	onPick: (serviceId: string) => void;
-	/** Servicios ya puestos en la reserva, para señalarlos sin bloquearlos. */
 	pickedIds?: string[];
 }
 
@@ -91,12 +90,6 @@ const BookingServicePicker: React.FC<Props> = ({
 											: 'hover:bg-muted/60',
 									)}
 								>
-									{/*
-									 * La misma barra redondeada al costado que la fila de un
-									 * servicio ya elegido. Elegir uno del catálogo y verlo puesto
-									 * en la reserva son dos momentos de la misma cosa: si se
-									 * dibujaran distinto, el segundo se leería como otro objeto.
-									 */}
 									<span
 										aria-hidden="true"
 										className={cn(
