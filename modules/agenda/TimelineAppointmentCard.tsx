@@ -125,7 +125,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 		<ContextMenu>
 			<ContextMenuTrigger
 				className={cn(
-					'block h-full overflow-hidden rounded border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
+					'block h-full select-none overflow-hidden rounded border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
 					colors.surface,
 				)}
 				/*
