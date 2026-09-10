@@ -104,10 +104,21 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 				/>
 			)}
 
-			{/* Sidebar */}
+			{/*
+			 * El alto sale de `inset-y-0` y no de un `h-screen`.
+			 *
+			 * Es el único elemento fijo de la pantalla, y Safari en iPad no mide igual
+			 * el viewport de un elemento fijo que el del flujo del documento: con
+			 * `100vh` el panel se dibujaba más largo que lo que se ve y "Cerrar sesión",
+			 * que es lo último, quedaba cortado al medio. La agenda, que está en el
+			 * flujo, terminaba bien en la misma pantalla.
+			 *
+			 * Anclado arriba y abajo no hay unidad que interpretar: el alto es el hueco
+			 * que deja el viewport, sea cual sea.
+			 */}
 			<aside
 				className={cn(
-					'fixed top-0 left-0 h-screen w-(--sidebar-width) bg-sidebar border-r border-sidebar-border transition-all duration-200 z-40',
+					'fixed inset-y-0 left-0 w-(--sidebar-width) bg-sidebar border-r border-sidebar-border transition-all duration-200 z-40',
 					isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
 				)}
 			>
