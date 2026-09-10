@@ -108,3 +108,32 @@ describe('el texto de una cita sobre su fondo tenue', () => {
 		}
 	});
 });
+
+describe('el texto de una cita sobre el relleno de tema oscuro', () => {
+	const AA = 4.5;
+
+	/** Los dos textos que la card pone encima del relleno. */
+	const NAME = '#fafafa';
+	const DETAIL = '#d4d4d4';
+
+	it('se lee el nombre del cliente', () => {
+		for (const color of TEAM_COLORS) {
+			expect(contrastRatio(NAME, schemeOf(color).fill)).toBeGreaterThanOrEqual(
+				AA,
+			);
+		}
+	});
+
+	/**
+	 * El que manda. El nombre pasa con margen en los dieciséis; el detalle es el que
+	 * define cuánto hay que oscurecer el relleno, y por eso el 59% no se puede bajar
+	 * sin aclarar también este texto.
+	 */
+	it('y se lee la línea de detalle, que es la que ajusta', () => {
+		for (const color of TEAM_COLORS) {
+			expect(
+				contrastRatio(DETAIL, schemeOf(color).fill),
+			).toBeGreaterThanOrEqual(AA);
+		}
+	});
+});

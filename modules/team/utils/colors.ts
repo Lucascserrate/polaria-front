@@ -76,11 +76,11 @@ export const TEAM_COLOR_LABELS: Record<TeamColor, string> = {
 /**
  * Todo lo que hace falta para pintar con un color de la paleta.
  *
- * Son cinco valores y no uno porque el color aparece de dos formas distintas: como
- * relleno —el avatar, la muestra del selector— y como fondo tenue con texto encima
- * —el bloque de una cita en la agenda—. Y la segunda necesita un texto distinto en
- * cada tema, porque el mismo tinte queda claro sobre fondo blanco y oscuro sobre
- * fondo negro.
+ * Son seis valores y no uno porque el color aparece de tres formas distintas: como
+ * relleno —el avatar, la muestra del selector—, como fondo tenue con texto encima
+ * —la cita en tema claro— y como bloque sólido —la misma cita en tema oscuro, donde
+ * el tinte no alcanza—. Y la del medio necesita un texto distinto en cada tema,
+ * porque el mismo tinte queda claro sobre fondo blanco y oscuro sobre fondo negro.
  */
 export interface TeamColorScheme {
 	/** El color, tal cual. */
@@ -89,6 +89,17 @@ export interface TeamColorScheme {
 	on: string;
 	/** Fondo tenue. Al ser translúcido funciona en los dos temas. */
 	tint: string;
+	/**
+	 * Relleno sólido, sólo para tema oscuro.
+	 *
+	 * El tinte translúcido no sirve ahí: sobre `#171717` los dieciséis colores caen
+	 * entre el 31 y el 54 de 255 —una franja de 23 niveles en el fondo del rango— y
+	 * dejan de distinguirse entre sí. El relleno los saca de esa franja.
+	 *
+	 * Se oscurece hacia el negro y no mezclándolo con la card, que es lo que conserva
+	 * el tono. Cuánto, lo decide cada color por separado: ver `fillFor`.
+	 */
+	fill: string;
 	/** Texto sobre `tint` en tema claro. */
 	strong: string;
 	/** Texto sobre `tint` en tema oscuro. */
@@ -158,6 +169,40 @@ export const INK = '#18181b';
  */
 export const ON_FILL = PAPER;
 
+/** Mínimo de WCAG AA para texto normal. */
+const AA_TEXT = 4.5;
+
+/**
+ * El texto atenuado de una cita —el profesional y el servicio— en tema oscuro.
+ *
+ * Es más claro que `--muted-foreground` a propósito: sobre un relleno de color, el
+ * gris de la interfaz se queda corto. Y es el que manda acá, porque el nombre del
+ * cliente va en `--foreground` y pasa con margen en toda la paleta.
+ */
+const DARK_DETAIL = '#d4d4d4';
+
+/**
+ * Cuánto hay que oscurecer un color para que se pueda escribir encima.
+ *
+ * La cuenta se hace por color y no con un factor único, y la diferencia no es
+ * cosmética. Un factor parejo lo termina fijando el peor caso —`lime` necesita 59%—
+ * y ese 59% se le cobra después a los azules, que con 37% ya cumplen: la mitad de la
+ * paleta queda más apagada de lo que hace falta.
+ *
+ * Resolverlo por color deja además todos los rellenos a la misma luminancia, que es
+ * lo que esta paleta viene buscando desde el principio: ningún profesional con el
+ * bloque más gritón que otro.
+ */
+const fillFor = (hex: string): string => {
+	for (let amount = 0; amount <= 100; amount += 1) {
+		const candidate = mix(hex, BLACK, amount / 100);
+		if (contrastRatio(DARK_DETAIL, candidate) >= AA_TEXT) return candidate;
+	}
+
+	/* Inalcanzable con esta paleta —el peor pide 59%—, pero el negro siempre cumple. */
+	return mix(hex, BLACK, 1);
+};
+
 const SCHEMES: Record<TeamColor, TeamColorScheme> = Object.fromEntries(
 	TEAM_COLORS.map((color) => {
 		const hex = HEX[color];
@@ -168,6 +213,7 @@ const SCHEMES: Record<TeamColor, TeamColorScheme> = Object.fromEntries(
 				hex,
 				on: ON_FILL,
 				tint: `${hex}24`,
+				fill: fillFor(hex),
 				strong: mix(hex, BLACK, 0.5),
 				soft: mix(hex, WHITE, 0.3),
 			},

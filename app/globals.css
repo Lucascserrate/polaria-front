@@ -179,6 +179,17 @@
 	}
 }
 
+.appt-tinted {
+	background-image:
+		linear-gradient(to right, var(--appt-bar) 0 4px, transparent 4px),
+		linear-gradient(var(--appt-tint), var(--appt-tint));
+}
+
+.dark .appt-tinted {
+	background-image: none;
+	background-color: var(--appt-fill);
+}
+
 /**
  * La barra de scroll.
  *

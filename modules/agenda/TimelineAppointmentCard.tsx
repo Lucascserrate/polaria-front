@@ -120,6 +120,7 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 	const inline = height < SINGLE_LINE_HEIGHT;
 	const showDetail = height >= DETAIL_HEIGHT;
 	const timeRange = `${formatMinute(startMinute)}–${formatMinute(endMinute)}`;
+	const tinted = Boolean(staffScheme) && isOpen;
 
 	return (
 		<ContextMenu>
@@ -127,23 +128,23 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 				className={cn(
 					'block h-full select-none overflow-hidden rounded border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
 					colors.surface,
+					tinted && 'appt-tinted',
 				)}
 				/*
-				 * El tinte va como `background-image` y no como capa aparte ni como
-				 * `background-color`.
+				 * Los tres colores viajan como variables y el dibujo lo hace
+				 * `.appt-tinted` en la hoja de estilos.
 				 *
-				 * No como capa porque un `absolute` se pinta **después** del contenido
-				 * estático de su hermano, así que un `inset-0` translúcido quedaría
-				 * velando el texto de la cita. Y no como `background-color` porque el
-				 * tinte es translúcido y necesita el fondo opaco que trae
-				 * `colors.surface`: sin él se vería la grilla a través. Un degradado de
-				 * un solo color compone las dos capas en la misma propiedad.
+				 * No es prolijidad: el tratamiento cambia entre temas —tinte y franja en
+				 * claro, bloque sólido en oscuro— y un `backgroundImage` en línea le gana
+				 * a cualquier regla, así que no habría forma de que `.dark` lo pisara.
 				 */
 				style={
 					staffScheme && isOpen
-						? {
-								backgroundImage: `linear-gradient(${staffScheme.tint}, ${staffScheme.tint})`,
-							}
+						? ({
+								'--appt-bar': staffScheme.hex,
+								'--appt-tint': staffScheme.tint,
+								'--appt-fill': staffScheme.fill,
+							} as React.CSSProperties)
 						: undefined
 				}
 			>
@@ -201,7 +202,12 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 					)}
 
 					{showDetail && (
-						<span className="block truncate text-[10px] text-muted-foreground">
+						<span
+							className={cn(
+								'block truncate text-[10px] text-muted-foreground',
+								tinted && 'dark:text-neutral-300',
+							)}
+						>
 							{detail ?? `${appointment.staff} · ${appointment.service}`}
 						</span>
 					)}
