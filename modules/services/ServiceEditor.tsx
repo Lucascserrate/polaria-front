@@ -167,7 +167,12 @@ const ServiceEditor: React.FC<Props> = ({
 								</p>
 							</div>
 
-							<Field label="Nombre" required>
+							<Field
+								label="Nombre"
+								required
+								count={draft.name.length}
+								max={SERVICE_TEXT_MAX_LENGTH}
+							>
 								<Input
 									value={draft.name}
 									placeholder="Corte de pelo"
@@ -179,6 +184,8 @@ const ServiceEditor: React.FC<Props> = ({
 							<Field
 								label="Descripción"
 								hint="Opcional. Sirve para aclarar qué incluye."
+								count={draft.description.length}
+								max={SERVICE_TEXT_MAX_LENGTH}
 							>
 								<Input
 									value={draft.description}
@@ -366,14 +373,13 @@ const SectionError: React.FC<{ message: string }> = ({ message }) => (
 const Field: React.FC<{
 	label: string;
 	required?: boolean;
-	/**
-	 * Aclaración bajo el campo. Va acá y no dentro de `children` para que la
-	 * etiqueta siga apuntando a un único control.
-	 */
 	hint?: string;
+	count?: number;
+	max?: number;
 	children: React.ReactElement<{ id?: string }>;
-}> = ({ label, required, hint, children }) => {
+}> = ({ label, required, hint, count, max, children }) => {
 	const id = useId();
+	const showsCount = count !== undefined && max !== undefined;
 
 	return (
 		<div>
@@ -382,7 +388,23 @@ const Field: React.FC<{
 				{required && <span className="ml-0.5 text-destructive">*</span>}
 			</Label>
 			{cloneElement(children, { id })}
-			{hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+
+			{(hint || showsCount) && (
+				<div className="mt-1 flex items-start justify-between gap-3">
+					<p className="text-xs text-muted-foreground">{hint}</p>
+
+					{showsCount && (
+						<span
+							className={cn(
+								'shrink-0 font-mono text-xs tabular-nums',
+								count >= max ? 'text-warning' : 'text-muted-foreground',
+							)}
+						>
+							{`${count} / ${max}`}
+						</span>
+					)}
+				</div>
+			)}
 		</div>
 	);
 };
