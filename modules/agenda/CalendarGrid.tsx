@@ -80,6 +80,21 @@ interface Props {
 	/** Un hueco libre. No se llama en las horas cerradas. */
 	onSlotClick?: (columnKey: string, minute: number) => void;
 	/**
+	 * El hueco elegido, que queda resaltado hasta que se suelte.
+	 *
+	 * Va acompañado de `slotAction`, que es lo que se dibuja ahí. Se recibe de
+	 * afuera en vez de recordarlo acá porque quien decide cuándo se suelta es
+	 * quien abre lo que aparece encima.
+	 */
+	selectedSlot?: { columnKey: string; minute: number } | null;
+	/**
+	 * Qué poner sobre el hueco elegido.
+	 *
+	 * Llega como nodo, igual que las citas: la grilla lo ubica en su lugar y no
+	 * sabe qué es. Acá lo que hay es un menú, pero eso es asunto de la pantalla.
+	 */
+	slotAction?: React.ReactNode;
+	/**
 	 * La cabecera de una columna es clickeable.
 	 *
 	 * En la vista semanal lleva al día de esa columna: mirar la semana y querer
@@ -106,6 +121,8 @@ const CalendarGrid: React.FC<Props> = ({
 	nowMinute = null,
 	scrollToMinute = null,
 	onSlotClick,
+	selectedSlot = null,
+	slotAction,
 	onColumnSelect,
 }) => {
 	const scrollRef = useRef<HTMLDivElement>(null);
@@ -279,23 +296,54 @@ const CalendarGrid: React.FC<Props> = ({
 							}
 						>
 							{/*
-							 * Debajo de las citas: ilumina el hueco, no la cita que hay
-							 * encima. Y sin eventos, para no robarle el cursor a la columna.
+							 * El hueco elegido, con el menú pegado.
+							 *
+							 * Se resalta más fuerte que el del cursor: mientras el menú está
+							 * abierto hay que poder ver de qué hueco salió, que en la vista
+							 * semanal es además de qué día.
 							 */}
-							{hovered?.columnKey === column.key && (
+							{selectedSlot?.columnKey === column.key && (
+								/*
+								 * Sin eventos, como el del cursor: lo único que hace este
+								 * rectángulo es marcar dónde está el hueco, y el menú que
+								 * cuelga de él vive en un portal, fuera de la grilla.
+								 */
 								<div
-									className="pointer-events-none absolute inset-x-0 flex items-start bg-sky-500/10 ring-1 ring-sky-500/30 ring-inset"
+									className="pointer-events-none absolute inset-x-0 bg-sky-500/15 ring-2 ring-sky-500/60 ring-inset"
 									style={{
-										top: hovered.minute * PX_PER_MINUTE,
+										top: selectedSlot.minute * PX_PER_MINUTE,
 										height: SLOT_MINUTES * PX_PER_MINUTE,
 									}}
-									aria-hidden="true"
 								>
-									<span className="px-1 font-mono text-[9px] leading-none text-sky-700 dark:text-sky-400">
-										{formatMinute(hovered.minute)}
-									</span>
+									{slotAction}
 								</div>
 							)}
+
+							{/*
+							 * Debajo de las citas: ilumina el hueco, no la cita que hay
+							 * encima. Y sin eventos, para no robarle el cursor a la columna.
+							 *
+							 * En el hueco ya elegido no se dibuja: serían dos marcos sobre el
+							 * mismo rectángulo.
+							 */}
+							{hovered?.columnKey === column.key &&
+								!(
+									selectedSlot?.columnKey === column.key &&
+									selectedSlot.minute === hovered.minute
+								) && (
+									<div
+										className="pointer-events-none absolute inset-x-0 flex items-start bg-sky-500/10 ring-1 ring-sky-500/30 ring-inset"
+										style={{
+											top: hovered.minute * PX_PER_MINUTE,
+											height: SLOT_MINUTES * PX_PER_MINUTE,
+										}}
+										aria-hidden="true"
+									>
+										<span className="px-1 font-mono text-[9px] leading-none text-sky-700 dark:text-sky-400">
+											{formatMinute(hovered.minute)}
+										</span>
+									</div>
+								)}
 
 							{/* Horario cerrado. Se come el click: ahí no hay nada que agendar. */}
 							{closedRangesOf(column.openRanges).map((range) => {

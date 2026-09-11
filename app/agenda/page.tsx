@@ -16,6 +16,7 @@ import BookingDrawer from '@/modules/agenda/BookingDrawer';
 import NewBookingDrawer, {
 	type BookingSeed,
 } from '@/modules/agenda/NewBookingDrawer';
+import SlotActionPopover from '@/modules/agenda/SlotActionPopover';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import {
 	buildStaffColumns,
@@ -28,6 +29,7 @@ import {
 	weekdayLabel,
 } from '@/modules/agenda/utils/calendarLabels';
 import {
+	formatMinute,
 	nowMinuteInTimeZone,
 	openRangesForWeekday,
 	shiftDateKey,
@@ -96,6 +98,29 @@ const AgendaPage = () => {
 	 * asistente sin hora ni profesional.
 	 */
 	const [draftSlot, setDraftSlot] = useState<BookingSeed | null>(null);
+
+	/**
+	 * El hueco que se tocó, mientras se decide qué hacer con él.
+	 *
+	 * Es un paso nuevo entre el click y el panel: hasta ahora el hueco sólo podía
+	 * significar "agendar acá", y ahora también "marcar esto como no disponible".
+	 * Se guarda la columna y no el día ya resuelto porque en la vista diaria la
+	 * columna es un profesional, y quién atiende es parte de lo que el click dijo.
+	 */
+	const [pickedSlot, setPickedSlot] = useState<{
+		columnKey: string;
+		minute: number;
+	} | null>(null);
+
+	/*
+	 * Cambiar de vista o de fecha suelta el hueco elegido.
+	 *
+	 * Su columna es un día o un profesional según la vista, así que al cambiarla
+	 * el mismo `columnKey` pasa a señalar otra cosa —o nada—. Se limpia acá y no
+	 * en cada botón que mueve la agenda porque son varios: la barra, la cabecera
+	 * de un día y los parámetros de la URL.
+	 */
+	useEffect(() => setPickedSlot(null), [view, picked]);
 
 	/** Reserva abierta en el panel lateral. */
 	const [editingId, setEditingId] = useState<string | null>(null);
@@ -355,28 +380,47 @@ const AgendaPage = () => {
 	}, []);
 
 	/**
-	 * Un hueco abre el panel de reserva con lo que el click ya dijo.
+	 * Lo que el click en un hueco ya dijo, traducido.
 	 *
 	 * En la vista semanal la columna es el día; en la diaria es el profesional, y
 	 * ahí también viaja quién atiende.
+	 */
+	const seedOf = useCallback(
+		(slot: { columnKey: string; minute: number }): BookingSeed => ({
+			date: view === 'week' ? slot.columnKey : selectedDate,
+			minute: slot.minute,
+			staffId:
+				view === 'day' && slot.columnKey !== UNASSIGNED_COLUMN
+					? slot.columnKey
+					: null,
+		}),
+		[view, selectedDate],
+	);
+
+	/**
+	 * Un hueco abre el menú de qué hacer con él, no el panel directamente.
 	 *
 	 * Los días pasados también abren: la agenda del panel no sirve solo para
 	 * agendar, también para registrar lo que ocurrió y no se cargó. Lo que era raro
 	 * —una hora que ya pasó, un día cerrado— se advierte, no se impide.
 	 */
 	const handleSlotClick = useCallback(
-		(columnKey: string, minute: number) => {
-			const date = view === 'week' ? columnKey : selectedDate;
-
-			setDraftSlot({
-				date,
-				minute,
-				staffId:
-					view === 'day' && columnKey !== UNASSIGNED_COLUMN ? columnKey : null,
-			});
-		},
-		[view, selectedDate],
+		(columnKey: string, minute: number) => setPickedSlot({ columnKey, minute }),
+		[],
 	);
+
+	/**
+	 * Del menú al panel de reserva.
+	 *
+	 * El hueco se suelta al abrir el panel: dejarlo elegido mantendría el menú
+	 * detrás del cajón, listo para reaparecer al cerrarlo.
+	 */
+	const openBookingFromSlot = useCallback(() => {
+		if (!pickedSlot) return;
+
+		setDraftSlot(seedOf(pickedSlot));
+		setPickedSlot(null);
+	}, [pickedSlot, seedOf]);
 
 	/*
 	 * Hasta que monta el reloj no se dibuja nada.
@@ -468,6 +512,16 @@ const AgendaPage = () => {
 					nowMinute={nowMinute}
 					scrollToMinute={scrollToMinute}
 					onSlotClick={handleSlotClick}
+					selectedSlot={pickedSlot}
+					slotAction={
+						pickedSlot && (
+							<SlotActionPopover
+								label={formatMinute(pickedSlot.minute)}
+								onAddAppointment={openBookingFromSlot}
+								onClose={() => setPickedSlot(null)}
+							/>
+						)
+					}
 					onColumnSelect={view === 'week' ? handleColumnSelect : undefined}
 				/>
 			</div>
