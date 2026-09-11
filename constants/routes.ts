@@ -7,6 +7,7 @@ export const ROUTES = {
 	analytics: '/analytics',
 	services: '/services',
 	servicesNew: '/services/new',
+	myPage: '/my-page',
 	settings: '/settings',
 	settingsBusiness: '/settings/business',
 	settingsPhotos: '/settings/photos',
@@ -17,9 +18,7 @@ export const ROUTES = {
 	team: '/team',
 	teamNew: '/team/new',
 	clients: '/clients',
-	/** La agenda de un profesional, acotada a sus propias citas. */
 	myAgenda: '/my-agenda',
-	/** Los números de un profesional, acotados a su propio trabajo. */
 	myStats: '/my-stats',
 };
 

@@ -32,6 +32,27 @@ import type { BusinessPhoto } from '@/services/settings/photos.service';
  */
 const ACCEPTED = 'image/jpeg,image/png,image/webp,image/avif';
 
+/**
+ * La tarjeta con el título, alrededor de cualquiera de los tres estados.
+ *
+ * Envuelve también el "cargando" y el error para que la sección ocupe el mismo
+ * lugar en la página desde el primer cuadro: sin esto, el bloque aparecía
+ * después y empujaba la vista previa hacia abajo justo cuando se la estaba
+ * mirando.
+ */
+const Card: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+	<section className="space-y-3 rounded-xl border border-border p-4 sm:p-6">
+		<div className="space-y-1">
+			<h2 className="text-lg font-semibold">Fotos</h2>
+			<p className="text-sm text-muted-foreground">
+				Se ven arriba de todo en tu página. Son opcionales: sin ellas la página
+				igual se ve bien.
+			</p>
+		</div>
+		{children}
+	</section>
+);
+
 const errorMessage = (cause: unknown, fallback: string): string =>
 	axios.isAxiosError(cause) &&
 	typeof (cause.response?.data as { message?: unknown } | undefined)
@@ -50,7 +71,7 @@ const errorMessage = (cause: unknown, fallback: string): string =>
  * Lo que sí se explica es qué hace la portada, porque es la única decisión con
  * consecuencia visible: es la foto grande de la página.
  */
-const BusinessPhotosSection: React.FC = () => {
+const PhotosSection: React.FC = () => {
 	const { data, isLoading, isError, refetch } = useGetBusinessPhotos();
 	const upload = useUploadBusinessPhotos();
 	const remove = useDeleteBusinessPhoto();
@@ -80,7 +101,11 @@ const BusinessPhotosSection: React.FC = () => {
 	};
 
 	if (isLoading) {
-		return <p className="text-sm text-muted-foreground">Cargando...</p>;
+		return (
+			<Card>
+				<p className="text-sm text-muted-foreground">Cargando...</p>
+			</Card>
+		);
 	}
 
 	/*
@@ -94,12 +119,12 @@ const BusinessPhotosSection: React.FC = () => {
 	 */
 	if (isError || !data) {
 		return (
-			<div className="space-y-3">
+			<Card>
 				<p className="text-sm text-destructive">No pudimos cargar tus fotos.</p>
 				<Button variant="outline" onClick={() => void refetch()}>
 					Volver a intentar
 				</Button>
-			</div>
+			</Card>
 		);
 	}
 
@@ -107,17 +132,12 @@ const BusinessPhotosSection: React.FC = () => {
 	const remaining = Math.max(maxPhotos - photos.length, 0);
 
 	return (
-		<div className="space-y-6">
-			<div className="space-y-2">
-				<p className="text-sm text-muted-foreground">
-					Se ven en tu página de reservas, arriba de todo. La primera es la
-					portada: la que aparece más grande.
-				</p>
-				<p className="text-sm text-muted-foreground">
-					Mostrá el local, la recepción y algún trabajo terminado. Es lo que
-					mira alguien que todavía no fue nunca.
-				</p>
-			</div>
+		<Card>
+			<p className="text-sm text-muted-foreground">
+				La primera es la portada: la que aparece más grande. Mostrá el local, la
+				recepción y algún trabajo terminado — es lo que mira alguien que todavía
+				no fue nunca.
+			</p>
 
 			{photos.length > 0 && (
 				<ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -267,8 +287,8 @@ const BusinessPhotosSection: React.FC = () => {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</div>
+		</Card>
 	);
 };
 
-export default BusinessPhotosSection;
+export default PhotosSection;

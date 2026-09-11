@@ -36,61 +36,6 @@ const LocationPicker = dynamic(
  * guarda todo al final porque abandonar a mitad de camino dejaría el negocio
  * incompleto; acá el negocio ya existe y cada pantalla es independiente.
  */
-/**
- * El enlace de la página pública, para copiar y pegar donde haga falta.
- *
- * Es de sólo lectura a propósito: el slug se asigna una vez a partir del nombre
- * y no cambia aunque el negocio se renombre, porque el enlace ya está pegado en
- * un QR sobre el mostrador y en la biografía de Instagram. Un campo editable
- * acá sería una forma silenciosa de romper todo eso.
- */
-const PublicPageLink: React.FC<{ url: string | null }> = ({ url }) => {
-	const [copied, setCopied] = useState(false);
-
-	if (!url) return null;
-
-	const copy = async () => {
-		try {
-			await navigator.clipboard.writeText(url);
-			setCopied(true);
-			window.setTimeout(() => setCopied(false), 2000);
-		} catch {
-			// Sin permiso de portapapeles queda el enlace a la vista para copiarlo
-			// a mano, que es lo que hace la mayoría igual.
-		}
-	};
-
-	return (
-		<div className="space-y-2">
-			<Label>Tu página de reservas</Label>
-			<div className="flex flex-wrap items-center gap-2">
-				<a
-					href={url}
-					target="_blank"
-					rel="noreferrer"
-					className="truncate rounded-md border border-border bg-muted px-3 py-2 text-sm underline-offset-4 hover:underline"
-				>
-					{url}
-				</a>
-				<Button variant="outline" size="sm" onClick={() => void copy()}>
-					{copied ? (
-						<>
-							<Check className="mr-2 h-4 w-4" />
-							Copiado
-						</>
-					) : (
-						'Copiar enlace'
-					)}
-				</Button>
-			</div>
-			<p className="text-sm text-muted-foreground">
-				Compartilo por WhatsApp, en tu perfil de Instagram o en un QR: tus
-				clientes reservan desde ahí sin escribirte.
-			</p>
-		</div>
-	);
-};
-
 const BusinessInfoSection: React.FC = () => {
 	const { data: settings, isLoading } = useGetSettings();
 	const {
@@ -147,22 +92,6 @@ const BusinessInfoSection: React.FC = () => {
 				</p>
 			</div>
 
-			<PublicPageLink url={settings?.publicBookingUrl ?? null} />
-
-			{/*
-			 * El rubro se lee y no se edita.
-			 *
-			 * No es un dato de preferencia como el nombre o la dirección: de él
-			 * dependen los servicios que Polaria sugiere y el tono con el que
-			 * contesta, y va a alimentar la comparación entre negocios del mismo
-			 * rubro. Un formulario acá invita a probar rubros a ver qué cambia, y
-			 * cada prueba mueve esos números para todos.
-			 *
-			 * Cambiarlo de verdad es raro —un negocio no se pasa de barbería a
-			 * clínica— y es una conversación con soporte, que lo corrige por
-			 * `/tenants`. El backend rechaza el cambio igual, así que esto no es la
-			 * única defensa. Ver `SettingsService.updateSettings`.
-			 */}
 			<div className="space-y-2">
 				<Label>Tipo de negocio</Label>
 				<p className="rounded-md border border-border bg-muted px-3 py-2 text-sm">
