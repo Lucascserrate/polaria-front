@@ -11,6 +11,7 @@ import { ROUTES } from '@/constants/routes';
 import { cn } from '@/lib/utils';
 import type { Service } from '@/types/services.types';
 import useServiceDraft, {
+	SERVICE_TEXT_MAX_LENGTH,
 	type ServicePayload,
 	type ServiceSection,
 } from './useServiceDraft';
@@ -170,6 +171,7 @@ const ServiceEditor: React.FC<Props> = ({
 								<Input
 									value={draft.name}
 									placeholder="Corte de pelo"
+									maxLength={SERVICE_TEXT_MAX_LENGTH}
 									onChange={(event) => set('name', event.target.value)}
 								/>
 							</Field>
@@ -181,6 +183,12 @@ const ServiceEditor: React.FC<Props> = ({
 								<Input
 									value={draft.description}
 									placeholder="Incluye lavado y peinado"
+									/*
+									 * El navegador corta al llegar al tope. Es lo que evita que
+									 * alguien escriba un párrafo entero para enterarse al guardar
+									 * de que no entraba.
+									 */
+									maxLength={SERVICE_TEXT_MAX_LENGTH}
 									onChange={(event) => set('description', event.target.value)}
 								/>
 							</Field>

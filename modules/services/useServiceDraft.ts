@@ -5,6 +5,16 @@ import type { Service, ServiceBookingPolicy } from '@/types/services.types';
 
 export type ServiceSection = 'details' | 'pricing' | 'booking';
 
+/**
+ * Lo que aguantan las columnas del servicio, iguales a las del DTO.
+ *
+ * Se repite acá y no se pide al servidor porque el punto es que el límite se vea
+ * **mientras se escribe**: enterarse al guardar de que la descripción era
+ * demasiado larga es enterarse tarde, y es como se veía el error que traía esto
+ * —un 500 sin explicación—.
+ */
+export const SERVICE_TEXT_MAX_LENGTH = 255;
+
 export interface ServiceDraft {
 	name: string;
 	description: string;
@@ -68,6 +78,10 @@ const useServiceDraft = (service?: Service | null) => {
 
 		if (!draft.name.trim()) {
 			found.details = 'El servicio necesita un nombre.';
+		} else if (draft.name.trim().length > SERVICE_TEXT_MAX_LENGTH) {
+			found.details = `El nombre no puede tener más de ${SERVICE_TEXT_MAX_LENGTH} caracteres.`;
+		} else if (draft.description.trim().length > SERVICE_TEXT_MAX_LENGTH) {
+			found.details = `La descripción no puede tener más de ${SERVICE_TEXT_MAX_LENGTH} caracteres.`;
 		}
 
 		const duration = toNumber(draft.duration);
@@ -89,7 +103,7 @@ const useServiceDraft = (service?: Service | null) => {
 		}
 
 		return found;
-	}, [draft.name, draft.duration, draft.price]);
+	}, [draft.name, draft.description, draft.duration, draft.price]);
 
 	const canSave = Object.keys(errors).length === 0;
 
