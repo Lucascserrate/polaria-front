@@ -44,7 +44,7 @@ const COPY: Record<
 		title: 'Fotos del local',
 		description:
 			'Se ven arriba de todo en tu página. Son opcionales: sin ellas la página igual se ve bien.',
-		hint: 'La primera es la portada: la que aparece más grande. Mostrá el local, la recepción y la fachada.',
+		hint: 'La portada es la que aparece más grande, marcada con la estrella. Tocá la estrella de otra foto para cambiarla.',
 		columns: 'grid-cols-2 sm:grid-cols-3',
 	},
 	portfolio: {
@@ -204,34 +204,39 @@ const PhotosSection: React.FC<{ kind: PhotoKind }> = ({ kind }) => {
 							 * que para esa gente no existe.
 							 */}
 							<div className="flex items-center gap-1 px-2 py-2">
-								{index > 0 && (
-									<Button
-										variant="ghost"
-										size="sm"
-										className="min-w-0"
-										aria-label="Hacer portada"
-										title="Hacer portada"
-										disabled={busy}
-										onClick={() => {
-											setError(null);
-											setCover.mutate(photo.id, {
-												onError: (cause) =>
-													setError(
-														errorMessage(
-															cause,
-															'No se pudo cambiar la portada.',
-														),
-													),
-											});
-										}}
-									>
-										<Star className="size-3.5 shrink-0" />
-										<span className="truncate sm:hidden">Portada</span>
-										<span className="hidden truncate sm:inline">
-											Hacer portada
+								{hasCover &&
+									(index === 0 ? (
+										<span
+											title="Es la portada"
+											aria-label="Es la portada"
+											className="grid size-7 shrink-0 place-items-center"
+										>
+											<Star className="size-4 fill-amber-400 text-amber-500" />
 										</span>
-									</Button>
-								)}
+									) : (
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											className="shrink-0"
+											aria-label="Hacer portada"
+											title="Hacer portada"
+											disabled={busy}
+											onClick={() => {
+												setError(null);
+												setCover.mutate(photo.id, {
+													onError: (cause) =>
+														setError(
+															errorMessage(
+																cause,
+																'No se pudo cambiar la portada.',
+															),
+														),
+												});
+											}}
+										>
+											<Star className="size-4" />
+										</Button>
+									))}
 
 								<Button
 									variant="ghost"
