@@ -48,7 +48,8 @@ export interface BookingWarning {
 		| 'CLOSED_DAY'
 		| 'OUTSIDE_BUSINESS_HOURS'
 		| 'STAFF_OFF_SHIFT'
-		| 'STAFF_BUSY';
+		| 'STAFF_BUSY'
+		| 'TIME_BLOCKED';
 	message: string;
 	staffId?: string;
 }
