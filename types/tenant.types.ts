@@ -59,11 +59,11 @@ export interface CreateTenantDto {
 
 export interface UpdateTenantDto {
 	name?: string;
-	businessType?: string;
+	businessType?: string | null;
 	address?: string | null;
 	latitude?: number | null;
 	longitude?: number | null;
-	email?: string;
+	email?: string | null;
 	timezone?: string;
 	status?: TenantStatus;
 	aiEnabled?: boolean;

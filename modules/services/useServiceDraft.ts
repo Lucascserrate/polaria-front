@@ -27,7 +27,7 @@ export interface ServiceDraft {
 /** Lo que se manda a guardar. Sin `timezone`, que lo resuelve la pantalla. */
 export interface ServicePayload {
 	name: string;
-	description?: string;
+	description: string;
 	durationMinutes: number;
 	price: number;
 	bookingPolicy: ServiceBookingPolicy;
@@ -116,7 +116,7 @@ const useServiceDraft = (service?: Service | null) => {
 	 */
 	const toPayload = (): ServicePayload => ({
 		name: draft.name.trim(),
-		description: draft.description.trim() || undefined,
+		description: draft.description.trim(),
 		durationMinutes: Number(draft.duration.trim()),
 		price: Number(draft.price.trim()),
 		bookingPolicy: draft.bookingPolicy,

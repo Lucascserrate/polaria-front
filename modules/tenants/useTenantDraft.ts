@@ -107,8 +107,10 @@ export const useTenantDraft = (tenant: Tenant) => {
 	/**
 	 * Lo que se manda al guardar.
 	 *
-	 * La dirección viaja como `null` cuando queda vacía y no como `''`, porque es
-	 * la única forma de borrarla: TypeORM ignora lo que llega `undefined`.
+	 * Los campos opcionales viajan como `null` cuando quedan vacíos y no como
+	 * `undefined`, porque es la única forma de borrarlos: TypeORM ignora lo que
+	 * llega `undefined`, así que un pedido que no los menciona deja el valor
+	 * anterior guardado y el borrado se ve como que no tomó.
 	 *
 	 * Nada de WhatsApp pasa por acá. La conexión no se edita como un campo: la
 	 * escribe Meta al terminar el Embedded Signup, y si viviera en el borrador,
@@ -117,8 +119,8 @@ export const useTenantDraft = (tenant: Tenant) => {
 	 */
 	const toPayload = (): UpdateTenantDto => ({
 		name: draft.name.trim(),
-		businessType: draft.businessType.trim() || undefined,
-		email: draft.email.trim() || undefined,
+		businessType: draft.businessType.trim() || null,
+		email: draft.email.trim() || null,
 		timezone: draft.timezone.trim(),
 		address: draft.address.trim() || null,
 		latitude: draft.location?.latitude ?? null,
