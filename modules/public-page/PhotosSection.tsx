@@ -168,35 +168,48 @@ const PhotosSection: React.FC = () => {
 							</div>
 
 							{/*
-							 * Los dos botones están siempre a la vista y no aparecen al pasar
-							 * el mouse por encima: hay negocios que usan el panel desde un
+							 * Los botones están siempre a la vista y no aparecen al pasar el
+							 * mouse por encima: hay negocios que usan el panel desde un
 							 * teléfono, donde no hay hover, y otros con un mouse sin rueda.
 							 * Una acción que solo existe al pasar por encima es una acción
 							 * que para esa gente no existe.
 							 */}
-							<div className="flex items-center justify-between gap-1 px-2 py-2">
-								<Button
-									variant="ghost"
-									size="sm"
-									disabled={busy || index === 0}
-									onClick={() => {
-										setError(null);
-										setCover.mutate(photo.id, {
-											onError: (cause) =>
-												setError(
-													errorMessage(cause, 'No se pudo cambiar la portada.'),
-												),
-										});
-									}}
-								>
-									<Star className="mr-1 h-4 w-4" />
-									{index === 0 ? 'Portada' : 'Hacer portada'}
-								</Button>
+							<div className="flex items-center gap-1 px-2 py-2">
+								{index > 0 && (
+									<Button
+										variant="ghost"
+										size="sm"
+										className="min-w-0"
+										aria-label="Hacer portada"
+										title="Hacer portada"
+										disabled={busy}
+										onClick={() => {
+											setError(null);
+											setCover.mutate(photo.id, {
+												onError: (cause) =>
+													setError(
+														errorMessage(
+															cause,
+															'No se pudo cambiar la portada.',
+														),
+													),
+											});
+										}}
+									>
+										<Star className="size-3.5 shrink-0" />
+										<span className="truncate sm:hidden">Portada</span>
+										<span className="hidden truncate sm:inline">
+											Hacer portada
+										</span>
+									</Button>
+								)}
 
 								<Button
 									variant="ghost"
-									size="sm"
+									size="icon-sm"
+									className="ml-auto shrink-0"
 									aria-label="Eliminar foto"
+									title="Eliminar foto"
 									disabled={busy}
 									onClick={() => setPendingDelete(photo)}
 								>
