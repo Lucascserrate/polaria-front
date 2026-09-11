@@ -67,9 +67,6 @@ const errorMessage = (cause: unknown, fallback: string): string =>
  * que se ve bien —no queda un hueco donde irían—, así que esto no es un paso
  * pendiente que haya que completar. Por eso no hay barra de progreso de perfil
  * ni avisos en el índice de configuración.
- *
- * Lo que sí se explica es qué hace la portada, porque es la única decisión con
- * consecuencia visible: es la foto grande de la página.
  */
 const PhotosSection: React.FC = () => {
 	const { data, isLoading, isError, refetch } = useGetBusinessPhotos();
@@ -135,8 +132,7 @@ const PhotosSection: React.FC = () => {
 		<Card>
 			<p className="text-sm text-muted-foreground">
 				La primera es la portada: la que aparece más grande. Mostrá el local, la
-				recepción y algún trabajo terminado — es lo que mira alguien que todavía
-				no fue nunca.
+				recepción y algún trabajo terminado.
 			</p>
 
 			{photos.length > 0 && (
