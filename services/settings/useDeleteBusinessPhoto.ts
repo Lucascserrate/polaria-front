@@ -1,18 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-	BUSINESS_PHOTOS_KEY,
 	deleteBusinessPhoto,
+	photoKeyOf,
 	type BusinessGallery,
+	type PhotoKind,
 } from './photos.service';
 
 /** Ver `useUploadBusinessPhotos` para por qué se escribe la caché y no se invalida. */
-const useDeleteBusinessPhoto = () => {
+const useDeleteBusinessPhoto = (kind: PhotoKind) => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: deleteBusinessPhoto,
+		mutationFn: (photoId: string) => deleteBusinessPhoto(kind, photoId),
 		onSuccess: (gallery: BusinessGallery) => {
-			queryClient.setQueryData(BUSINESS_PHOTOS_KEY, gallery);
+			queryClient.setQueryData(photoKeyOf(kind), gallery);
 		},
 	});
 };

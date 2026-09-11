@@ -16,11 +16,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import useGetBusinessPhotos from '@/services/settings/useGetBusinessPhotos';
 import useUploadBusinessPhotos from '@/services/settings/useUploadBusinessPhotos';
 import useDeleteBusinessPhoto from '@/services/settings/useDeleteBusinessPhoto';
 import useSetBusinessPhotoCover from '@/services/settings/useSetBusinessPhotoCover';
-import type { BusinessPhoto } from '@/services/settings/photos.service';
+import type {
+	BusinessPhoto,
+	PhotoKind,
+} from '@/services/settings/photos.service';
 
 /**
  * Formatos que se ofrecen en el selector de archivos.
@@ -32,6 +36,26 @@ import type { BusinessPhoto } from '@/services/settings/photos.service';
  */
 const ACCEPTED = 'image/jpeg,image/png,image/webp,image/avif';
 
+const COPY: Record<
+	PhotoKind,
+	{ title: string; description: string; hint: string; columns: string }
+> = {
+	gallery: {
+		title: 'Fotos del local',
+		description:
+			'Se ven arriba de todo en tu página. Son opcionales: sin ellas la página igual se ve bien.',
+		hint: 'La primera es la portada: la que aparece más grande. Mostrá el local, la recepción y la fachada.',
+		columns: 'grid-cols-2 sm:grid-cols-3',
+	},
+	portfolio: {
+		title: 'Portfolio',
+		description:
+			'Trabajos terminados. Se ven en tu página, en una sección propia debajo del equipo.',
+		hint: 'Es lo que mira alguien que está decidiendo si venir. Subí cortes reales y sacá los que ya no te representan.',
+		columns: 'grid-cols-3 sm:grid-cols-4',
+	},
+};
+
 /**
  * La tarjeta con el título, alrededor de cualquiera de los tres estados.
  *
@@ -40,14 +64,14 @@ const ACCEPTED = 'image/jpeg,image/png,image/webp,image/avif';
  * después y empujaba la vista previa hacia abajo justo cuando se la estaba
  * mirando.
  */
-const Card: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const Card: React.FC<{ kind: PhotoKind; children: React.ReactNode }> = ({
+	kind,
+	children,
+}) => (
 	<section className="space-y-3 rounded-xl border border-border p-4 sm:p-6">
 		<div className="space-y-1">
-			<h2 className="text-lg font-semibold">Fotos</h2>
-			<p className="text-sm text-muted-foreground">
-				Se ven arriba de todo en tu página. Son opcionales: sin ellas la página
-				igual se ve bien.
-			</p>
+			<h2 className="text-lg font-semibold">{COPY[kind].title}</h2>
+			<p className="text-sm text-muted-foreground">{COPY[kind].description}</p>
 		</div>
 		{children}
 	</section>
@@ -61,18 +85,26 @@ const errorMessage = (cause: unknown, fallback: string): string =>
 		: fallback;
 
 /**
- * Las fotos del local, para la página pública de reservas.
+ * Una colección de fotos de la página pública: el local o el portfolio.
  *
- * Opcional a propósito y sin insistencia: un negocio sin fotos tiene una página
- * que se ve bien —no queda un hueco donde irían—, así que esto no es un paso
- * pendiente que haya que completar. Por eso no hay barra de progreso de perfil
- * ni avisos en el índice de configuración.
+ * Las dos se cargan igual —se eligen archivos, se suben, se borran— y lo único
+ * que las separa es dónde se muestran, cuántas entran y si hay portada. Por eso
+ * es un componente con dos configuraciones: un arreglo en la subida llega a las
+ * dos, que es lo que no pasaría con dos pantallas parecidas.
+ *
+ * Opcionales a propósito y sin insistencia: un negocio sin fotos tiene una
+ * página que se ve bien —no queda un hueco donde irían—, así que esto no es un
+ * paso pendiente que haya que completar. Por eso no hay barra de progreso de
+ * perfil ni avisos en el índice de configuración.
  */
-const PhotosSection: React.FC = () => {
-	const { data, isLoading, isError, refetch } = useGetBusinessPhotos();
-	const upload = useUploadBusinessPhotos();
-	const remove = useDeleteBusinessPhoto();
+const PhotosSection: React.FC<{ kind: PhotoKind }> = ({ kind }) => {
+	const { data, isLoading, isError, refetch } = useGetBusinessPhotos(kind);
+	const upload = useUploadBusinessPhotos(kind);
+	const remove = useDeleteBusinessPhoto(kind);
 	const setCover = useSetBusinessPhotoCover();
+
+	/* Solo el local tiene portada: en el portfolio ninguna representa al resto. */
+	const hasCover = kind === 'gallery';
 
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -99,7 +131,7 @@ const PhotosSection: React.FC = () => {
 
 	if (isLoading) {
 		return (
-			<Card>
+			<Card kind={kind}>
 				<p className="text-sm text-muted-foreground">Cargando...</p>
 			</Card>
 		);
@@ -116,7 +148,7 @@ const PhotosSection: React.FC = () => {
 	 */
 	if (isError || !data) {
 		return (
-			<Card>
+			<Card kind={kind}>
 				<p className="text-sm text-destructive">No pudimos cargar tus fotos.</p>
 				<Button variant="outline" onClick={() => void refetch()}>
 					Volver a intentar
@@ -129,11 +161,8 @@ const PhotosSection: React.FC = () => {
 	const remaining = Math.max(maxPhotos - photos.length, 0);
 
 	return (
-		<Card>
-			<p className="text-sm text-muted-foreground">
-				La primera es la portada: la que aparece más grande. Mostrá el local, la
-				recepción y algún trabajo terminado.
-			</p>
+		<Card kind={kind}>
+			<p className="text-sm text-muted-foreground">{COPY[kind].hint}</p>
 
 			{error && (
 				<p
@@ -145,7 +174,7 @@ const PhotosSection: React.FC = () => {
 			)}
 
 			{photos.length > 0 && (
-				<ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+				<ul className={cn('grid gap-3', COPY[kind].columns)}>
 					{photos.map((photo, index) => (
 						<li
 							key={photo.id}
@@ -160,7 +189,7 @@ const PhotosSection: React.FC = () => {
 									className="object-cover"
 								/>
 
-								{index === 0 && (
+								{hasCover && index === 0 && (
 									<span className="absolute left-2 top-2 rounded-full bg-foreground/85 px-2 py-0.5 text-xs font-medium text-background">
 										Portada
 									</span>

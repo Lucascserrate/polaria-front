@@ -1,14 +1,43 @@
 import { axiosInstance } from '@/lib/axios';
 
 /**
- * Las fotos del local: `GET/POST/PATCH/DELETE /settings/photos`.
+ * Las fotos del negocio: la galería del local y el portfolio de trabajos.
  *
- * Vive aparte de `settings.service.ts` porque es una colección con
- * operaciones propias, y no un campo más del formulario de configuración. Eso
- * además deja invalidar solo la galería cuando cambia una foto, sin volver a
- * pedir la conexión con Meta ni el estado de facturación.
+ * `GET/POST/DELETE` sobre `/settings/photos` y `/settings/portfolio`, más el
+ * `PATCH` de portada, que sólo tiene la galería.
+ *
+ * Vive aparte de `settings.service.ts` porque son colecciones con operaciones
+ * propias, y no campos del formulario de configuración. Eso además deja
+ * redibujar una foto sin volver a pedir la conexión con Meta ni el estado de
+ * facturación.
  */
-export const BUSINESS_PHOTOS_KEY = ['settings', 'photos'] as const;
+
+/**
+ * Para qué se subió la foto. Espejo de `BusinessPhotoKind` del servidor.
+ *
+ * `gallery` es el local —la fachada, la sala— y `portfolio` son los trabajos
+ * terminados. Son dos colecciones con endpoints propios: el uso no viaja como
+ * parámetro, lo fija la ruta.
+ */
+export type PhotoKind = 'gallery' | 'portfolio';
+
+const PATHS: Record<PhotoKind, string> = {
+	gallery: '/settings/photos',
+	portfolio: '/settings/portfolio',
+};
+
+/**
+ * La clave de caché de cada colección.
+ *
+ * Distintas entre sí para que subir un trabajo no invalide las fotos del local
+ * ni al revés: son dos pantallas que conviven en "Mi página" y cada una se
+ * redibuja sola.
+ */
+export const photoKeyOf = (kind: PhotoKind) =>
+	['settings', 'photos', kind] as const;
+
+/** La galería del local. Se conserva el nombre porque lo usan las pantallas viejas. */
+export const BUSINESS_PHOTOS_KEY = photoKeyOf('gallery');
 
 export type BusinessPhoto = {
 	id: string;
@@ -35,8 +64,10 @@ export type BusinessGallery = {
 	maxPhotos: number;
 };
 
-export const getBusinessPhotos = async (): Promise<BusinessGallery> => {
-	const { data } = await axiosInstance.get<BusinessGallery>('/settings/photos');
+export const getBusinessPhotos = async (
+	kind: PhotoKind,
+): Promise<BusinessGallery> => {
+	const { data } = await axiosInstance.get<BusinessGallery>(PATHS[kind]);
 	return data;
 };
 
@@ -49,24 +80,23 @@ export const getBusinessPhotos = async (): Promise<BusinessGallery> => {
  * partir.
  */
 export const uploadBusinessPhotos = async (
+	kind: PhotoKind,
 	files: File[],
 ): Promise<BusinessGallery> => {
 	const form = new FormData();
 	files.forEach((file) => form.append('files', file));
 
-	const { data } = await axiosInstance.post<BusinessGallery>(
-		'/settings/photos',
-		form,
-	);
+	const { data } = await axiosInstance.post<BusinessGallery>(PATHS[kind], form);
 
 	return data;
 };
 
 export const deleteBusinessPhoto = async (
+	kind: PhotoKind,
 	photoId: string,
 ): Promise<BusinessGallery> => {
 	const { data } = await axiosInstance.delete<BusinessGallery>(
-		`/settings/photos/${photoId}`,
+		`${PATHS[kind]}/${photoId}`,
 	);
 
 	return data;

@@ -46,7 +46,8 @@ const MyPagePage = () => {
 				<BookingLinkCard url={url} />
 			)}
 
-			<PhotosSection />
+			<PhotosSection kind="gallery" />
+			<PhotosSection kind="portfolio" />
 
 			{/* La vista previa necesita una dirección que exista. */}
 			{url && <PublicPagePreview url={url} />}

@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-	BUSINESS_PHOTOS_KEY,
+	photoKeyOf,
 	uploadBusinessPhotos,
 	type BusinessGallery,
+	type PhotoKind,
 } from './photos.service';
 
 /**
@@ -18,13 +19,13 @@ import {
  * el máximo, qué formato no se acepta— es lo que hay que mostrar, y eso lo hace
  * la pantalla.
  */
-const useUploadBusinessPhotos = () => {
+const useUploadBusinessPhotos = (kind: PhotoKind) => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: uploadBusinessPhotos,
+		mutationFn: (files: File[]) => uploadBusinessPhotos(kind, files),
 		onSuccess: (gallery: BusinessGallery) => {
-			queryClient.setQueryData(BUSINESS_PHOTOS_KEY, gallery);
+			queryClient.setQueryData(photoKeyOf(kind), gallery);
 		},
 	});
 };
