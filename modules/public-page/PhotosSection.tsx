@@ -135,6 +135,15 @@ const PhotosSection: React.FC = () => {
 				recepción y algún trabajo terminado.
 			</p>
 
+			{error && (
+				<p
+					role="alert"
+					className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-destructive"
+				>
+					{error}
+				</p>
+			)}
+
 			{photos.length > 0 && (
 				<ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 					{photos.map((photo, index) => (
@@ -238,8 +247,6 @@ const PhotosSection: React.FC = () => {
 						? `Llegaste al máximo de ${maxPhotos} fotos. Borrá alguna para subir otra.`
 						: `Podés subir ${remaining} ${remaining === 1 ? 'foto' : 'fotos'} más. JPG, PNG, WEBP o AVIF, hasta 5 MB cada una.`}
 				</p>
-
-				{error && <p className="text-sm text-destructive">{error}</p>}
 			</div>
 
 			<AlertDialog
