@@ -102,11 +102,24 @@ export const deleteBusinessPhoto = async (
 	return data;
 };
 
-export const setBusinessPhotoCover = async (
+/**
+ * Manda una foto al frente de su colección.
+ *
+ * Cada una lo llama a su manera y por eso son dos rutas: en la galería la
+ * primera es la **portada**, y en el portfolio la **destacada**, la que ocupa la
+ * baldosa grande. Es la misma operación con dos significados.
+ */
+const FRONT_PATHS: Record<PhotoKind, (photoId: string) => string> = {
+	gallery: (photoId) => `/settings/photos/${photoId}/cover`,
+	portfolio: (photoId) => `/settings/portfolio/${photoId}/featured`,
+};
+
+export const movePhotoToFront = async (
+	kind: PhotoKind,
 	photoId: string,
 ): Promise<BusinessGallery> => {
 	const { data } = await axiosInstance.patch<BusinessGallery>(
-		`/settings/photos/${photoId}/cover`,
+		FRONT_PATHS[kind](photoId),
 	);
 
 	return data;

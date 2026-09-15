@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import useGetBusinessPhotos from '@/services/settings/useGetBusinessPhotos';
 import useUploadBusinessPhotos from '@/services/settings/useUploadBusinessPhotos';
 import useDeleteBusinessPhoto from '@/services/settings/useDeleteBusinessPhoto';
-import useSetBusinessPhotoCover from '@/services/settings/useSetBusinessPhotoCover';
+import useMovePhotoToFront from '@/services/settings/useMovePhotoToFront';
 import type {
 	BusinessPhoto,
 	PhotoKind,
@@ -38,7 +38,13 @@ const ACCEPTED = 'image/jpeg,image/png,image/webp,image/avif';
 
 const COPY: Record<
 	PhotoKind,
-	{ title: string; description: string; hint: string; columns: string }
+	{
+		title: string;
+		description: string;
+		hint: string;
+		columns: string;
+		front: { badge: string; is: string; make: string; failed: string };
+	}
 > = {
 	gallery: {
 		title: 'Fotos del local',
@@ -46,13 +52,25 @@ const COPY: Record<
 			'Se ven arriba de todo en tu página. Son opcionales: sin ellas la página igual se ve bien.',
 		hint: 'La portada es la que aparece más grande, marcada con la estrella. Tocá la estrella de otra foto para cambiarla.',
 		columns: 'grid-cols-2 sm:grid-cols-3',
+		front: {
+			badge: 'Portada',
+			is: 'Es la portada',
+			make: 'Hacer portada',
+			failed: 'No se pudo cambiar la portada.',
+		},
 	},
 	portfolio: {
 		title: 'Portfolio',
 		description:
 			'Trabajos terminados. Se ven en tu página, en una sección propia debajo del equipo.',
-		hint: 'Es lo que mira alguien que está decidiendo si venir. Subí cortes reales y sacá los que ya no te representan.',
+		hint: 'Lo último que subís encabeza solo. Con la estrella podés fijar otro trabajo en la baldosa grande de tu página.',
 		columns: 'grid-cols-3 sm:grid-cols-4',
+		front: {
+			badge: 'Destacada',
+			is: 'Es la destacada',
+			make: 'Destacar',
+			failed: 'No se pudo destacar el trabajo.',
+		},
 	},
 };
 
@@ -101,10 +119,7 @@ const PhotosSection: React.FC<{ kind: PhotoKind }> = ({ kind }) => {
 	const { data, isLoading, isError, refetch } = useGetBusinessPhotos(kind);
 	const upload = useUploadBusinessPhotos(kind);
 	const remove = useDeleteBusinessPhoto(kind);
-	const setCover = useSetBusinessPhotoCover();
-
-	/* Solo el local tiene portada: en el portfolio ninguna representa al resto. */
-	const hasCover = kind === 'gallery';
+	const moveToFront = useMovePhotoToFront(kind);
 
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -112,7 +127,7 @@ const PhotosSection: React.FC<{ kind: PhotoKind }> = ({ kind }) => {
 		null,
 	);
 
-	const busy = upload.isPending || remove.isPending || setCover.isPending;
+	const busy = upload.isPending || remove.isPending || moveToFront.isPending;
 
 	const pick = (files: FileList | null) => {
 		setError(null);
@@ -189,9 +204,9 @@ const PhotosSection: React.FC<{ kind: PhotoKind }> = ({ kind }) => {
 									className="object-cover"
 								/>
 
-								{hasCover && index === 0 && (
+								{index === 0 && (
 									<span className="absolute left-2 top-2 rounded-full bg-foreground/85 px-2 py-0.5 text-xs font-medium text-background">
-										Portada
+										{COPY[kind].front.badge}
 									</span>
 								)}
 							</div>
@@ -204,39 +219,35 @@ const PhotosSection: React.FC<{ kind: PhotoKind }> = ({ kind }) => {
 							 * que para esa gente no existe.
 							 */}
 							<div className="flex items-center gap-1 px-2 py-2">
-								{hasCover &&
-									(index === 0 ? (
-										<span
-											title="Es la portada"
-											aria-label="Es la portada"
-											className="grid size-7 shrink-0 place-items-center"
-										>
-											<Star className="size-4 fill-amber-400 text-amber-500" />
-										</span>
-									) : (
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											className="shrink-0"
-											aria-label="Hacer portada"
-											title="Hacer portada"
-											disabled={busy}
-											onClick={() => {
-												setError(null);
-												setCover.mutate(photo.id, {
-													onError: (cause) =>
-														setError(
-															errorMessage(
-																cause,
-																'No se pudo cambiar la portada.',
-															),
-														),
-												});
-											}}
-										>
-											<Star className="size-4" />
-										</Button>
-									))}
+								{index === 0 ? (
+									<span
+										title={COPY[kind].front.is}
+										aria-label={COPY[kind].front.is}
+										className="grid size-7 shrink-0 place-items-center"
+									>
+										<Star className="size-4 fill-amber-400 text-amber-500" />
+									</span>
+								) : (
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										className="shrink-0"
+										aria-label={COPY[kind].front.make}
+										title={COPY[kind].front.make}
+										disabled={busy}
+										onClick={() => {
+											setError(null);
+											moveToFront.mutate(photo.id, {
+												onError: (cause) =>
+													setError(
+														errorMessage(cause, COPY[kind].front.failed),
+													),
+											});
+										}}
+									>
+										<Star className="size-4" />
+									</Button>
+								)}
 
 								<Button
 									variant="ghost"
