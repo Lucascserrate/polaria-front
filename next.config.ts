@@ -20,6 +20,29 @@ const nextConfig: NextConfig = {
 			},
 		],
 	},
+
+	/**
+	 * Los nombres viejos de los iconos, en la raíz.
+	 *
+	 * Las etiquetas del `<head>` ya dicen dónde está cada icono y es lo que mira
+	 * cualquier navegador de hoy. Pero iOS —y varios rastreadores— además piden
+	 * estas rutas fijas a ciegas, sin leer el HTML, y hasta acá respondían 404.
+	 * Cuesta tres líneas cerrarles esa puerta.
+	 *
+	 * Son reescrituras y no redirecciones a propósito: el que pide
+	 * `/apple-touch-icon.png` recibe el PNG en esa misma URL, sin un salto de por
+	 * medio que alguno pueda no seguir.
+	 */
+	async rewrites() {
+		return [
+			{ source: '/apple-touch-icon.png', destination: '/apple-icon' },
+			{
+				source: '/apple-touch-icon-precomposed.png',
+				destination: '/apple-icon',
+			},
+			{ source: '/favicon.ico', destination: '/icon/32' },
+		];
+	},
 };
 
 export default nextConfig;
