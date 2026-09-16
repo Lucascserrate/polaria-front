@@ -71,8 +71,6 @@ interface Props {
 	/** Ausente, el panel está cerrado. */
 	seed: BlockSeed | null;
 	onClose: () => void;
-	/** Se llama cuando el bloqueo quedó guardado. */
-	onSaved?: () => void;
 }
 
 const errorMessage = (cause: unknown, fallback: string): string =>
@@ -93,7 +91,7 @@ const errorMessage = (cause: unknown, fallback: string): string =>
  * el bloqueo dice que no entren más, no que esos tres dejaron de existir.
  * Cancelarlos es una decisión aparte y se toma desde la agenda.
  */
-const BlockDrawer: React.FC<Props> = ({ seed, onClose, onSaved }) => (
+const BlockDrawer: React.FC<Props> = ({ seed, onClose }) => (
 	<Drawer
 		direction="right"
 		open={Boolean(seed)}
@@ -112,7 +110,6 @@ const BlockDrawer: React.FC<Props> = ({ seed, onClose, onSaved }) => (
 					key={`${seed.date}:${seed.minute}:${seed.staffId ?? ''}`}
 					seed={seed}
 					onClose={onClose}
-					onSaved={onSaved}
 				/>
 			)}
 		</DrawerContent>
@@ -122,8 +119,7 @@ const BlockDrawer: React.FC<Props> = ({ seed, onClose, onSaved }) => (
 const BlockForm: React.FC<{
 	seed: BlockSeed;
 	onClose: () => void;
-	onSaved?: () => void;
-}> = ({ seed, onClose, onSaved }) => {
+}> = ({ seed, onClose }) => {
 	const { data: settings } = useGetSettings();
 	const { data: staff = [] } = useGetStaff();
 	const { mutateAsync: create, isPending } = useCreateScheduleBlock();
@@ -159,7 +155,10 @@ const BlockForm: React.FC<{
 				reason: reason.trim() || null,
 			});
 
-			onSaved?.();
+			/*
+			 * Alcanza con cerrar: la mutación invalida la consulta del rango, así que
+			 * la franja aparece sola en la grilla detrás del panel.
+			 */
 			onClose();
 		} catch (cause) {
 			setError(

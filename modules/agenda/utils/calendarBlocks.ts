@@ -1,4 +1,5 @@
 import type { Appointment } from '@/types/appointments.types';
+import type { ScheduleBlock } from '@/services/schedule-blocks/schedule-blocks.service';
 import {
 	dateKeyInTimeZone,
 	dayMinutesOf,
@@ -62,6 +63,79 @@ export const groupBlocksByDay = (
 
 	return grouped;
 };
+
+/** Una franja no disponible ya ubicada en la grilla. */
+export interface ScheduleBlockPiece extends MinuteRange {
+	key: string;
+	block: ScheduleBlock;
+}
+
+/**
+ * Reparte los bloqueos por día del calendario.
+ *
+ * Mismo criterio que las citas: el día lo decide la zona del negocio, y un
+ * bloqueo sin instante legible se saltea en lugar de dibujarse a la medianoche.
+ *
+ * Un bloqueo que cruza la medianoche aparece solo en el día donde empieza.
+ * `dayMinutesOf` recorta su alto hasta el final de ese día, así que la cola no
+ * se pierde de vista —el bloque llega hasta abajo— pero tampoco se duplica en el
+ * día siguiente diciendo que arranca a las 00:00.
+ */
+const durationMinutesOf = (block: ScheduleBlock): number =>
+	(new Date(block.endTime).getTime() - new Date(block.startTime).getTime()) /
+	60_000;
+
+export const groupScheduleBlocksByDay = (
+	blocks: ScheduleBlock[],
+	timezone?: string,
+): Map<string, ScheduleBlockPiece[]> => {
+	const grouped = new Map<string, ScheduleBlockPiece[]>();
+
+	for (const block of blocks) {
+		const day = dateKeyInTimeZone(block.startTime, timezone);
+		const minutes = dayMinutesOf({
+			startTime: block.startTime,
+			endTime: block.endTime,
+			/*
+			 * La duración va explícita aunque el fin ya viaje.
+			 *
+			 * `dayMinutesOf` sólo usa el fin cuando cae el mismo día; para el que
+			 * cruza la medianoche se apoya en la duración, y sin ella cae a su
+			 * respaldo de media hora. Un bloqueo de 23:00 a 01:00 se dibujaba de
+			 * treinta minutos y decía que a las 23:30 ya se podía agendar.
+			 */
+			duration: durationMinutesOf(block),
+			timezone,
+		});
+
+		if (!day || !minutes) continue;
+
+		const pieces = grouped.get(day) ?? [];
+		pieces.push({ key: block.id, block, ...minutes });
+		grouped.set(day, pieces);
+	}
+
+	return grouped;
+};
+
+/**
+ * Los bloqueos que le tapan horas a una columna de la vista diaria.
+ *
+ * Los del negocio entero —`staffId` nulo— entran en todas: cerrar el local un
+ * rato le cierra la agenda a cada uno. Es la misma regla que aplica el servidor
+ * al calcular disponibilidad (`groupBlocksByStaff`), y por eso acá también los
+ * reparte quien conoce las columnas en lugar de que cada columna la recuerde.
+ *
+ * La columna de "Sin asignar" recibe solo los del negocio: no es una persona,
+ * así que no tiene bloqueos propios.
+ */
+export const scheduleBlocksForStaff = (
+	pieces: ScheduleBlockPiece[],
+	staffId: string | null,
+): ScheduleBlockPiece[] =>
+	pieces.filter(
+		(piece) => piece.block.staffId === null || piece.block.staffId === staffId,
+	);
 
 /** Cómo se llama la columna de los tramos que no tienen profesional. */
 export const UNASSIGNED_COLUMN = 'unassigned';

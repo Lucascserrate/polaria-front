@@ -18,10 +18,13 @@ import NewBookingDrawer, {
 } from '@/modules/agenda/NewBookingDrawer';
 import SlotActionPopover from '@/modules/agenda/SlotActionPopover';
 import BlockDrawer, { type BlockSeed } from '@/modules/agenda/BlockDrawer';
+import ScheduleBlockStrips from '@/modules/agenda/ScheduleBlockStrips';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import {
 	buildStaffColumns,
 	groupBlocksByDay,
+	groupScheduleBlocksByDay,
+	scheduleBlocksForStaff,
 	UNASSIGNED_COLUMN,
 } from '@/modules/agenda/utils/calendarBlocks';
 import {
@@ -40,6 +43,8 @@ import {
 } from '@/modules/agenda/utils/calendarLayout';
 import useNow from '@/lib/useNow';
 import useGetAppointmentsRange from '@/services/appointments/useGetAppointmentsRange';
+import useGetScheduleBlocksRange from '@/services/schedule-blocks/useGetScheduleBlocksRange';
+import useDeleteScheduleBlock from '@/services/schedule-blocks/useDeleteScheduleBlock';
 import useGetWorkingStaff from '@/services/staff/useGetWorkingStaff';
 import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useDeleteBooking from '@/services/appointments/useDeleteBooking';
@@ -132,15 +137,6 @@ const AgendaPage = () => {
 	 */
 	const [blockSlot, setBlockSlot] = useState<BlockSeed | null>(null);
 
-	/**
-	 * Aviso de que el bloqueo quedó guardado.
-	 *
-	 * Existe porque todavía no se dibuja en la grilla: sin esto, marcar un
-	 * horario cierra el panel y no cambia nada a la vista, que es indistinguible
-	 * de haber fallado. Se puede sacar el día que el bloque se vea en su lugar.
-	 */
-	const [blockSaved, setBlockSaved] = useState(false);
-
 	/** Reserva abierta en el panel lateral. */
 	const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -214,6 +210,36 @@ const AgendaPage = () => {
 			? (deletingId ?? null)
 			: null;
 
+	/*
+	 * Los bloqueos del mismo rango que las citas.
+	 *
+	 * Consulta aparte y no un campo de la de citas: son dos colecciones que se
+	 * cambian por separado, y así marcar un horario no obliga a volver a pedir la
+	 * agenda entera.
+	 */
+	const { data: blockRange } = useGetScheduleBlocksRange(
+		days[0],
+		days[days.length - 1],
+	);
+
+	const {
+		mutate: deleteScheduleBlock,
+		isPending: isDeletingBlock,
+		variables: deletingBlockId,
+	} = useDeleteScheduleBlock();
+
+	const handleDeleteBlock = useCallback(
+		(id: string) => deleteScheduleBlock(id),
+		[deleteScheduleBlock],
+	);
+
+	const deletingBlock = isDeletingBlock ? (deletingBlockId ?? null) : null;
+
+	const scheduleBlocksByDay = useMemo(
+		() => groupScheduleBlocksByDay(blockRange?.items ?? [], timezone),
+		[blockRange?.items, timezone],
+	);
+
 	// Solo en la vista diaria: en la semanal sería un pedido que nadie mira.
 	const { data: working } = useGetWorkingStaff(selectedDate, view === 'day');
 
@@ -236,14 +262,29 @@ const AgendaPage = () => {
 						weekdayOf(day),
 					),
 					content: (
-						<AppointmentBlocks
-							blocks={blocksByDay.get(day) ?? []}
-							onMarkAttended={handleMarkAttended}
-							onCancel={handleCancel}
-							onEdit={setEditingId}
-							onDelete={handleDelete}
-							updatingId={updatingId}
-						/>
+						<>
+							{/*
+							 * Las franjas van primero para quedar debajo de las citas: un
+							 * bloqueo no las cancela, así que taparlas escondería lo que hay
+							 * que resolver.
+							 *
+							 * En la semanal se muestran todos los del día, de quien sean: la
+							 * columna es un día y el nombre lo dice la franja.
+							 */}
+							<ScheduleBlockStrips
+								pieces={scheduleBlocksByDay.get(day) ?? []}
+								onDelete={handleDeleteBlock}
+								deletingId={deletingBlock}
+							/>
+							<AppointmentBlocks
+								blocks={blocksByDay.get(day) ?? []}
+								onMarkAttended={handleMarkAttended}
+								onCancel={handleCancel}
+								onEdit={setEditingId}
+								onDelete={handleDelete}
+								updatingId={updatingId}
+							/>
+						</>
 					),
 					header: (
 						<div className="leading-tight">
@@ -268,6 +309,9 @@ const AgendaPage = () => {
 			todayKey,
 			settings?.businessHours,
 			blocksByDay,
+			scheduleBlocksByDay,
+			handleDeleteBlock,
+			deletingBlock,
 			handleMarkAttended,
 			handleCancel,
 			handleDelete,
@@ -298,14 +342,28 @@ const AgendaPage = () => {
 			isToday,
 			openRanges: column.openRanges,
 			content: (
-				<AppointmentBlocks
-					blocks={column.blocks}
-					onMarkAttended={handleMarkAttended}
-					onCancel={handleCancel}
-					onEdit={setEditingId}
-					onDelete={handleDelete}
-					updatingId={updatingId}
-				/>
+				<>
+					{/*
+					 * Acá la columna es una persona, así que recibe los suyos más los del
+					 * negocio entero. Ver `scheduleBlocksForStaff`.
+					 */}
+					<ScheduleBlockStrips
+						pieces={scheduleBlocksForStaff(
+							scheduleBlocksByDay.get(selectedDate) ?? [],
+							column.staffId,
+						)}
+						onDelete={handleDeleteBlock}
+						deletingId={deletingBlock}
+					/>
+					<AppointmentBlocks
+						blocks={column.blocks}
+						onMarkAttended={handleMarkAttended}
+						onCancel={handleCancel}
+						onEdit={setEditingId}
+						onDelete={handleDelete}
+						updatingId={updatingId}
+					/>
+				</>
 			),
 			header: (
 				<div className="flex items-center justify-center gap-2">
@@ -345,6 +403,9 @@ const AgendaPage = () => {
 		working?.staff,
 		settings?.businessHours,
 		timezone,
+		scheduleBlocksByDay,
+		handleDeleteBlock,
+		deletingBlock,
 		handleMarkAttended,
 		handleCancel,
 		handleDelete,
@@ -452,8 +513,6 @@ const AgendaPage = () => {
 	const openBlockFromSlot = useCallback(() => {
 		if (!pickedSlot) return;
 
-		setBlockSaved(false);
-
 		const seed = seedOf(pickedSlot);
 		setBlockSlot({
 			date: seed.date,
@@ -514,22 +573,6 @@ const AgendaPage = () => {
 					)
 				}
 			/>
-
-			{blockSaved && (
-				<div className="flex shrink-0 items-start justify-between gap-3 border-b border-border bg-muted/60 px-3 py-1.5">
-					<p className="text-xs">
-						Horario no disponible guardado. Deja de ofrecerse para reservas
-						nuevas.
-					</p>
-					<button
-						type="button"
-						className="shrink-0 cursor-pointer text-xs text-muted-foreground underline"
-						onClick={() => setBlockSaved(false)}
-					>
-						Entendido
-					</button>
-				</div>
-			)}
 
 			{saveWarnings.length > 0 && (
 				<div className="shrink-0 border-b border-amber-500/50 bg-amber-500/10 px-3 py-1.5">
@@ -603,11 +646,11 @@ const AgendaPage = () => {
 				onSaved={setSaveWarnings}
 			/>
 
-			<BlockDrawer
-				seed={blockSlot}
-				onClose={() => setBlockSlot(null)}
-				onSaved={() => setBlockSaved(true)}
-			/>
+			{/*
+			 * Sin `onSaved`: el bloqueo aparece solo en la grilla al guardarse, así
+			 * que no hace falta un cartel que diga que se guardó.
+			 */}
+			<BlockDrawer seed={blockSlot} onClose={() => setBlockSlot(null)} />
 
 			<AddAppointmentFab onClick={openBlankBooking} />
 
