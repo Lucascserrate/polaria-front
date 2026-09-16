@@ -11,7 +11,7 @@ import type { ServicePayload } from '@/modules/services/useServiceDraft';
 import useService from '@/services/services/useService';
 import useUpdateService from '@/services/services/useUpdateService';
 import useDeleteService from '@/services/services/useDeleteService';
-import useGetSettings from '@/services/settings/useGetSettings';
+import useBusinessCurrency from '@/modules/settings/useBusinessCurrency';
 
 const messageOf = (cause: unknown, fallback: string): string =>
 	axios.isAxiosError(cause) && typeof cause.response?.data?.message === 'string'
@@ -24,7 +24,7 @@ const ServicePage = () => {
 	const id = params?.id;
 
 	const { data: service, isLoading, isError } = useService(id ?? '');
-	const { data: settings } = useGetSettings();
+	const { currency, setCurrency } = useBusinessCurrency();
 	const updateService = useUpdateService();
 	const deleteService = useDeleteService();
 	const [error, setError] = useState<string | null>(null);
@@ -81,7 +81,8 @@ const ServicePage = () => {
 			// los datos del anterior.
 			key={service.id}
 			service={service}
-			currency={settings?.currency ?? 'BOB'}
+			currency={currency}
+			onCurrencyChange={setCurrency}
 			saving={updateService.isPending}
 			deleting={deleteService.isPending}
 			error={error}

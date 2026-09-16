@@ -6,13 +6,13 @@ import axios from 'axios';
 import { ROUTES } from '@/constants/routes';
 import ServiceEditor from '@/modules/services/ServiceEditor';
 import type { ServicePayload } from '@/modules/services/useServiceDraft';
+import useBusinessCurrency from '@/modules/settings/useBusinessCurrency';
 import useCreateService from '@/services/services/useCreateService';
-import useGetSettings from '@/services/settings/useGetSettings';
 
 const NewServicePage = () => {
 	const router = useRouter();
 	const createService = useCreateService();
-	const { data: settings } = useGetSettings();
+	const { currency, setCurrency } = useBusinessCurrency();
 	const [error, setError] = useState<string | null>(null);
 
 	const handleSave = async (payload: ServicePayload) => {
@@ -43,7 +43,8 @@ const NewServicePage = () => {
 
 	return (
 		<ServiceEditor
-			currency={settings?.currency ?? 'BOB'}
+			currency={currency}
+			onCurrencyChange={setCurrency}
 			saving={createService.isPending}
 			error={error}
 			onSave={(payload) => void handleSave(payload)}

@@ -117,9 +117,8 @@ export type UpdateSettingsPayload = {
 	polariaName?: string;
 	businessType?: string;
 	timezone?: string;
-	/** `null` borra la ubicación; ausente la deja como está. */
+	currency?: string;
 	location?: { latitude: number; longitude: number } | null;
-	/** Misma regla: `null` la borra, ausente la deja como está. */
 	address?: string | null;
 	businessHours?: WeeklyRange[];
 	/** Apagado, Polaria deja de responder por WhatsApp en todo el negocio. */

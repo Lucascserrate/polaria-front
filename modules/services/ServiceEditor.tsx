@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { ROUTES } from '@/constants/routes';
 import { cn } from '@/lib/utils';
+import { currencyLabel } from '@/lib/currencies';
+import { formatMoney } from '@/lib/money';
 import type { Service } from '@/types/services.types';
 import useServiceDraft, {
 	SERVICE_TEXT_MAX_LENGTH,
@@ -16,6 +18,7 @@ import useServiceDraft, {
 	type ServiceSection,
 } from './useServiceDraft';
 import DeleteServiceDialog from './DeleteServiceDialog';
+import PriceField from './PriceField';
 
 const SECTIONS: Array<{ key: ServiceSection; label: string }> = [
 	{ key: 'details', label: 'Detalles' },
@@ -28,6 +31,13 @@ interface Props {
 	service?: Service | null;
 	/** La del negocio, para escribir el precio en su moneda. */
 	currency: string;
+	/**
+	 * Cambia la moneda del negocio, no la de este servicio.
+	 *
+	 * Sube hasta la página porque lo que se guarda es la configuración del
+	 * negocio y no el servicio: son dos entidades y dos guardados distintos.
+	 */
+	onCurrencyChange: (currency: string) => void;
 	saving?: boolean;
 	deleting?: boolean;
 	error?: string | null;
@@ -56,6 +66,7 @@ interface Props {
 const ServiceEditor: React.FC<Props> = ({
 	service,
 	currency,
+	onCurrencyChange,
 	saving = false,
 	deleting = false,
 	error,
@@ -65,6 +76,24 @@ const ServiceEditor: React.FC<Props> = ({
 	const [section, setSection] = useState<ServiceSection>('details');
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
 	const { draft, set, errors, canSave, toPayload } = useServiceDraft(service);
+
+	/*
+	 * El precio escrito, tal como lo va a leer el cliente.
+	 *
+	 * Es la comprobación de que la moneda es la correcta, y por eso se muestra el
+	 * precio formateado y no sólo el código: "Bs 45.000" en una pantalla
+	 * colombiana salta a la vista, un "BOB" suelto en una etiqueta no tanto. Sin
+	 * precio escrito no hay nada que formatear, así que queda sólo el aviso.
+	 */
+	const price = Number(draft.price);
+	const priceHint = [
+		Number.isFinite(price) && draft.price.trim()
+			? `Así lo ve tu cliente: ${formatMoney(price, currency)}.`
+			: null,
+		`Se escribe en ${currencyLabel(currency).toLowerCase()}, la moneda de tu negocio: cambiarla afecta a todos tus servicios.`,
+	]
+		.filter(Boolean)
+		.join(' ');
 
 	return (
 		<div className="space-y-6">
@@ -228,15 +257,12 @@ const ServiceEditor: React.FC<Props> = ({
 									/>
 								</Field>
 
-								<Field label="Precio" required hint={`En ${currency}.`}>
-									<Input
-										type="number"
-										min="0"
-										step="1"
-										inputMode="decimal"
+								<Field label="Precio" required hint={priceHint}>
+									<PriceField
 										value={draft.price}
-										placeholder="0"
-										onChange={(event) => set('price', event.target.value)}
+										onChange={(next) => set('price', next)}
+										currency={currency}
+										onCurrencyChange={onCurrencyChange}
 									/>
 								</Field>
 							</div>
