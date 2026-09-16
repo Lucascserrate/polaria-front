@@ -17,6 +17,7 @@ import NewBookingDrawer, {
 	type BookingSeed,
 } from '@/modules/agenda/NewBookingDrawer';
 import SlotActionPopover from '@/modules/agenda/SlotActionPopover';
+import BlockDrawer, { type BlockSeed } from '@/modules/agenda/BlockDrawer';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import {
 	buildStaffColumns,
@@ -121,6 +122,24 @@ const AgendaPage = () => {
 	 * de un día y los parámetros de la URL.
 	 */
 	useEffect(() => setPickedSlot(null), [view, picked]);
+
+	/**
+	 * El hueco desde el que se está marcando un horario no disponible.
+	 *
+	 * Aparte de `draftSlot` aunque los dos salgan del mismo click: son dos
+	 * paneles y sólo uno puede estar abierto. Compartir el estado obligaría a
+	 * guardar también cuál de los dos abrir, que es el mismo dato en dos piezas.
+	 */
+	const [blockSlot, setBlockSlot] = useState<BlockSeed | null>(null);
+
+	/**
+	 * Aviso de que el bloqueo quedó guardado.
+	 *
+	 * Existe porque todavía no se dibuja en la grilla: sin esto, marcar un
+	 * horario cierra el panel y no cambia nada a la vista, que es indistinguible
+	 * de haber fallado. Se puede sacar el día que el bloque se vea en su lugar.
+	 */
+	const [blockSaved, setBlockSaved] = useState(false);
 
 	/** Reserva abierta en el panel lateral. */
 	const [editingId, setEditingId] = useState<string | null>(null);
@@ -422,6 +441,28 @@ const AgendaPage = () => {
 		setPickedSlot(null);
 	}, [pickedSlot, seedOf]);
 
+	/**
+	 * Del menú al panel del horario no disponible.
+	 *
+	 * Reusa `seedOf` porque de la columna sale lo mismo que para una reserva: el
+	 * día en la vista semanal, el profesional en la diaria. La diferencia es que
+	 * acá el minuto no puede faltar —un bloqueo sin hora no significa nada—, y por
+	 * eso el panel lo pide obligatorio.
+	 */
+	const openBlockFromSlot = useCallback(() => {
+		if (!pickedSlot) return;
+
+		setBlockSaved(false);
+
+		const seed = seedOf(pickedSlot);
+		setBlockSlot({
+			date: seed.date,
+			minute: pickedSlot.minute,
+			staffId: seed.staffId,
+		});
+		setPickedSlot(null);
+	}, [pickedSlot, seedOf]);
+
 	/*
 	 * Hasta que monta el reloj no se dibuja nada.
 	 *
@@ -474,6 +515,22 @@ const AgendaPage = () => {
 				}
 			/>
 
+			{blockSaved && (
+				<div className="flex shrink-0 items-start justify-between gap-3 border-b border-border bg-muted/60 px-3 py-1.5">
+					<p className="text-xs">
+						Horario no disponible guardado. Deja de ofrecerse para reservas
+						nuevas.
+					</p>
+					<button
+						type="button"
+						className="shrink-0 cursor-pointer text-xs text-muted-foreground underline"
+						onClick={() => setBlockSaved(false)}
+					>
+						Entendido
+					</button>
+				</div>
+			)}
+
 			{saveWarnings.length > 0 && (
 				<div className="shrink-0 border-b border-amber-500/50 bg-amber-500/10 px-3 py-1.5">
 					<div className="flex items-start justify-between gap-3">
@@ -518,6 +575,7 @@ const AgendaPage = () => {
 							<SlotActionPopover
 								label={formatMinute(pickedSlot.minute)}
 								onAddAppointment={openBookingFromSlot}
+								onAddBlock={openBlockFromSlot}
 								onClose={() => setPickedSlot(null)}
 							/>
 						)
@@ -543,6 +601,12 @@ const AgendaPage = () => {
 				todayKey={todayKey}
 				onClose={() => setDraftSlot(null)}
 				onSaved={setSaveWarnings}
+			/>
+
+			<BlockDrawer
+				seed={blockSlot}
+				onClose={() => setBlockSlot(null)}
+				onSaved={() => setBlockSaved(true)}
 			/>
 
 			<AddAppointmentFab onClick={openBlankBooking} />
