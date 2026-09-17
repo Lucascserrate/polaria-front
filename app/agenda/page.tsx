@@ -10,7 +10,6 @@ import AgendaToolbar, { type AgendaView } from '@/modules/agenda/AgendaToolbar';
 import CalendarGrid, {
 	type CalendarColumn,
 } from '@/modules/agenda/CalendarGrid';
-import AddAppointmentFab from '@/modules/agenda/AddAppointmentFab';
 import FloatingAttention from '@/modules/agenda/FloatingAttention';
 import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
 import BookingDrawer from '@/modules/agenda/BookingDrawer';
@@ -636,8 +635,6 @@ const AgendaPage = () => {
 			 * que no hace falta un cartel que diga que se guardó.
 			 */}
 			<BlockDrawer seed={blockSlot} onClose={() => setBlockSlot(null)} />
-
-			<AddAppointmentFab onClick={openBlankBooking} />
 
 			<FloatingAttention />
 		</>
