@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 		default: 'Polaria',
 		template: '%s - Polaria',
 	},
-	description: 'AI Booking Assistant',
+	description: 'Asistente de reservas',
 };
 
 export default function RootLayout({
