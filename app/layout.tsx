@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from '@/lib/query-provider';
+import { Toaster } from '@/components/ui/sonner';
 import { SIDEBAR_PREFERENCE_SCRIPT } from '@/components/sidebar-preference';
 import { THEME_PREFERENCE_SCRIPT } from '@/components/theme-preference';
 
@@ -54,6 +55,7 @@ export default function RootLayout({
 					}}
 				/>
 				<QueryProvider>{children}</QueryProvider>
+				<Toaster />
 			</body>
 		</html>
 	);

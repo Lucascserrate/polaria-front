@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Menu, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toggleMobileSidebar } from '@/components/sidebar-mobile';
@@ -140,15 +141,6 @@ const AgendaPage = () => {
 	/** Reserva abierta en el panel lateral. */
 	const [editingId, setEditingId] = useState<string | null>(null);
 
-	/**
-	 * Lo que el backend advirtió de la última reserva guardada, creada o editada.
-	 *
-	 * La cita ya existe: esto no es un error, es lo que hay que saber sobre ella.
-	 * Se muestra en la agenda y no en el panel porque el panel se cierra al
-	 * guardar, y lo que quedó raro sigue importando después.
-	 */
-	const [saveWarnings, setSaveWarnings] = useState<BookingWarning[]>([]);
-
 	const { data: settings } = useGetSettings();
 	const timezone = settings?.timezone;
 
@@ -198,6 +190,21 @@ const AgendaPage = () => {
 		(id: string) => deleteBooking(id),
 		[deleteBooking],
 	);
+
+	const announceWarnings = useCallback((warnings: BookingWarning[]) => {
+		if (warnings.length === 0) {
+			toast.success('Cita guardada.');
+			return;
+		}
+
+		for (const warning of warnings) {
+			toast.warning('Cita guardada.', {
+				description: warning.message,
+				duration: Infinity,
+				closeButton: true,
+			});
+		}
+	}, []);
 
 	/*
 	 * La cita en curso sale de la mutación, así que no hace falta un estado
@@ -574,28 +581,6 @@ const AgendaPage = () => {
 				}
 			/>
 
-			{saveWarnings.length > 0 && (
-				<div className="shrink-0 border-b border-amber-500/50 bg-amber-500/10 px-3 py-1.5">
-					<div className="flex items-start justify-between gap-3">
-						<div className="space-y-0.5">
-							<p className="text-xs font-medium">Cita guardada.</p>
-							{saveWarnings.map((warning) => (
-								<p key={warning.code} className="text-xs">
-									{warning.message}
-								</p>
-							))}
-						</div>
-						<button
-							type="button"
-							className="shrink-0 text-xs text-muted-foreground underline"
-							onClick={() => setSaveWarnings([])}
-						>
-							Entendido
-						</button>
-					</div>
-				</div>
-			)}
-
 			{(isError || statusError || deleteError) && (
 				<p className="shrink-0 border-b border-border bg-red-50 px-3 py-1.5 text-xs text-destructive dark:bg-red-950/40">
 					{isError
@@ -636,14 +621,14 @@ const AgendaPage = () => {
 				appointmentId={editingId}
 				todayKey={todayKey}
 				onClose={() => setEditingId(null)}
-				onSaved={setSaveWarnings}
+				onSaved={announceWarnings}
 			/>
 
 			<NewBookingDrawer
 				seed={editingId === null ? draftSlot : null}
 				todayKey={todayKey}
 				onClose={() => setDraftSlot(null)}
-				onSaved={setSaveWarnings}
+				onSaved={announceWarnings}
 			/>
 
 			{/*
