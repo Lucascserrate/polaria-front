@@ -38,6 +38,7 @@ interface Props {
 	/** Abierto muestra el buscador; cerrado, sólo el botón. */
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	className?: string;
 }
 
 /**
@@ -68,6 +69,7 @@ const BookingClientPanel: React.FC<Props> = ({
 	dialCode,
 	open = false,
 	onOpenChange,
+	className,
 }) => {
 	const [term, setTerm] = useState('');
 	const [adding, setAdding] = useState(false);
@@ -106,6 +108,7 @@ const BookingClientPanel: React.FC<Props> = ({
 				searching
 					? 'absolute inset-0 z-20 w-full bg-popover sm:static sm:w-72 sm:bg-muted/30'
 					: 'w-full sm:w-44',
+				className,
 			)}
 		>
 			{client.id || !editable ? (

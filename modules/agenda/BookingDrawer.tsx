@@ -231,16 +231,34 @@ const BookingEditor: React.FC<EditorProps> = ({
 
 	return (
 		/*
-		 * Dos columnas desde `sm`; en móvil, una sola cosa abajo de la otra. El
-		 * `relative` es para el buscador de clientes de la reserva nueva, que se
-		 * abre encima del formulario: acá el cliente es de lectura, pero la columna
-		 * es el mismo componente y la referencia tiene que existir igual.
+		 * Dos columnas desde `sm`; en móvil, todo apilado. El `relative` es para el
+		 * buscador de clientes de la reserva nueva, que se abre encima del
+		 * formulario: acá el cliente es de lectura, pero la columna es el mismo
+		 * componente y la referencia tiene que existir igual.
+		 *
+		 * El orden de lo apilado no es el del código: en móvil la columna de la
+		 * derecha es `contents`, así que sus hijos son hijos de este mismo flex y
+		 * el `order` de cada uno los intercala con la tarjeta del cliente.
 		 */
 		<div className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
-			<BookingClientPanel client={draft.client} dialCode={settings?.dialCode} />
+			{/*
+			 * Eligiendo servicio, la tarjeta del cliente va arriba de la lista: es de
+			 * quién es la reserva a la que se le está agregando algo. Mirando la
+			 * reserva, va abajo de la fecha, que es lo que la define.
+			 */}
+			<BookingClientPanel
+				client={draft.client}
+				dialCode={settings?.dialCode}
+				className={cn('sm:order-1', picking ? 'order-1' : 'order-2')}
+			/>
 
-			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
-				<header className="border-b border-border px-4 py-3 sm:px-5 sm:py-4">
+			<div className="contents sm:order-2 sm:flex sm:min-h-0 sm:min-w-0 sm:flex-1 sm:flex-col">
+				<header
+					className={cn(
+						'border-b border-border px-4 py-3 sm:order-1 sm:px-5 sm:py-4',
+						picking ? 'order-2' : 'order-1',
+					)}
+				>
 					{picking ? (
 						<div className="flex items-center gap-2">
 							<Button
@@ -277,7 +295,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 					)}
 				</header>
 
-				<div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+				<div className="order-3 min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
 					{picking ? (
 						<BookingServicePicker
 							services={services}
@@ -351,7 +369,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 				 * panel—. El `env(safe-area-inset-bottom)` es para que no termine abajo
 				 * del indicador de home.
 				 */}
-				<footer className="flex flex-col gap-3 border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:pb-3">
+				<footer className="order-4 flex flex-col gap-3 border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:pb-3">
 					<div className="flex items-baseline justify-between gap-4 sm:block">
 						<p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 							Total

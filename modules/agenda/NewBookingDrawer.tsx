@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { useIsCompact } from '@/lib/useIsCompact';
 import { formatTotals } from '@/lib/money';
 import useCreateBooking from '@/services/appointments/useCreateBooking';
 import useGetSettings from '@/services/settings/useGetSettings';
@@ -206,11 +207,22 @@ const NewBookingForm: React.FC<FormProps> = ({
 
 	return (
 		/*
-		 * Dos columnas desde `sm`; en móvil, una sola cosa abajo de la otra. El
-		 * `relative` sostiene al buscador de clientes, que en pantalla angosta se
-		 * abre encima del formulario en vez de robarle la mitad del ancho.
+		 * Dos columnas desde `sm`; en móvil, todo apilado. El `relative` sostiene
+		 * al buscador de clientes, que en pantalla angosta se abre encima del
+		 * formulario en vez de robarle la mitad del ancho.
+		 *
+		 * El orden de lo apilado no es el del código: en móvil la columna de la
+		 * derecha es `contents`, así que sus hijos son hijos de este mismo flex y
+		 * el `order` de cada uno los intercala con la tarjeta del cliente. Ver el
+		 * comentario de cada pieza.
 		 */
 		<div className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
+			{/*
+			 * Eligiendo servicio, la tarjeta del cliente va arriba de la lista: es lo
+			 * que ya se decidió y lo que da contexto a lo que se está por elegir.
+			 * Mirando la reserva armada, va abajo de la fecha, que es lo que la
+			 * define —y es el orden de la referencia—.
+			 */}
 			<BookingClientPanel
 				client={draft.client}
 				onChange={(next) => {
@@ -220,10 +232,16 @@ const NewBookingForm: React.FC<FormProps> = ({
 				dialCode={settings?.dialCode}
 				open={clientOpen}
 				onOpenChange={onClientOpenChange}
+				className={cn('sm:order-1', showPicker ? 'order-1' : 'order-2')}
 			/>
 
-			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
-				<header className="border-b border-border px-4 py-3 sm:px-5 sm:py-4">
+			<div className="contents sm:order-2 sm:flex sm:min-h-0 sm:min-w-0 sm:flex-1 sm:flex-col">
+				<header
+					className={cn(
+						'border-b border-border px-4 py-3 sm:order-1 sm:px-5 sm:py-4',
+						showPicker ? 'order-2' : 'order-1',
+					)}
+				>
 					{showPicker ? (
 						<div className="flex items-center gap-2">
 							{hasServices && (
@@ -269,7 +287,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 					)}
 				</header>
 
-				<div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+				<div className="order-3 min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
 					{showPicker ? (
 						<BookingServicePicker
 							services={services}
@@ -305,7 +323,14 @@ const NewBookingForm: React.FC<FormProps> = ({
 
 							{draft.client.id === null && (
 								<p className="text-sm text-muted-foreground">
-									Falta el cliente. Elegilo en el panel de la izquierda.
+									{/* Dónde está la tarjeta depende del ancho: al costado en el
+									 * panel de dos columnas, acá arriba cuando está apilado. */}
+									<span className="sm:hidden">
+										Falta el cliente. Elegilo en la tarjeta de arriba.
+									</span>
+									<span className="hidden sm:inline">
+										Falta el cliente. Elegilo en el panel de la izquierda.
+									</span>
 								</p>
 							)}
 
@@ -325,7 +350,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 				 * propia palabra. El `env(safe-area-inset-bottom)` es para que el botón
 				 * no termine abajo del indicador de home.
 				 */}
-				<footer className="flex flex-col gap-3 border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:pb-3">
+				<footer className="order-4 flex flex-col gap-3 border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:pb-3">
 					<div className="flex items-baseline justify-between gap-4 sm:block">
 						<p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 							Total
@@ -379,6 +404,30 @@ const NewBookingDrawer: React.FC<Props> = ({
 	onSaved,
 }) => {
 	const [clientOpen, setClientOpen] = useState(false);
+
+	/**
+	 * En móvil el panel arranca preguntando por el cliente.
+	 *
+	 * En escritorio las dos columnas conviven y el orden lo elige quien reserva:
+	 * el servicio está a la derecha, el cliente a la izquierda, y se llenan en
+	 * cualquier orden. Apilado eso no existe —sólo se ve una cosa por vez— así
+	 * que hay que elegir por dónde empieza, y empieza por el cliente: es de quien
+	 * es la reserva, es lo que la lista larga hace tedioso encontrar después, y
+	 * es lo único sin lo cual no se puede guardar.
+	 *
+	 * Después de elegirlo el buscador se cierra solo y lo que queda a la vista es
+	 * el catálogo de servicios, que es el paso siguiente. Nadie escribió una
+	 * secuencia: son los mismos dos estados de siempre, que apilados se leen uno
+	 * atrás del otro.
+	 */
+	const isCompact = useIsCompact();
+
+	const [lastSeed, setLastSeed] = useState(seed);
+
+	if (seed !== lastSeed) {
+		setLastSeed(seed);
+		setClientOpen(seed !== null && isCompact);
+	}
 
 	return (
 		<Drawer
