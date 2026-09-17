@@ -90,7 +90,7 @@ const ServiceEditor: React.FC<Props> = ({
 		Number.isFinite(price) && draft.price.trim()
 			? `Así lo ve tu cliente: ${formatMoney(price, draft.currency)}.`
 			: null,
-		`Se cobra en ${currencyLabel(draft.currency).toLowerCase()}. Cada servicio puede tener la suya.`,
+		`Se cobra en ${currencyLabel(draft.currency).toLowerCase()}.`,
 	]
 		.filter(Boolean)
 		.join(' ');
@@ -219,11 +219,6 @@ const ServiceEditor: React.FC<Props> = ({
 								<Input
 									value={draft.description}
 									placeholder="Incluye lavado y peinado"
-									/*
-									 * El navegador corta al llegar al tope. Es lo que evita que
-									 * alguien escriba un párrafo entero para enterarse al guardar
-									 * de que no entraba.
-									 */
 									maxLength={SERVICE_TEXT_MAX_LENGTH}
 									onChange={(event) => set('description', event.target.value)}
 								/>
@@ -266,17 +261,6 @@ const ServiceEditor: React.FC<Props> = ({
 									/>
 								</Field>
 							</div>
-
-							{/*
-							 * El precio de una cita ya reservada no cambia con esto: se congela
-							 * al reservar. Decirlo evita la duda de si editar el catálogo
-							 * reescribe el historial y lo facturado.
-							 */}
-							<p className="border-t border-border pt-3 text-xs text-muted-foreground">
-								Cambiar el precio no afecta a las citas ya reservadas: cada una
-								conserva el precio que tenía cuando se agendó.
-							</p>
-
 							{errors.pricing && <SectionError message={errors.pricing} />}
 						</div>
 					) : (
