@@ -30,6 +30,17 @@ const RULER_WIDTH = 56;
 const MIN_COLUMN_WIDTH = 116;
 
 /**
+ * Minutos alrededor de la hora actual en los que la hora en punto no se dibuja.
+ *
+ * La regla mide 60px por hora, y la etiqueta de ahora es una píldora de unos
+ * 18px de alto: a menos de esto, "04:00" y "03:53" se pisan y quedan dos
+ * números encimados donde tendría que haber uno. Desaparece el de la hora en
+ * punto, que es el que se puede deducir —arriba y abajo están sus vecinas— y no
+ * el que dice qué hora es ahora.
+ */
+const HOUR_MARK_CLEARANCE = 15;
+
+/**
  * Las líneas de la grilla se dibujan con degradados y no con elementos.
  *
  * Son 96 líneas por columna: con siete columnas serían más de 600 nodos que solo
@@ -135,6 +146,18 @@ const CalendarGrid: React.FC<Props> = ({
 }) => {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const lastScrolled = useRef<number | null>(null);
+
+	/**
+	 * El minuto que va etiquetado en la regla, o `null` si hoy no está a la vista.
+	 *
+	 * `nowMinute` llega siempre que el reloj corra, incluso mirando otra semana:
+	 * quien decide si hay algo que marcar son las columnas, que son las que saben
+	 * qué día muestran.
+	 */
+	const nowLabelMinute =
+		nowMinute !== null && columns.some((column) => column.isToday)
+			? nowMinute
+			: null;
 
 	/**
 	 * La celda de 15 minutos bajo el cursor.
@@ -282,19 +305,47 @@ const CalendarGrid: React.FC<Props> = ({
 				{/* Cuerpo */}
 				<div className="flex" style={{ height: DAY_MINUTES * PX_PER_MINUTE }}>
 					{/* Regla de horas. */}
+					{/*
+					 * `z-25` y no `z-20`: la línea de ahora también va en 20 y se dibuja
+					 * después, así que con la grilla corrida al costado le pasaba por
+					 * encima a la regla —y ahora, encima de la etiqueta de la hora—. Más
+					 * que 30 no puede ir, que es lo que tapa a la regla cuando se scrollea
+					 * para abajo.
+					 */}
 					<div
-						className="sticky left-0 z-20 shrink-0 border-r border-border bg-background"
+						className="sticky left-0 z-25 shrink-0 border-r border-border bg-background"
 						style={{ width: RULER_WIDTH }}
 					>
-						{HOUR_MARKS.map((minute) => (
+						{HOUR_MARKS.map((minute) =>
+							nowLabelMinute !== null &&
+							Math.abs(minute - nowLabelMinute) < HOUR_MARK_CLEARANCE ? null : (
+								<span
+									key={minute}
+									className="absolute right-2 -translate-y-1/2 font-mono text-[10px] tabular-nums text-muted-foreground"
+									style={{ top: minute * PX_PER_MINUTE }}
+								>
+									{formatMinute(minute)}
+								</span>
+							),
+						)}
+
+						{/*
+						 * La hora actual, en la regla y no colgando de la línea.
+						 *
+						 * Antes el único ancla era un punto al principio de cada columna,
+						 * que con cinco profesionales son cinco puntos diciendo lo mismo y
+						 * ninguno diciendo la hora. Acá está una sola vez, en la columna
+						 * donde se leen todas las demás horas, y se queda pegada a la
+						 * izquierda cuando la grilla se corre al costado.
+						 */}
+						{nowLabelMinute !== null && (
 							<span
-								key={minute}
-								className="absolute right-2 -translate-y-1/2 font-mono text-[10px] tabular-nums text-muted-foreground"
-								style={{ top: minute * PX_PER_MINUTE }}
+								className="absolute right-0 -translate-y-1/2 rounded-full border-2 border-sky-500 bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums text-sky-600 dark:text-sky-400"
+								style={{ top: nowLabelMinute * PX_PER_MINUTE }}
 							>
-								{formatMinute(minute)}
+								{formatMinute(nowLabelMinute)}
 							</span>
-						))}
+						)}
 					</div>
 
 					{columns.map((column) => (
@@ -389,13 +440,10 @@ const CalendarGrid: React.FC<Props> = ({
 
 							{column.isToday && nowMinute !== null && (
 								<div
-									className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
+									className="pointer-events-none absolute inset-x-0 z-20 h-0.5 -translate-y-1/2 bg-sky-500"
 									style={{ top: nowMinute * PX_PER_MINUTE }}
 									aria-hidden="true"
-								>
-									<span className="-ml-1 h-2 w-2 shrink-0 rounded-full bg-sky-500" />
-									<span className="h-px flex-1 bg-sky-500" />
-								</div>
+								/>
 							)}
 						</div>
 					))}
