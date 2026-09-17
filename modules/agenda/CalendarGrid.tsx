@@ -18,7 +18,15 @@ import {
 /** Ancho de la regla de horas. La cabecera reserva lo mismo para no desalinearse. */
 const RULER_WIDTH = 56;
 
-/** Ancho mínimo de una columna. Debajo de esto la grilla scrollea al costado. */
+/**
+ * Ancho mínimo de una columna. Debajo de esto la grilla scrollea al costado.
+ *
+ * Es el piso de "María": todas las columnas reparten el ancho en partes iguales
+ * y ninguna baja de acá, así que un nombre corto no hace una columna angosta.
+ * El techo es la columna misma —lo que no entra se recorta—, y no un ancho
+ * máximo: con un solo profesional, o en la vista de día de `/my-agenda`, que es
+ * de una sola columna, un máximo dejaría media pantalla en blanco.
+ */
 const MIN_COLUMN_WIDTH = 116;
 
 /**
@@ -236,10 +244,21 @@ const CalendarGrid: React.FC<Props> = ({
 						style={{ width: RULER_WIDTH }}
 					/>
 					{columns.map((column) => (
+						/*
+						 * `min-w-0` y no `flex-1` a secas.
+						 *
+						 * Un ítem de flex no baja de su ancho mínimo de contenido, así que
+						 * sin esto la columna de la cabecera medía lo que medía la palabra
+						 * más larga del nombre —"Rodríguez"— mientras la del cuerpo, que no
+						 * tiene texto, repartía en partes iguales. Las dos filas se
+						 * dibujaban con anchos distintos y los nombres terminaban corridos
+						 * respecto de sus citas. El nombre se recorta; la columna no se
+						 * estira.
+						 */
 						<div
 							key={column.key}
 							className={cn(
-								'flex-1 border-r border-border text-center last:border-r-0',
+								'min-w-0 flex-1 border-r border-border text-center last:border-r-0',
 								column.isToday && 'bg-muted/40',
 							)}
 						>
@@ -279,14 +298,16 @@ const CalendarGrid: React.FC<Props> = ({
 					</div>
 
 					{columns.map((column) => (
+						/* Las mismas reglas de ancho que la cabecera. Cualquier diferencia
+						   acá son los nombres corridos de sus columnas. */
 						<div
 							key={column.key}
+							style={GRID_LINES}
 							className={cn(
-								'relative flex-1 border-r border-border last:border-r-0',
+								'relative min-w-0 flex-1 border-r border-border last:border-r-0',
 								column.isToday && 'bg-muted/20',
 								onSlotClick && 'cursor-pointer',
 							)}
-							style={GRID_LINES}
 							onClick={(event) => handleClick(column, event)}
 							onMouseMove={(event) => handleMove(column, event)}
 							onMouseLeave={() =>

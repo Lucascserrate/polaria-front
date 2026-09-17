@@ -372,7 +372,9 @@ const AgendaPage = () => {
 				</>
 			),
 			header: (
-				<div className="flex items-center justify-center gap-2">
+				/* `min-w-0` para que el nombre se recorte en vez de ensanchar la
+				   columna: ver `CalendarGrid`, donde se decide el ancho. */
+				<div className="flex min-w-0 items-center justify-center gap-2">
 					{column.staffId && (
 						/*
 						 * Las iniciales en su color, el mismo con el que se pintan sus citas
@@ -391,7 +393,9 @@ const AgendaPage = () => {
 							{initialsOf(column.name)}
 						</span>
 					)}
-					<span className="truncate text-sm font-medium">{column.name}</span>
+					<span className="min-w-0 truncate text-sm font-medium">
+						{column.name}
+					</span>
 					{/* Tiene citas pero no le toca trabajar: si no se dice, su columna
 					    cerrada parece un error de horario. */}
 					{column.offDuty && (
