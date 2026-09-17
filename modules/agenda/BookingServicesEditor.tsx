@@ -189,7 +189,7 @@ const BookingServicesEditor: React.FC<Props> = ({
 								 * columna de ancho fijo para cuatro caracteres se comía el
 								 * espacio del nombre.
 								 */}
-								<div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+								<div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
 									<span className="tabular-nums">{timeOf(index)}</span>
 									<span aria-hidden="true">·</span>
 									<span>{formatDuration(service?.durationMinutes ?? 0)}</span>
@@ -206,10 +206,17 @@ const BookingServicesEditor: React.FC<Props> = ({
 										disabled={disabled || eligible.length === 0}
 										onValueChange={(value) => replaceStaff(index, value)}
 									>
+										{/*
+										 * `min-w-0` para que el nombre se recorte en vez de
+										 * empujar la fila: en un teléfono, "11:00 · 1 h 30 min ·"
+										 * más un nombre largo no entra, y sin esto el renglón
+										 * crecía hacia afuera y aparecía scroll horizontal en
+										 * todo el panel.
+										 */}
 										<SelectTrigger
 											size="sm"
 											aria-label="Profesional"
-											className="h-auto gap-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none data-[size=sm]:h-auto dark:bg-transparent dark:hover:bg-transparent"
+											className="h-auto min-w-0 gap-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none data-[size=sm]:h-auto dark:bg-transparent dark:hover:bg-transparent"
 										>
 											<SelectValue placeholder="Elegir profesional" />
 										</SelectTrigger>

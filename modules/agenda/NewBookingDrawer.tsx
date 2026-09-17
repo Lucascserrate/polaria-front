@@ -21,6 +21,7 @@ import useGetStaff from '@/services/staff/useGetStaff';
 import useGetSlotsForBooking from '@/services/availability/useGetSlotsForBooking';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import BookingClientPanel from './BookingClientPanel';
+import BookingMobileBar from './BookingMobileBar';
 import BookingServicePicker from './BookingServicePicker';
 import BookingServicesEditor from './BookingServicesEditor';
 import BookingWhenField from './BookingWhenField';
@@ -204,7 +205,12 @@ const NewBookingForm: React.FC<FormProps> = ({
 	};
 
 	return (
-		<div className="flex h-full min-h-0">
+		/*
+		 * Dos columnas desde `sm`; en móvil, una sola cosa abajo de la otra. El
+		 * `relative` sostiene al buscador de clientes, que en pantalla angosta se
+		 * abre encima del formulario en vez de robarle la mitad del ancho.
+		 */
+		<div className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
 			<BookingClientPanel
 				client={draft.client}
 				onChange={(next) => {
@@ -216,8 +222,8 @@ const NewBookingForm: React.FC<FormProps> = ({
 				onOpenChange={onClientOpenChange}
 			/>
 
-			<div className="flex min-w-0 flex-1 flex-col">
-				<header className="border-b border-border px-5 py-4">
+			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
+				<header className="border-b border-border px-4 py-3 sm:px-5 sm:py-4">
 					{showPicker ? (
 						<div className="flex items-center gap-2">
 							{hasServices && (
@@ -230,7 +236,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 									<ChevronLeft className="size-4" />
 								</Button>
 							)}
-							<h2 className="text-2xl font-semibold tracking-tight">
+							<h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
 								{hasServices ? 'Añadir un servicio' : 'Seleccionar un servicio'}
 							</h2>
 						</div>
@@ -263,7 +269,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 					)}
 				</header>
 
-				<div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+				<div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
 					{showPicker ? (
 						<BookingServicePicker
 							services={services}
@@ -312,25 +318,40 @@ const NewBookingForm: React.FC<FormProps> = ({
 					)}
 				</div>
 
-				<footer className="flex items-center justify-between gap-4 border-t border-border px-5 py-3">
-					<div>
+				{/*
+				 * En móvil el pie se apila: el total en un renglón y los botones en
+				 * otro. Con todo en una sola fila, a 375px el total y dos botones se
+				 * repartían el ancho hasta que "Guardar" quedaba más angosto que su
+				 * propia palabra. El `env(safe-area-inset-bottom)` es para que el botón
+				 * no termine abajo del indicador de home.
+				 */}
+				<footer className="flex flex-col gap-3 border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:pb-3">
+					<div className="flex items-baseline justify-between gap-4 sm:block">
 						<p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 							Total
 						</p>
-						<p className="text-xl font-semibold tabular-nums">
-							{formatTotals(draft.summary.totals, currency)}
-						</p>
-						<p className="text-xs text-muted-foreground tabular-nums">
-							{draft.summary.totalMinutes} min
-						</p>
+						<div className="flex items-baseline gap-2 sm:block">
+							<p className="text-xl font-semibold tabular-nums">
+								{formatTotals(draft.summary.totals, currency)}
+							</p>
+							<p className="text-xs text-muted-foreground tabular-nums">
+								{draft.summary.totalMinutes} min
+							</p>
+						</div>
 					</div>
 
 					<div className="flex items-center gap-2">
 						<Button variant="ghost" disabled={busy} onClick={onClose}>
 							Cancelar
 						</Button>
+						{/*
+						 * Se queda con el ancho que sobra en móvil. Es la acción del panel
+						 * y la que se toca con el pulgar; "Cancelar" ya tiene además la
+						 * "X" de arriba.
+						 */}
 						<Button
 							size="lg"
+							className="flex-1 sm:flex-none"
 							disabled={!canSave}
 							onClick={() => void handleSave()}
 						>
@@ -404,6 +425,8 @@ const NewBookingDrawer: React.FC<Props> = ({
 						Elegí el servicio, el horario y el cliente.
 					</DrawerDescription>
 				</DrawerHeader>
+
+				<BookingMobileBar title="Nueva reserva" onClose={onClose} />
 
 				{seed && (
 					<NewBookingForm

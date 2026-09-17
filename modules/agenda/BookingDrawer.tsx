@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { formatTotals } from '@/lib/money';
 import { formatDuration } from '@/lib/duration';
 import BookingClientPanel from './BookingClientPanel';
+import BookingMobileBar from './BookingMobileBar';
 import BookingNotices from './BookingNotices';
 import BookingServicePicker from './BookingServicePicker';
 import BookingServicesField from './BookingServicesField';
@@ -222,18 +223,24 @@ const BookingEditor: React.FC<EditorProps> = ({
 
 	if (isLoading || !booking) {
 		return (
-			<div className="flex h-full items-center justify-center">
+			<div className="flex flex-1 items-center justify-center">
 				<Spinner />
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex h-full min-h-0">
+		/*
+		 * Dos columnas desde `sm`; en móvil, una sola cosa abajo de la otra. El
+		 * `relative` es para el buscador de clientes de la reserva nueva, que se
+		 * abre encima del formulario: acá el cliente es de lectura, pero la columna
+		 * es el mismo componente y la referencia tiene que existir igual.
+		 */
+		<div className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
 			<BookingClientPanel client={draft.client} dialCode={settings?.dialCode} />
 
-			<div className="flex min-w-0 flex-1 flex-col">
-				<header className="border-b border-border px-5 py-4">
+			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
+				<header className="border-b border-border px-4 py-3 sm:px-5 sm:py-4">
 					{picking ? (
 						<div className="flex items-center gap-2">
 							<Button
@@ -244,7 +251,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 							>
 								<ChevronLeft className="size-4" />
 							</Button>
-							<h2 className="text-2xl font-semibold tracking-tight">
+							<h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
 								Añadir un servicio
 							</h2>
 						</div>
@@ -270,7 +277,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 					)}
 				</header>
 
-				<div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+				<div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
 					{picking ? (
 						<BookingServicePicker
 							services={services}
@@ -336,26 +343,36 @@ const BookingEditor: React.FC<EditorProps> = ({
 					)}
 				</div>
 
-				<footer className="flex items-center justify-between gap-4 border-t border-border px-5 py-3">
-					<div>
+				{/*
+				 * En móvil el pie se apila: el total en un renglón y los botones en
+				 * otro. Con todo en una sola fila, a 375px el total y dos botones se
+				 * repartían el ancho hasta que "Finalizar" quedaba más angosto que su
+				 * propia palabra —que era, justamente, el botón por el que se abre este
+				 * panel—. El `env(safe-area-inset-bottom)` es para que no termine abajo
+				 * del indicador de home.
+				 */}
+				<footer className="flex flex-col gap-3 border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:pb-3">
+					<div className="flex items-baseline justify-between gap-4 sm:block">
 						<p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 							Total
 						</p>
-						<p className="text-xl font-semibold tabular-nums">
-							{formatTotals(
-								draft.hasChanges
-									? draft.summary.totals
-									: (booking.totals ?? []),
-								currency,
-							)}
-						</p>
-						<p className="text-xs tabular-nums text-muted-foreground">
-							{formatDuration(
-								draft.hasChanges
-									? draft.summary.totalMinutes
-									: (booking.totalDuration ?? 0),
-							)}
-						</p>
+						<div className="flex items-baseline gap-2 sm:block">
+							<p className="text-xl font-semibold tabular-nums">
+								{formatTotals(
+									draft.hasChanges
+										? draft.summary.totals
+										: (booking.totals ?? []),
+									currency,
+								)}
+							</p>
+							<p className="text-xs tabular-nums text-muted-foreground">
+								{formatDuration(
+									draft.hasChanges
+										? draft.summary.totalMinutes
+										: (booking.totalDuration ?? 0),
+								)}
+							</p>
+						</div>
 					</div>
 
 					{draft.hasChanges ? (
@@ -373,6 +390,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 							</Button>
 							<Button
 								size="lg"
+								className="flex-1 sm:flex-none"
 								disabled={!canSave}
 								onClick={() => void handleSave()}
 							>
@@ -381,7 +399,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 							</Button>
 						</div>
 					) : (
-						<div className="flex items-center gap-2">
+						<div className="flex items-center gap-2 max-sm:justify-between">
 							{/*
 							 * Finalizar vive acá y no en un menú aparte porque es lo que se
 							 * viene a hacer: se abre la cita del cliente que está sentado en
@@ -394,8 +412,14 @@ const BookingEditor: React.FC<EditorProps> = ({
 							 * puede ser ambigua. Primero se guarda o se descarta.
 							 */}
 							{isPendingResolution ? (
+								/*
+								 * Se queda con el ancho que sobra en móvil: es lo que se viene
+								 * a hacer acá y lo que se toca con el pulgar. "Cerrar" no lo
+								 * necesita —además está la "X" de arriba—.
+								 */
 								<Button
 									size="lg"
+									className="flex-1 sm:flex-none"
 									disabled={busy}
 									onClick={() => void handleFinish()}
 								>
@@ -461,6 +485,8 @@ const BookingDrawer: React.FC<Props> = ({
 					Cambiá el horario o los servicios de esta cita.
 				</DrawerDescription>
 			</DrawerHeader>
+
+			<BookingMobileBar title="Reserva" onClose={onClose} />
 
 			{appointmentId !== null && (
 				<BookingEditor

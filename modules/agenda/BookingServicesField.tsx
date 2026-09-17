@@ -64,7 +64,7 @@ const BookingServicesField: React.FC<Props> = ({
 	onAddRequest,
 	disabled = false,
 }) => (
-	<div className="space-y-2 px-2">
+	<div className="space-y-2 sm:px-2">
 		<p className="flex items-center gap-2 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 			<BookOpen className="h-3 w-3" />
 			Servicios · {items.length}

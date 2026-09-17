@@ -49,6 +49,13 @@ interface Props {
  * Cerrado ocupa lo que ocupa un botón; abierto se lleva el ancho que necesita
  * una búsqueda con su lista de resultados.
  *
+ * En móvil no es una columna: es una tarjeta ancha arriba del formulario. Al
+ * costado no entra —serían 176px de los 375 que hay— y partir en dos una
+ * pantalla angosta deja a las dos mitades sin lugar. Arriba ocupa un renglón,
+ * que es lo que ocupa el dato: un nombre y un teléfono. Buscar sí necesita la
+ * pantalla entera, así que el buscador se abre encima del formulario en vez de
+ * empujarlo.
+ *
  * El cliente se **elige**, no se escribe. Antes era un campo de texto libre y el
  * nombre escrito creaba un cliente al guardar: ése era el último camino del
  * sistema que producía clientes sin teléfono, y como la unicidad es `(negocio,
@@ -68,6 +75,9 @@ const BookingClientPanel: React.FC<Props> = ({
 	/** En lectura no hay nada que buscar: la columna es sólo la ficha. */
 	const editable = Boolean(onChange);
 
+	/** El buscador a la vista: el único estado que cambia el tamaño del panel. */
+	const searching = editable && open && !client.id;
+
 	const debouncedTerm = useDebouncedValue(term);
 
 	/*
@@ -78,7 +88,7 @@ const BookingClientPanel: React.FC<Props> = ({
 	 */
 	const { data, isFetching } = useGetClients(
 		{ search: debouncedTerm.trim(), limit: MAX_MATCHES },
-		{ enabled: editable && open && !client.id },
+		{ enabled: searching },
 	);
 
 	const matches = data?.items ?? [];
@@ -86,8 +96,16 @@ const BookingClientPanel: React.FC<Props> = ({
 	return (
 		<aside
 			className={cn(
-				'flex shrink-0 flex-col border-r border-border bg-muted/30 transition-[width] duration-200',
-				editable && open && !client.id ? 'w-72' : 'w-44',
+				'flex shrink-0 flex-col border-b border-border bg-muted/30 transition-[width] duration-200 sm:border-r sm:border-b-0',
+				/*
+				 * Buscando, en móvil, se pone encima del formulario: la lista de
+				 * clientes necesita el alto entero y no hay de dónde sacárselo. Desde
+				 * `sm` vuelve a ser la columna que se ensancha, que es lo que el panel
+				 * de dos columnas espera.
+				 */
+				searching
+					? 'absolute inset-0 z-20 w-full bg-popover sm:static sm:w-72 sm:bg-muted/30'
+					: 'w-full sm:w-44',
 			)}
 		>
 			{client.id || !editable ? (
@@ -106,25 +124,36 @@ const BookingClientPanel: React.FC<Props> = ({
 				/>
 			) : !open ? (
 				/*
-				 * Ocupa la columna entera y no sólo su contenido.
+				 * En escritorio ocupa la columna entera y no sólo su contenido.
 				 *
 				 * Es el único destino de esta columna mientras no haya cliente, así que
 				 * todo lo que se ve a la izquierda tiene que llevar ahí: un botón del
 				 * alto de su texto deja tres cuartos de columna que parecen clickeables
 				 * y no hacen nada. El contenido se queda arriba, que es donde se lo
 				 * busca.
+				 *
+				 * En móvil no hay columna que llenar: es la misma tarjeta con la que se
+				 * muestra el cliente elegido, con lo que falta en vez del nombre.
 				 */
 				<button
 					type="button"
 					onClick={() => onOpenChange?.(true)}
-					className="flex flex-1 flex-col items-center gap-2 px-4 pt-8 text-center transition-colors hover:bg-muted/60"
+					className="flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60 sm:flex-1 sm:flex-col sm:items-center sm:gap-2 sm:pt-8 sm:text-center"
 				>
-					<span className="flex size-12 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border">
+					<span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border sm:size-12">
 						<UserRoundPlus className="size-5" />
 					</span>
-					<span className="text-sm font-semibold">Añadir cliente</span>
-					<span className="text-xs leading-snug text-muted-foreground">
-						Toda reserva es de alguien: hace falta para poder avisarle.
+
+					{/*
+					 * El envoltorio existe sólo en móvil, para agrupar el texto al
+					 * costado del ícono. Desde `sm` desaparece con `contents` y las dos
+					 * líneas vuelven a ser hijas directas de la columna.
+					 */}
+					<span className="min-w-0 sm:contents">
+						<span className="block text-sm font-semibold">Añadir cliente</span>
+						<span className="block text-xs leading-snug text-muted-foreground">
+							Toda reserva es de alguien: hace falta para poder avisarle.
+						</span>
 					</span>
 				</button>
 			) : (
@@ -237,54 +266,81 @@ const BookingClientPanel: React.FC<Props> = ({
 	);
 };
 
-/** El cliente de la reserva. Con `onClear`, además, la salida para cambiarlo. */
+/**
+ * El cliente de la reserva. Con `onClear`, además, la salida para cambiarlo.
+ *
+ * La misma información en dos formas: en móvil una fila —avatar chico, nombre y
+ * teléfono al costado, "Cambiar" al final— y desde `sm` la ficha centrada de la
+ * columna. Los envoltorios con `sm:contents` desaparecen en escritorio, así que
+ * ahí cada línea vuelve a ser hija directa de la columna y se apilan como
+ * siempre.
+ */
 const Chosen: React.FC<{
 	client: DraftClient;
 	dialCode?: string;
 	onClear?: () => void;
 }> = ({ client, dialCode, onClear }) => (
-	<div className="flex flex-1 flex-col items-center gap-2 px-4 pt-8 text-center">
+	<div className="flex items-center gap-3 px-4 py-3 sm:flex-1 sm:flex-col sm:gap-2 sm:pt-8 sm:text-center">
 		{client.id ? (
-			<ClientAvatar client={{ id: client.id, name: client.name }} size="lg" />
+			<ClientAvatar
+				client={{ id: client.id, name: client.name }}
+				size="lg"
+				/*
+				 * El tamaño de `lg` es el de la ficha de escritorio: en la fila de
+				 * móvil, un avatar de 80px sería más alto que las tres líneas que
+				 * acompaña.
+				 */
+				className="size-10 text-sm sm:size-20 sm:text-2xl"
+			/>
 		) : (
-			<span className="flex size-20 items-center justify-center rounded-full bg-muted">
-				<UserRound className="size-7 text-muted-foreground" />
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted sm:size-20">
+				<UserRound className="size-5 text-muted-foreground sm:size-7" />
 			</span>
 		)}
 
-		<p className="mt-1 font-semibold break-words">
-			{client.name || 'Sin cliente'}
-		</p>
-		<p className="text-xs tabular-nums text-muted-foreground">
-			{client.phone
-				? formatClientPhone(client.phone, dialCode)
-				: 'Sin teléfono'}
-		</p>
+		<div className="min-w-0 flex-1 sm:contents">
+			<p className="font-semibold break-words max-sm:truncate sm:mt-1">
+				{client.name || 'Sin cliente'}
+			</p>
 
-		{/*
-		 * En una pestaña nueva, y no en ésta.
-		 *
-		 * La ficha es otra ruta, así que ir en la misma pestaña desmonta el drawer
-		 * y se lleva la reserva a medio armar. Que sea otra pestaña además es lo
-		 * que hace útil al enlace: se mira el historial de la persona *mientras* se
-		 * le arma el turno, que es justamente cuando interesa saber si suele
-		 * faltar.
-		 */}
-		{client.id !== null && (
-			<a
-				href={clientRoute(client.id)}
-				target="_blank"
-				rel="noopener noreferrer"
-				className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-			>
-				Ver ficha
-				<ExternalLink className="size-3" aria-hidden="true" />
-				<span className="sr-only">(se abre en una pestaña nueva)</span>
-			</a>
-		)}
+			<div className="flex items-center gap-2 sm:contents">
+				<p className="truncate text-xs tabular-nums text-muted-foreground">
+					{client.phone
+						? formatClientPhone(client.phone, dialCode)
+						: 'Sin teléfono'}
+				</p>
+
+				{/*
+				 * En una pestaña nueva, y no en ésta.
+				 *
+				 * La ficha es otra ruta, así que ir en la misma pestaña desmonta el
+				 * drawer y se lleva la reserva a medio armar. Que sea otra pestaña
+				 * además es lo que hace útil al enlace: se mira el historial de la
+				 * persona *mientras* se le arma el turno, que es justamente cuando
+				 * interesa saber si suele faltar.
+				 */}
+				{client.id !== null && (
+					<a
+						href={clientRoute(client.id)}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground sm:mt-1"
+					>
+						Ver ficha
+						<ExternalLink className="size-3" aria-hidden="true" />
+						<span className="sr-only">(se abre en una pestaña nueva)</span>
+					</a>
+				)}
+			</div>
+		</div>
 
 		{onClear && (
-			<Button variant="ghost" size="sm" className="mt-2" onClick={onClear}>
+			<Button
+				variant="ghost"
+				size="sm"
+				className="shrink-0 sm:mt-2"
+				onClick={onClear}
+			>
 				Cambiar
 			</Button>
 		)}
