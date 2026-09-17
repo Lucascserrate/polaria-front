@@ -12,7 +12,18 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-	title: 'Polaria',
+	/*
+	 * La pestaña dice dónde está parado el usuario, y después de qué producto.
+	 *
+	 * `template` es el sufijo que Next le agrega a lo que declare cada sección en
+	 * su propio layout, así que el nombre se escribe una sola vez —el mismo que
+	 * está en el menú— y el "- Polaria" sale solo. `default` es lo que queda
+	 * donde no hay sección que nombrar: la pantalla de entrada.
+	 */
+	title: {
+		default: 'Polaria',
+		template: '%s - Polaria',
+	},
 	description: 'AI Booking Assistant',
 };
 

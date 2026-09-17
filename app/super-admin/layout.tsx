@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
+
+export const metadata: Metadata = { title: 'Soporte' };
 
 /**
  * El panel de soporte no usa `AppShell` —no tiene menú lateral ni barra de

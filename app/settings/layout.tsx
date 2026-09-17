@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import AppShell from '@/components/AppShell';
+
+export const metadata: Metadata = { title: 'Configuración' };
 
 interface Props {
 	children: React.ReactNode;

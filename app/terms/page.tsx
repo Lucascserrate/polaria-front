@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { ROUTES } from '@/constants/routes';
 import { Separator } from '@radix-ui/react-select';
 import Link from 'next/link';
 import { LuArrowLeft } from 'react-icons/lu';
+
+export const metadata: Metadata = { title: 'Términos y Condiciones' };
 
 export default function TermsAndConditions() {
 	const homeHref =
