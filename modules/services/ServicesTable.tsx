@@ -18,7 +18,6 @@ import type { Service } from '@/types/services.types';
 interface Props {
 	services: Service[];
 	/** La del negocio: los precios se escriben en su moneda, no en dólares. */
-	currency: string;
 }
 
 /**
@@ -33,7 +32,7 @@ interface Props {
  * fila y no una columna propia: sería una columna casi siempre vacía, que es la
  * clase de columna que se deja de leer justo cuando dice algo.
  */
-const ServicesTable: React.FC<Props> = ({ services, currency }) => {
+const ServicesTable: React.FC<Props> = ({ services }) => {
 	if (services.length === 0) {
 		return (
 			<div className="rounded-xl border border-border py-12 text-center">
@@ -88,7 +87,7 @@ const ServicesTable: React.FC<Props> = ({ services, currency }) => {
 									{`${service.durationMinutes} min`}
 								</TableCell>
 								<TableCell className="text-right font-medium tabular-nums">
-									{formatMoney(Number(service.price), currency)}
+									{formatMoney(Number(service.price), service.currency)}
 								</TableCell>
 							</TableRow>
 						))}
@@ -116,7 +115,7 @@ const ServicesTable: React.FC<Props> = ({ services, currency }) => {
 								)}
 							</span>
 							<span className="shrink-0 font-medium tabular-nums">
-								{formatMoney(Number(service.price), currency)}
+								{formatMoney(Number(service.price), service.currency)}
 							</span>
 						</Link>
 					</li>

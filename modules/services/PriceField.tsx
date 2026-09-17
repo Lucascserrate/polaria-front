@@ -14,7 +14,7 @@ interface Props {
 	/** El precio como lo escribe el usuario, sin convertir. */
 	value: string;
 	onChange: (value: string) => void;
-	/** La del negocio, no la del servicio: ver el comentario de abajo. */
+	/** La de **este** servicio, no la del negocio. */
 	currency: string;
 	onCurrencyChange: (currency: string) => void;
 	/** Lo inyecta `Field`. */
@@ -22,18 +22,20 @@ interface Props {
 }
 
 /**
- * El precio y la moneda en la que se escribe.
+ * El precio y la moneda en la que se cobra.
  *
- * La moneda es del negocio, no de este servicio: se guarda en el tenant y la
- * comparten todos los precios. Aun así el selector vive **acá** y no en una
- * pantalla de configuración, porque una moneda equivocada no se ve en ningún
- * lado salvo al lado de un precio. Mientras no estuvo acá, un negocio colombiano
- * publicaba sus precios en bolivianos sin enterarse: el sistema deducía la
- * moneda de la zona horaria y nadie la veía nunca para desmentirla.
+ * La moneda es de **este** servicio y no una configuración del negocio: una
+ * psicóloga cobra las sesiones presenciales en bolivianos y las online para el
+ * exterior en dólares, en el mismo catálogo. Un precio sin su moneda al lado no
+ * es un precio.
  *
- * Por eso se guarda apenas se elige, y no junto al servicio: el servicio se
- * guarda con el botón de la cabecera y se puede abandonar a medio escribir; la
- * moneda del negocio no es parte de ese borrador.
+ * Va pegado al campo y no en otra pantalla porque es la única parte del producto
+ * donde una moneda equivocada se ve. Mientras la moneda salía de la zona horaria
+ * y nadie la miraba nunca, un negocio colombiano publicaba sus precios en
+ * bolivianos sin enterarse.
+ *
+ * Se guarda con el servicio, con el botón de la cabecera: es parte del mismo
+ * borrador que el precio, y abandonar la pantalla no deja nada escrito.
  */
 const PriceField: React.FC<Props> = ({
 	value,

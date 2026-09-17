@@ -8,15 +8,18 @@ import {
 } from './bookingDraft';
 
 const SERVICES = [
-	{ id: 'corte', durationMinutes: 30, price: 50 },
-	{ id: 'barba', durationMinutes: 30, price: 40 },
-	{ id: 'cejas', durationMinutes: 20, price: 25 },
+	{ id: 'corte', durationMinutes: 30, price: 50, currency: 'BOB' },
+	{ id: 'barba', durationMinutes: 30, price: 40, currency: 'BOB' },
+	{ id: 'cejas', durationMinutes: 20, price: 25, currency: 'BOB' },
+	// En dólares a propósito: un catálogo puede cobrar en dos monedas.
+	{ id: 'online', durationMinutes: 40, price: 30, currency: 'USD' },
 ];
 
 const segment = (
 	serviceId: string,
 	staffId: string | null,
 	price = 50,
+	currency = 'BOB',
 ): AppointmentSegment => ({
 	staffId,
 	staffName: staffId,
@@ -25,6 +28,7 @@ const segment = (
 	startTime: '2026-08-24T13:00:00.000Z',
 	endTime: '2026-08-24T13:30:00.000Z',
 	price,
+	currency,
 	durationMinutes: 30,
 });
 
@@ -85,7 +89,11 @@ describe('summarizeDraft', () => {
 				],
 				services: SERVICES,
 			}),
-		).toEqual({ totalMinutes: 50, totalPrice: 75, unknownServiceIds: [] });
+		).toEqual({
+			totalMinutes: 50,
+			totals: [{ currency: 'BOB', amount: 75 }],
+			unknownServiceIds: [],
+		});
 	});
 
 	it('conserva el precio pactado de lo que la reserva ya tenía', () => {
@@ -95,11 +103,40 @@ describe('summarizeDraft', () => {
 				{ serviceId: 'barba', staffId: 'diego' },
 			],
 			services: SERVICES,
-			agreedPrices: new Map([['corte', 45]]),
+			agreedPrices: new Map([['corte', { price: 45, currency: 'BOB' }]]),
 		});
 
 		// 45 pactado del corte + 40 de hoy de la barba, que se agrega ahora.
-		expect(summary.totalPrice).toBe(85);
+		expect(summary.totals).toEqual([{ currency: 'BOB', amount: 85 }]);
+	});
+
+	it('no mezcla monedas distintas en un solo total', () => {
+		// Una consulta presencial y una sesión online para el exterior entran en la
+		// misma reserva: sumarlas daría un número que no se le puede cobrar a nadie.
+		const summary = summarizeDraft({
+			items: [
+				{ serviceId: 'corte', staffId: 'diego' },
+				{ serviceId: 'online', staffId: 'diego' },
+			],
+			services: SERVICES,
+		});
+
+		expect(summary.totals).toEqual([
+			{ currency: 'BOB', amount: 50 },
+			{ currency: 'USD', amount: 30 },
+		]);
+	});
+
+	it('conserva la moneda pactada aunque el servicio haya cambiado de moneda', () => {
+		// Pasar un servicio a dólares no puede reescribir lo que ya se acordó: eso
+		// convertiría Bs 300 en USD 300.
+		const summary = summarizeDraft({
+			items: [{ serviceId: 'online', staffId: 'diego' }],
+			services: SERVICES,
+			agreedPrices: new Map([['online', { price: 300, currency: 'BOB' }]]),
+		});
+
+		expect(summary.totals).toEqual([{ currency: 'BOB', amount: 300 }]);
 	});
 
 	it('avisa del servicio que ya no existe en lugar de sumar de menos en silencio', () => {
@@ -116,9 +153,11 @@ describe('summarizeDraft', () => {
 	});
 
 	it('un borrador vacío no suma nada', () => {
-		expect(
-			summarizeDraft({ items: [], services: SERVICES }),
-		).toEqual({ totalMinutes: 0, totalPrice: 0, unknownServiceIds: [] });
+		expect(summarizeDraft({ items: [], services: SERVICES })).toEqual({
+			totalMinutes: 0,
+			totals: [],
+			unknownServiceIds: [],
+		});
 	});
 });
 

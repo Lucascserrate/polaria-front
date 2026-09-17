@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { formatMoney } from '@/lib/money';
+import { formatTotals } from '@/lib/money';
 import useCreateBooking from '@/services/appointments/useCreateBooking';
 import useGetSettings from '@/services/settings/useGetSettings';
 import useGetServices from '@/services/services/useGetServices';
@@ -268,7 +268,6 @@ const NewBookingForm: React.FC<FormProps> = ({
 						<BookingServicePicker
 							services={services}
 							staff={staff}
-							currency={currency}
 							onPick={addService}
 							pickedIds={draft.items.map((item) => item.serviceId)}
 						/>
@@ -319,7 +318,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 							Total
 						</p>
 						<p className="text-xl font-semibold tabular-nums">
-							{formatMoney(draft.summary.totalPrice, currency)}
+							{formatTotals(draft.summary.totals, currency)}
 						</p>
 						<p className="text-xs text-muted-foreground tabular-nums">
 							{draft.summary.totalMinutes} min

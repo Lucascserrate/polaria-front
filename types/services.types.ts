@@ -13,6 +13,13 @@ export interface Service {
 	description?: string;
 	durationMinutes: number;
 	price: number;
+	/**
+	 * La moneda de `price`, en ISO 4217.
+	 *
+	 * Es del servicio y no del negocio: un catálogo puede cobrar una consulta
+	 * presencial en bolivianos y una sesión online en dólares.
+	 */
+	currency: string;
 	timezone?: string;
 	isActive?: boolean;
 	/** Ausente en servicios creados antes de que esto existiera: son reservables. */
@@ -26,6 +33,8 @@ export interface CreateServiceDto {
 	description?: string;
 	durationMinutes: number;
 	price: number;
+	/** Ausente hereda la moneda por defecto del negocio. */
+	currency?: string;
 	timezone: string;
 	isActive?: boolean;
 	bookingPolicy?: ServiceBookingPolicy;

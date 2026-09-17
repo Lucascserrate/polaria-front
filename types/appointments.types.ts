@@ -1,3 +1,5 @@
+import type { MoneyTotal } from '@/lib/money';
+
 export type AppointmentStatus =
 	'pending' | 'confirmed' | 'completed' | 'cancelled';
 
@@ -27,6 +29,8 @@ export interface AppointmentSegmentApi {
 	endTime: string;
 	/** Lo pactado al reservar, no lo que el servicio cuesta hoy. */
 	price: number;
+	/** La moneda de `price`, también la pactada al reservar. */
+	currency: string;
 	durationMinutes: number;
 }
 
@@ -56,7 +60,13 @@ export interface AppointmentApi {
 export interface AppointmentDetailApi extends AppointmentApi {
 	segments: AppointmentSegmentApi[];
 	client: { id: string; name: string | null; phone: string | null } | null;
-	totalPrice: number;
+	/**
+	 * El total de la cita, una entrada por moneda.
+	 *
+	 * Lista y no número porque una reserva puede mezclar monedas: una consulta en
+	 * bolivianos y una sesión online en dólares entran en la misma cita.
+	 */
+	totals: MoneyTotal[];
 }
 
 /** Las citas de un rango de días, para la agenda semanal. */
@@ -99,6 +109,8 @@ export interface AppointmentSegment {
 	startTime: string;
 	endTime: string;
 	price: number;
+	/** La moneda de `price`, congelada al reservar con él. */
+	currency: string;
 	durationMinutes: number;
 }
 

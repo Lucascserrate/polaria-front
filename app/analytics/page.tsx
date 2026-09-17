@@ -4,7 +4,10 @@ import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import PeriodSelector from '@/modules/analytics/PeriodSelector';
 import AnalyticsSummary from '@/modules/analytics/AnalyticsSummary';
-import AnalyticsTimeline from '@/modules/analytics/AnalyticsTimeline';
+import AnalyticsTimeline, {
+	currenciesIn,
+} from '@/modules/analytics/AnalyticsTimeline';
+import { currencyLabel } from '@/lib/currencies';
 import StaffRanking from '@/modules/analytics/StaffRanking';
 import ServiceRanking from '@/modules/analytics/ServiceRanking';
 import { formatRange } from '@/modules/analytics/utils/format';
@@ -135,10 +138,21 @@ const AnalyticsPage = () => {
 							<h2 className="mb-4 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 								Evolución
 							</h2>
-							<AnalyticsTimeline
-								timeline={data.timeline}
-								currency={data.currency}
-							/>
+							<div className="space-y-6">
+								{currenciesIn(data.timeline, data.currency).map((currency) => (
+									<div key={currency} className="space-y-2">
+										{currenciesIn(data.timeline!, data.currency).length > 1 && (
+											<p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+												{currencyLabel(currency)} · {currency}
+											</p>
+										)}
+										<AnalyticsTimeline
+											timeline={data.timeline!}
+											currency={currency}
+										/>
+									</div>
+								))}
+							</div>
 						</section>
 					)}
 
@@ -152,20 +166,14 @@ const AnalyticsPage = () => {
 							<h2 className="mb-4 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 								Profesionales
 							</h2>
-							<StaffRanking
-								entries={data.staffRanking}
-								currency={data.currency}
-							/>
+							<StaffRanking entries={data.staffRanking} />
 						</section>
 
 						<section className="rounded-xl border border-border bg-card p-6">
 							<h2 className="mb-4 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 								Servicios
 							</h2>
-							<ServiceRanking
-								entries={data.serviceRanking}
-								currency={data.currency}
-							/>
+							<ServiceRanking entries={data.serviceRanking} />
 						</section>
 					</div>
 				</div>

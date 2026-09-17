@@ -9,6 +9,7 @@ import type { Appointment } from '@/types/appointments.types';
 import useGetSettings from '@/services/settings/useGetSettings';
 import { describeReminder } from './utils/reminderStatus';
 import { cn } from '@/lib/utils';
+import { formatTotals, sumByCurrency } from '@/lib/money';
 
 /**
  * El detalle de una cita, con el estado arriba y teñido según cuál sea.
@@ -34,11 +35,8 @@ const AppointmentPreview: React.FC<{
 	const reminder = describeReminder(appointment.reminder);
 
 	// Lo pactado al reservar, sumando los tramos: es lo que se cobra, no lo que
-	// los servicios cuesten hoy.
-	const total = (appointment.segments ?? []).reduce(
-		(sum, segment) => sum + (segment.price ?? 0),
-		0,
-	);
+	// los servicios cuesten hoy. Por moneda, porque una cita puede mezclar dos.
+	const totals = sumByCurrency(appointment.segments ?? []);
 
 	return (
 		<>
@@ -66,10 +64,12 @@ const AppointmentPreview: React.FC<{
 					</p>
 				</div>
 
-				{total > 0 && (
+				{totals.length > 0 && (
 					<p className="flex items-center justify-between border-t border-border pt-2 text-xs">
 						<span className="text-muted-foreground">Total</span>
-						<span className="font-medium tabular-nums">{`${total} ${currency}`}</span>
+						<span className="font-medium tabular-nums">
+							{formatTotals(totals, currency)}
+						</span>
 					</p>
 				)}
 

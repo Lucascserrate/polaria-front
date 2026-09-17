@@ -21,7 +21,7 @@ import useGetServices from '@/services/services/useGetServices';
 import useGetStaff from '@/services/staff/useGetStaff';
 import useGetSlotsForBooking from '@/services/availability/useGetSlotsForBooking';
 import { cn } from '@/lib/utils';
-import { formatMoney } from '@/lib/money';
+import { formatTotals } from '@/lib/money';
 import { formatDuration } from '@/lib/duration';
 import BookingClientPanel from './BookingClientPanel';
 import BookingNotices from './BookingNotices';
@@ -275,7 +275,6 @@ const BookingEditor: React.FC<EditorProps> = ({
 						<BookingServicePicker
 							services={services}
 							staff={staff}
-							currency={currency}
 							onPick={addService}
 							pickedIds={draft.items.map((item) => item.serviceId)}
 						/>
@@ -343,10 +342,10 @@ const BookingEditor: React.FC<EditorProps> = ({
 							Total
 						</p>
 						<p className="text-xl font-semibold tabular-nums">
-							{formatMoney(
+							{formatTotals(
 								draft.hasChanges
-									? draft.summary.totalPrice
-									: (booking.totalPrice ?? 0),
+									? draft.summary.totals
+									: (booking.totals ?? []),
 								currency,
 							)}
 						</p>

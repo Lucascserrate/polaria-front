@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { DEFAULT_CURRENCY } from '@/lib/currencies';
 import type { Service, ServiceBookingPolicy } from '@/types/services.types';
 
 export type ServiceSection = 'details' | 'pricing' | 'booking';
@@ -21,6 +22,8 @@ export interface ServiceDraft {
 	/** Como texto porque viene de un `input`: vacío es distinto de cero. */
 	duration: string;
 	price: string;
+	/** La moneda de este precio, en ISO 4217. Ver `PriceField`. */
+	currency: string;
 	bookingPolicy: ServiceBookingPolicy;
 }
 
@@ -30,6 +33,7 @@ export interface ServicePayload {
 	description: string;
 	durationMinutes: number;
 	price: number;
+	currency: string;
 	bookingPolicy: ServiceBookingPolicy;
 }
 
@@ -57,7 +61,16 @@ const toNumber = (value: string): number | null => {
  * secciones pero se guarda de una sola vez, y el botón de la cabecera tiene que
  * saber si hay un error en una sección que no se está mirando.
  */
-const useServiceDraft = (service?: Service | null) => {
+const useServiceDraft = (
+	service?: Service | null,
+	/**
+	 * La moneda con la que nace un servicio nuevo: la por defecto del negocio.
+	 *
+	 * Sólo se usa al crear. Un servicio que ya existe trae la suya, y caer acá le
+	 * cambiaría la moneda al abrirlo.
+	 */
+	defaultCurrency = DEFAULT_CURRENCY,
+) => {
 	const [draft, setDraft] = useState<ServiceDraft>(() => ({
 		name: service?.name ?? '',
 		description: service?.description ?? '',
@@ -66,6 +79,7 @@ const useServiceDraft = (service?: Service | null) => {
 				? ''
 				: String(service.durationMinutes),
 		price: service?.price === undefined ? '' : String(Number(service.price)),
+		currency: service?.currency ?? defaultCurrency,
 		// Los servicios viejos no traen el campo, y siempre fueron reservables.
 		bookingPolicy: service?.bookingPolicy ?? 'CLIENT_BOOKS',
 	}));
@@ -119,6 +133,7 @@ const useServiceDraft = (service?: Service | null) => {
 		description: draft.description.trim(),
 		durationMinutes: Number(draft.duration.trim()),
 		price: Number(draft.price.trim()),
+		currency: draft.currency,
 		bookingPolicy: draft.bookingPolicy,
 	});
 

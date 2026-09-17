@@ -27,6 +27,7 @@ export interface EditableService {
 	id: string;
 	name: string;
 	price: number;
+	currency: string;
 	durationMinutes: number;
 	/** Un servicio dado de baja no se ofrece para agregar. */
 	isActive?: boolean;
@@ -159,7 +160,10 @@ const BookingServicesEditor: React.FC<Props> = ({
 									</p>
 									<div className="flex shrink-0 items-center gap-1">
 										<p className="tabular-nums">
-											{formatMoney(service?.price ?? 0, currency)}
+											{formatMoney(
+												service?.price ?? 0,
+												service?.currency ?? currency,
+											)}
 										</p>
 										<Button
 											variant="ghost"

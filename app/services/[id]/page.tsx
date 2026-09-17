@@ -24,7 +24,7 @@ const ServicePage = () => {
 	const id = params?.id;
 
 	const { data: service, isLoading, isError } = useService(id ?? '');
-	const { currency, setCurrency } = useBusinessCurrency();
+	const { currency } = useBusinessCurrency();
 	const updateService = useUpdateService();
 	const deleteService = useDeleteService();
 	const [error, setError] = useState<string | null>(null);
@@ -76,13 +76,9 @@ const ServicePage = () => {
 
 	return (
 		<ServiceEditor
-			// Remonta el editor si cambia de servicio: el borrador se inicializa una
-			// sola vez, así que sin esto una navegación entre dos servicios dejaría
-			// los datos del anterior.
 			key={service.id}
 			service={service}
-			currency={currency}
-			onCurrencyChange={setCurrency}
+			defaultCurrency={currency}
 			saving={updateService.isPending}
 			deleting={deleteService.isPending}
 			error={error}

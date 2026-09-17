@@ -28,15 +28,42 @@ const AnalyticsSummary: React.FC<Props> = ({
 }) => {
 	const hasActivity = summary.completedCount > 0;
 
+	/*
+	 * Un período sin facturar no tiene moneda propia, así que el cero se escribe
+	 * en la del negocio: "Bs 0" se lee mejor que un cero pelado.
+	 */
+	const entries = summary.revenue.length
+		? summary.revenue
+		: [{ currency, amount: 0, averageTicket: 0 }];
+
 	return (
 		<div className="rounded-xl border border-border bg-card p-6">
 			<p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
 				Facturado{rangeLabel ? ` · ${rangeLabel}` : ''}
 			</p>
 
-			<p className="mt-1 text-4xl font-bold tracking-tight tabular-nums">
-				{formatMoney(summary.revenueTotal, currency)}
-			</p>
+			{/*
+			 * Un bloque por moneda, no un total sumado: 300 bolivianos más 40 dólares
+			 * no son 340 de nada. Con una sola moneda —casi todos los negocios— esto
+			 * se ve igual que un número suelto.
+			 */}
+			<div className="mt-1 flex flex-wrap items-baseline gap-x-8 gap-y-3">
+				{entries.map((entry) => (
+					<div key={entry.currency}>
+						<p className="text-4xl font-bold tracking-tight tabular-nums">
+							{formatMoney(entry.amount, entry.currency)}
+						</p>
+						{hasActivity && (
+							<p className="text-sm text-muted-foreground">
+								<span className="font-medium text-foreground tabular-nums">
+									{formatMoney(entry.averageTicket, entry.currency)}
+								</span>{' '}
+								por cita
+							</p>
+						)}
+					</div>
+				))}
+			</div>
 
 			{hasActivity ? (
 				<p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
@@ -45,13 +72,6 @@ const AnalyticsSummary: React.FC<Props> = ({
 							{summary.completedCount}
 						</span>{' '}
 						{summary.completedCount === 1 ? 'cita atendida' : 'citas atendidas'}
-					</span>
-					<span aria-hidden="true">·</span>
-					<span>
-						<span className="font-medium text-foreground tabular-nums">
-							{formatMoney(summary.averageTicket, currency)}
-						</span>{' '}
-						por cita
 					</span>
 					{summary.cancelledCount > 0 && (
 						<>

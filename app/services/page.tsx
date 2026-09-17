@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
 import ServicesTable from '@/modules/services/ServicesTable';
 import useGetServices from '@/services/services/useGetServices';
-import useGetSettings from '@/services/settings/useGetSettings';
 
 /**
  * El catálogo de servicios.
@@ -19,10 +18,6 @@ import useGetSettings from '@/services/settings/useGetSettings';
  */
 const ServicesPage = () => {
 	const { data: services = [], isPending, isError, error } = useGetServices();
-	const { data: settings } = useGetSettings();
-
-	// Sin configuración todavía, el código ISO es el del negocio por defecto.
-	const currency = settings?.currency ?? 'BOB';
 
 	if (isPending) {
 		return (
@@ -63,7 +58,7 @@ const ServicesPage = () => {
 				</Button>
 			</div>
 
-			<ServicesTable services={services} currency={currency} />
+			<ServicesTable services={services} />
 		</div>
 	);
 };

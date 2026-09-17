@@ -12,7 +12,7 @@ import useCreateService from '@/services/services/useCreateService';
 const NewServicePage = () => {
 	const router = useRouter();
 	const createService = useCreateService();
-	const { currency, setCurrency } = useBusinessCurrency();
+	const { currency } = useBusinessCurrency();
 	const [error, setError] = useState<string | null>(null);
 
 	const handleSave = async (payload: ServicePayload) => {
@@ -43,8 +43,7 @@ const NewServicePage = () => {
 
 	return (
 		<ServiceEditor
-			currency={currency}
-			onCurrencyChange={setCurrency}
+			defaultCurrency={currency}
 			saving={createService.isPending}
 			error={error}
 			onSave={(payload) => void handleSave(payload)}

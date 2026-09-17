@@ -6,9 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check } from 'lucide-react';
-import { DEFAULT_CURRENCY } from '@/lib/currencies';
 import { businessTypeLabel } from '@/modules/onboarding/constants';
-import CurrencySelect from '@/modules/settings/CurrencySelect';
 import TimezoneSelect from '@/modules/settings/TimezoneSelect';
 import useGetSettings from '@/services/settings/useGetSettings';
 import useUpdateSettings from '@/services/settings/useUpdateSettings';
@@ -49,14 +47,12 @@ const BusinessInfoSection: React.FC = () => {
 
 	const [name, setName] = useState<string | null>(null);
 	const [timezone, setTimezone] = useState<string | null>(null);
-	const [currency, setCurrency] = useState<string | null>(null);
 	const [address, setAddress] = useState<string | null>(null);
 	const [location, setLocation] = useState<Coordinates | null>(null);
 	const [locationTouched, setLocationTouched] = useState(false);
 
 	const currentName = name ?? settings?.polariaName ?? '';
 	const currentTimezone = timezone ?? settings?.timezone ?? '';
-	const currentCurrency = currency ?? settings?.currency ?? DEFAULT_CURRENCY;
 	const currentAddress = address ?? settings?.address ?? '';
 	const currentLocation = locationTouched
 		? location
@@ -70,7 +66,6 @@ const BusinessInfoSection: React.FC = () => {
 		await save({
 			polariaName: currentName.trim(),
 			timezone: currentTimezone || undefined,
-			currency: currentCurrency,
 			address: currentAddress.trim() || null,
 			location: currentLocation,
 		});
@@ -107,12 +102,6 @@ const BusinessInfoSection: React.FC = () => {
 				value={currentTimezone}
 				disabled={isPending}
 				onChange={setTimezone}
-			/>
-
-			<CurrencySelect
-				value={currentCurrency}
-				disabled={isPending}
-				onChange={setCurrency}
 			/>
 
 			<div className="space-y-2">

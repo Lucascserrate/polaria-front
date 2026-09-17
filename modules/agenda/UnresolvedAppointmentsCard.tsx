@@ -3,6 +3,7 @@
 import { CalendarX2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatLongDate } from '@/lib/date';
+import { formatTotals, sumByCurrency } from '@/lib/money';
 import { isAdminRole } from '@/modules/auth/session';
 import { useSessionActor } from '@/modules/auth/hooks/useAuth';
 import useGetSettings from '@/services/settings/useGetSettings';
@@ -110,10 +111,7 @@ const UnresolvedRow: React.FC<{
 	busy: boolean;
 	onResolve: (status: 'completed' | 'cancelled') => void;
 }> = ({ appointment, timezone, currency, busy, onResolve }) => {
-	const total = appointment.segments.reduce(
-		(sum, segment) => sum + (segment.price ?? 0),
-		0,
-	);
+	const totals = sumByCurrency(appointment.segments);
 
 	return (
 		<li className="px-4 py-3">
@@ -125,7 +123,7 @@ const UnresolvedRow: React.FC<{
 			</p>
 			<p className="text-xs text-muted-foreground truncate mt-0.5">
 				{`${appointment.service} · ${appointment.staff}`}
-				{total > 0 && ` · ${total} ${currency}`}
+				{totals.length > 0 && ` · ${formatTotals(totals, currency)}`}
 			</p>
 
 			<div className="flex items-center gap-1 mt-2">

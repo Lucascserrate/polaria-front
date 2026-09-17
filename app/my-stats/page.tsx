@@ -8,7 +8,10 @@ import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
 import { useBottomNav } from '@/components/BottomNav';
 import PeriodSelector from '@/modules/analytics/PeriodSelector';
-import AnalyticsTimeline from '@/modules/analytics/AnalyticsTimeline';
+import AnalyticsTimeline, {
+	currenciesIn,
+} from '@/modules/analytics/AnalyticsTimeline';
+import { currencyLabel } from '@/lib/currencies';
 import ServiceRanking from '@/modules/analytics/ServiceRanking';
 import EarningsHeadline from '@/modules/me/EarningsHeadline';
 import MyWorkSummary from '@/modules/me/MyWorkSummary';
@@ -185,19 +188,28 @@ const MyStatsPage = () => {
 							{data.timeline && (
 								<section className="space-y-3">
 									<h2 className="text-sm font-semibold">Cómo evolucionó</h2>
-									<AnalyticsTimeline
-										timeline={data.timeline}
-										currency={data.currency}
-									/>
+									{currenciesIn(data.timeline, data.currency).map(
+										(currency) => (
+											<div key={currency} className="space-y-2">
+												{currenciesIn(data.timeline!, data.currency).length >
+													1 && (
+													<p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+														{currencyLabel(currency)} · {currency}
+													</p>
+												)}
+												<AnalyticsTimeline
+													timeline={data.timeline!}
+													currency={currency}
+												/>
+											</div>
+										),
+									)}
 								</section>
 							)}
 
 							<section className="space-y-3">
 								<h2 className="text-sm font-semibold">Lo que más hiciste</h2>
-								<ServiceRanking
-									entries={data.serviceRanking}
-									currency={data.currency}
-								/>
+								<ServiceRanking entries={data.serviceRanking} />
 							</section>
 						</div>
 					)}

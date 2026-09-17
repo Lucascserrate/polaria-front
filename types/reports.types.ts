@@ -1,15 +1,36 @@
 import type { AppointmentStatus } from '@/types/appointments.types';
+import type { MoneyTotal } from '@/lib/money';
 
 export const REPORT_PRESETS = ['today', 'week', 'month', 'custom'] as const;
 export type ReportPreset = (typeof REPORT_PRESETS)[number];
 
+/**
+ * Lo facturado en una moneda. Espejo de `CurrencyRevenue` del servidor.
+ *
+ * Los totales son listas porque un catálogo puede cobrar en dos monedas, y
+ * sumarlas daría un número que no se le puede cobrar a nadie. Casi todos los
+ * negocios usan una sola y reciben una lista de un elemento.
+ */
+export interface CurrencyRevenue {
+	currency: string;
+	amount: number;
+	/** Promedio por cita facturada **en esta moneda**. */
+	averageTicket: number;
+}
+
+/** Lo facturado en una moneda, más la parte del profesional. */
+export interface CurrencyEarnings extends CurrencyRevenue {
+	/** `null` si el negocio no definió comisión, distinto de una comisión cero. */
+	estimatedCommission: number | null;
+}
+
 export interface ReportSummary {
-	revenueTotal: number;
+	/** Lo facturado, una entrada por moneda. */
+	revenue: CurrencyRevenue[];
 	completedCount: number;
 	cancelledCount: number;
 	/** Citas aún abiertas: pendientes, agendadas o confirmadas. */
 	pendingCount: number;
-	averageTicket: number;
 	byStatus: Record<AppointmentStatus, number>;
 }
 
@@ -17,10 +38,10 @@ export interface StaffRankingEntry {
 	staffId: string;
 	staffName: string;
 	completedAppointments: number;
-	revenue: number;
+	/** Lo facturado y su parte, una entrada por moneda. */
+	earnings: CurrencyEarnings[];
 	/** Porcentaje configurado, o `null` si el negocio no definió comisión. */
 	commissionRate: number | null;
-	estimatedCommission: number | null;
 	/** `true` si el profesional ya no trabaja en el negocio. */
 	isFormer: boolean;
 }
@@ -30,6 +51,8 @@ export interface ServiceRankingEntry {
 	serviceName: string;
 	timesPerformed: number;
 	revenue: number;
+	/** La moneda de `revenue`: un servicio cobra en una sola. */
+	currency: string;
 }
 
 export type TimelineGranularity = 'day' | 'month';
@@ -37,7 +60,8 @@ export type TimelineGranularity = 'day' | 'month';
 export interface TimelineBucket {
 	/** `YYYY-MM-DD` por día, `YYYY-MM` por mes. */
 	key: string;
-	revenue: number;
+	/** Lo facturado en el tramo, una entrada por moneda. Vacío si no facturó. */
+	revenue: MoneyTotal[];
 	/** Citas distintas atendidas en el tramo, no servicios prestados. */
 	completed: number;
 }
@@ -54,7 +78,12 @@ export interface TenantReport {
 		to: string;
 		timezone: string;
 	};
-	/** ISO 4217, para formatear los montos. */
+	/**
+	 * Moneda por defecto del negocio, en ISO 4217.
+	 *
+	 * No es la moneda de los montos —cada uno trae la suya— sino con cuál escribir
+	 * un cero: un período sin facturación no tiene moneda propia.
+	 */
 	currency: string;
 	summary: ReportSummary;
 	/**
@@ -112,9 +141,8 @@ export interface StaffReport {
 	 * semana y mes—, que son las tres opciones del selector.
 	 */
 	currentMonth: {
-		revenue: number;
-		/** Su parte, o `null` si el negocio no configuró comisión. */
-		estimatedCommission: number | null;
+		/** Lo generado y su parte, una entrada por moneda. */
+		earnings: CurrencyEarnings[];
 	};
 	summary: StaffSummary;
 	/**
@@ -137,16 +165,14 @@ export interface StaffReport {
 
 /** Los números de un profesional en un período. El reporte lo usa dos veces. */
 export interface StaffSummary {
-	revenueTotal: number;
 	/**
-	 * Lo que le corresponde de `revenueTotal`, o `null` si el negocio no configuró
-	 * comisión —distinto de una comisión de cero, que sí se muestra—.
+	 * Lo que facturó y lo que le corresponde, una entrada por moneda.
 	 *
-	 * Es **estimado** y hay que escribirlo así en pantalla: sale de la tasa vigente
-	 * hoy, no de la que regía el día de cada servicio, y no hay registro de pagos,
-	 * así que no sabe nada de lo que el negocio ya liquidó.
+	 * La comisión es **estimada** y hay que escribirla así en pantalla: sale de la
+	 * tasa vigente hoy, no de la que regía el día de cada servicio, y no hay
+	 * registro de pagos, así que no sabe nada de lo que el negocio ya liquidó.
 	 */
-	estimatedCommission: number | null;
+	earnings: CurrencyEarnings[];
 	completedCount: number;
 	cancelledCount: number;
 	pendingCount: number;
@@ -154,5 +180,4 @@ export interface StaffSummary {
 	clientsServed: number;
 	/** Servicios prestados. Acá el grano es el segmento: son unidades de trabajo. */
 	servicesPerformed: number;
-	averageTicket: number;
 }

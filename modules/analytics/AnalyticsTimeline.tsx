@@ -15,6 +15,13 @@ import { bucketAxisLabel, bucketFullLabel } from './utils/timelineLabels';
 
 interface Props {
 	timeline: ReportTimeline;
+	/**
+	 * Cuál de las monedas dibujar.
+	 *
+	 * Una sola por gráfico: dos monedas en el mismo eje no se pueden comparar en
+	 * altura, y apilarlas inventaría una suma que no existe. El negocio que cobra
+	 * en dos ve dos gráficos, uno debajo del otro. Ver `currenciesIn`.
+	 */
 	currency: string;
 }
 
@@ -32,6 +39,10 @@ interface Props {
 const AnalyticsTimeline: React.FC<Props> = ({ timeline, currency }) => {
 	const data = timeline.buckets.map((bucket) => ({
 		...bucket,
+		// Un tramo sin facturar en esta moneda es un cero, que es lo que el eje
+		// necesita para dibujar el hueco.
+		revenue:
+			bucket.revenue.find((total) => total.currency === currency)?.amount ?? 0,
 		axis: bucketAxisLabel(bucket.key, timeline.granularity),
 	}));
 
@@ -104,3 +115,32 @@ const AnalyticsTimeline: React.FC<Props> = ({ timeline, currency }) => {
 };
 
 export default AnalyticsTimeline;
+
+/**
+ * Las monedas que aparecen en la evolución, de mayor facturación a menor.
+ *
+ * Sirve para decidir cuántos gráficos dibujar. Sin ninguna devuelve la del
+ * negocio: un período vacío igual muestra su eje en cero, que es información
+ * —no vino nadie— y no una pantalla rota.
+ */
+export const currenciesIn = (
+	timeline: ReportTimeline,
+	fallback: string,
+): string[] => {
+	const totals = new Map<string, number>();
+
+	for (const bucket of timeline.buckets) {
+		for (const total of bucket.revenue) {
+			totals.set(
+				total.currency,
+				(totals.get(total.currency) ?? 0) + total.amount,
+			);
+		}
+	}
+
+	if (totals.size === 0) return [fallback];
+
+	return [...totals]
+		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+		.map(([currency]) => currency);
+};

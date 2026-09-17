@@ -29,15 +29,13 @@ const SECTIONS: Array<{ key: ServiceSection; label: string }> = [
 interface Props {
 	/** Ausente al crear. */
 	service?: Service | null;
-	/** La del negocio, para escribir el precio en su moneda. */
-	currency: string;
 	/**
-	 * Cambia la moneda del negocio, no la de este servicio.
+	 * La moneda con la que nace un servicio nuevo: la por defecto del negocio.
 	 *
-	 * Sube hasta la página porque lo que se guarda es la configuración del
-	 * negocio y no el servicio: son dos entidades y dos guardados distintos.
+	 * Un servicio que ya existe trae la suya y esta no lo toca. Ver
+	 * `useServiceDraft`.
 	 */
-	onCurrencyChange: (currency: string) => void;
+	defaultCurrency: string;
 	saving?: boolean;
 	deleting?: boolean;
 	error?: string | null;
@@ -65,8 +63,7 @@ interface Props {
  */
 const ServiceEditor: React.FC<Props> = ({
 	service,
-	currency,
-	onCurrencyChange,
+	defaultCurrency,
 	saving = false,
 	deleting = false,
 	error,
@@ -75,7 +72,10 @@ const ServiceEditor: React.FC<Props> = ({
 }) => {
 	const [section, setSection] = useState<ServiceSection>('details');
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
-	const { draft, set, errors, canSave, toPayload } = useServiceDraft(service);
+	const { draft, set, errors, canSave, toPayload } = useServiceDraft(
+		service,
+		defaultCurrency,
+	);
 
 	/*
 	 * El precio escrito, tal como lo va a leer el cliente.
@@ -88,9 +88,9 @@ const ServiceEditor: React.FC<Props> = ({
 	const price = Number(draft.price);
 	const priceHint = [
 		Number.isFinite(price) && draft.price.trim()
-			? `Así lo ve tu cliente: ${formatMoney(price, currency)}.`
+			? `Así lo ve tu cliente: ${formatMoney(price, draft.currency)}.`
 			: null,
-		`Se escribe en ${currencyLabel(currency).toLowerCase()}, la moneda de tu negocio: cambiarla afecta a todos tus servicios.`,
+		`Se cobra en ${currencyLabel(draft.currency).toLowerCase()}. Cada servicio puede tener la suya.`,
 	]
 		.filter(Boolean)
 		.join(' ');
@@ -261,8 +261,8 @@ const ServiceEditor: React.FC<Props> = ({
 									<PriceField
 										value={draft.price}
 										onChange={(next) => set('price', next)}
-										currency={currency}
-										onCurrencyChange={onCurrencyChange}
+										currency={draft.currency}
+										onCurrencyChange={(next) => set('currency', next)}
 									/>
 								</Field>
 							</div>

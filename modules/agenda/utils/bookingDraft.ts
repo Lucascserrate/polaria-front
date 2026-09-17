@@ -1,3 +1,4 @@
+import { sumByCurrency, type MoneyTotal } from '@/lib/money';
 import type { AppointmentSegment } from '@/types/appointments.types';
 
 /**
@@ -22,6 +23,7 @@ export interface ServiceOption {
 	id: string;
 	durationMinutes: number;
 	price: number;
+	currency: string;
 }
 
 /** Los tramos guardados como borrador editable. */
@@ -53,7 +55,14 @@ export const itemsChanged = (
 
 export interface DraftSummary {
 	totalMinutes: number;
-	totalPrice: number;
+	/**
+	 * El total, una entrada por moneda.
+	 *
+	 * Es una lista y no un número porque una reserva puede mezclar monedas: una
+	 * consulta presencial en bolivianos y una sesión online en dólares entran en
+	 * la misma cita. Casi siempre trae un elemento.
+	 */
+	totals: MoneyTotal[];
 	/** Servicios del borrador que ya no existen o están inactivos. */
 	unknownServiceIds: string[];
 }
@@ -68,8 +77,12 @@ export interface DraftSummary {
 export const summarizeDraft = (input: {
 	items: DraftItem[];
 	services: ServiceOption[];
-	/** Precio ya pactado por servicio, de los tramos que la reserva ya tenía. */
-	agreedPrices?: Map<string, number>;
+	/**
+	 * Precio y moneda ya pactados por servicio, de los tramos que la reserva ya
+	 * tenía. Los dos juntos: conservar "8.000" sin conservar que eran guaraníes
+	 * no conserva nada.
+	 */
+	agreedPrices?: Map<string, { price: number; currency: string }>;
 }): DraftSummary => {
 	const byId = new Map(input.services.map((service) => [service.id, service]));
 
@@ -82,17 +95,22 @@ export const summarizeDraft = (input: {
 	];
 
 	let totalMinutes = 0;
-	let totalPrice = 0;
+	const priced: Array<{ price: number; currency: string }> = [];
 
 	for (const item of input.items) {
 		const service = byId.get(item.serviceId);
 		if (!service) continue;
 
 		totalMinutes += service.durationMinutes;
-		totalPrice += input.agreedPrices?.get(item.serviceId) ?? service.price;
+		priced.push(
+			input.agreedPrices?.get(item.serviceId) ?? {
+				price: service.price,
+				currency: service.currency,
+			},
+		);
 	}
 
-	return { totalMinutes, totalPrice, unknownServiceIds };
+	return { totalMinutes, totals: sumByCurrency(priced), unknownServiceIds };
 };
 
 /**
@@ -111,7 +129,8 @@ export const offsetsOf = (input: {
 		input.items
 			.slice(0, index)
 			.reduce(
-				(total, item) => total + (byId.get(item.serviceId)?.durationMinutes ?? 0),
+				(total, item) =>
+					total + (byId.get(item.serviceId)?.durationMinutes ?? 0),
 				0,
 			),
 	);

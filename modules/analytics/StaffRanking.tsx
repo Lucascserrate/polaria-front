@@ -4,10 +4,21 @@ import { Badge } from '@/components/ui/badge';
 import { formatMoney } from '@/lib/money';
 import type { StaffRankingEntry } from '@/types/reports.types';
 import RankedList, { type RankedRow } from './RankedList';
+import CurrencySections from './CurrencySections';
+import groupByCurrency from './utils/groupByCurrency';
 
 interface Props {
 	entries: StaffRankingEntry[];
-	currency: string;
+}
+
+/** Un profesional dentro de una moneda: lo que el ranking dibuja como fila. */
+interface StaffInCurrency {
+	staffId: string;
+	staffName: string;
+	completedAppointments: number;
+	commissionRate: number | null;
+	isFormer: boolean;
+	earning: StaffRankingEntry['earnings'][number];
 }
 
 /**
@@ -20,43 +31,68 @@ interface Props {
  * en el período ocurrió, y borrarlos de la lista dejaría un total que no cierra
  * con la suma de sus filas.
  */
-const StaffRanking: React.FC<Props> = ({ entries, currency }) => {
-	const rows: RankedRow[] = entries.map((entry) => {
-		const perAppointment =
-			entry.completedAppointments > 0
-				? entry.revenue / entry.completedAppointments
-				: 0;
+/**
+ * Cada profesional se abre en una fila por moneda.
+ *
+ * Quien cobra en dos aparece en las dos secciones, con lo suyo en cada una. Es
+ * lo que hace comparables las barras: dentro de una moneda, la altura significa
+ * algo.
+ */
+const toRows = (entries: StaffRankingEntry[]): StaffInCurrency[] =>
+	entries.flatMap((entry) =>
+		entry.earnings.map((earning) => ({
+			staffId: entry.staffId,
+			staffName: entry.staffName,
+			completedAppointments: entry.completedAppointments,
+			commissionRate: entry.commissionRate,
+			isFormer: entry.isFormer,
+			earning,
+		})),
+	);
 
-		const meta = [
-			`${entry.completedAppointments} ${entry.completedAppointments === 1 ? 'atendida' : 'atendidas'}`,
-			`${formatMoney(perAppointment, currency)} por cita`,
-			entry.estimatedCommission !== null
-				? `comisión ${formatMoney(entry.estimatedCommission, currency)}${
-						entry.commissionRate !== null ? ` (${entry.commissionRate}%)` : ''
-					}`
-				: null,
-		]
-			.filter(Boolean)
-			.join(' · ');
+const toRow = (row: StaffInCurrency): RankedRow => {
+	const { currency, amount, averageTicket, estimatedCommission } = row.earning;
 
-		return {
-			id: entry.staffId,
-			label: entry.staffName,
-			value: entry.revenue,
-			valueLabel: formatMoney(entry.revenue, currency),
-			meta,
-			badge: entry.isFormer ? (
-				<Badge variant="outline" className="shrink-0 font-normal">
-					Ya no trabaja
-				</Badge>
-			) : undefined,
-		};
-	});
+	const meta = [
+		`${row.completedAppointments} ${row.completedAppointments === 1 ? 'atendida' : 'atendidas'}`,
+		`${formatMoney(averageTicket, currency)} por cita`,
+		estimatedCommission !== null
+			? `comisión ${formatMoney(estimatedCommission, currency)}${
+					row.commissionRate !== null ? ` (${row.commissionRate}%)` : ''
+				}`
+			: null,
+	]
+		.filter(Boolean)
+		.join(' · ');
 
+	return {
+		id: `${row.staffId}:${currency}`,
+		label: row.staffName,
+		value: amount,
+		valueLabel: formatMoney(amount, currency),
+		meta,
+		badge: row.isFormer ? (
+			<Badge variant="outline" className="shrink-0 font-normal">
+				Ya no trabaja
+			</Badge>
+		) : undefined,
+	};
+};
+
+const StaffRanking: React.FC<Props> = ({ entries }) => {
 	return (
-		<RankedList
-			rows={rows}
-			emptyMessage="Todavía no hay citas atendidas en este período."
+		<CurrencySections
+			groups={groupByCurrency(
+				toRows(entries),
+				(row) => row.earning.currency,
+				(row) => row.earning.amount,
+			)}
+			render={(items) => (
+				<RankedList
+					rows={items.map(toRow)}
+					emptyMessage="Todavía no hay citas atendidas en este período."
+				/>
+			)}
 		/>
 	);
 };

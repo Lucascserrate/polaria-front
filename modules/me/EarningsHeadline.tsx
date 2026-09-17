@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, formatTotals } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { comparisonLabel, periodLabel } from '@/modules/analytics/utils/format';
 import type { StaffReport } from '@/types/reports.types';
@@ -34,14 +34,32 @@ const EarningsHeadline: React.FC<Props> = ({ report }) => {
 
 	const rate = staff.commissionRate;
 	const paysCommission = rate !== null;
-	const headline = paysCommission
-		? (summary.estimatedCommission ?? 0)
-		: summary.revenueTotal;
 
-	const trend = compareRevenue(
-		summary.revenueTotal,
-		comparison.summary.revenueTotal,
-	);
+	/*
+	 * Un titular por moneda.
+	 *
+	 * Quien atiende presenciales en bolivianos y sesiones online en dólares tiene
+	 * dos cifras, y no hay tipo de cambio que las junte sin inventar uno. Con una
+	 * sola moneda —el caso de casi todos— esto es el número grande de siempre.
+	 *
+	 * Un período sin facturar no tiene moneda propia: el cero se escribe en la
+	 * del negocio.
+	 */
+	const entries = summary.earnings.length
+		? summary.earnings
+		: [
+				{
+					currency,
+					amount: 0,
+					averageTicket: 0,
+					estimatedCommission: paysCommission ? 0 : null,
+				},
+			];
+
+	/** Lo que la misma moneda generó en el período anterior. */
+	const previousIn = (code: string) =>
+		comparison.summary.earnings.find((entry) => entry.currency === code)
+			?.amount ?? 0;
 
 	return (
 		<section className="rounded-xl border border-border bg-card p-5 sm:p-6">
@@ -55,15 +73,14 @@ const EarningsHeadline: React.FC<Props> = ({ report }) => {
 					{rate === null ? (
 						<p>
 							El negocio no configuró una comisión para vos, así que acá va todo
-							lo que generaste. Si trabajás a porcentaje, pedile que la cargue en
-							tu ficha.
+							lo que generaste. Si trabajás a porcentaje, pedile que la cargue
+							en tu ficha.
 						</p>
 					) : (
 						<>
 							<p>
-								Tu {rate}% sobre los{' '}
-								{formatMoney(summary.revenueTotal, currency)} que facturaste en
-								este período.
+								Tu {rate}% sobre los {formatTotals(summary.earnings, currency)}{' '}
+								que facturaste en este período.
 							</p>
 							<p className="mt-2 text-muted-foreground">
 								Es una estimación con tu comisión de hoy. Lo que se te paga lo
@@ -74,22 +91,33 @@ const EarningsHeadline: React.FC<Props> = ({ report }) => {
 				</InfoHint>
 			</div>
 
-			<p className="text-4xl font-bold tracking-tight tabular-nums sm:text-5xl">
-				{formatMoney(headline, currency)}
-			</p>
+			{entries.map((entry) => (
+				<div key={entry.currency} className="mt-1 first:mt-0">
+					<p className="text-4xl font-bold tracking-tight tabular-nums sm:text-5xl">
+						{formatMoney(
+							paysCommission ? (entry.estimatedCommission ?? 0) : entry.amount,
+							entry.currency,
+						)}
+					</p>
 
-			<Trend
-				comparison={trend}
-				label={comparisonLabel(preset, comparison.range)}
-				previous={comparison.summary.revenueTotal}
-				currency={currency}
-			/>
+					{/* La comparación es dentro de la misma moneda: es la única que compara. */}
+					<Trend
+						comparison={compareRevenue(
+							entry.amount,
+							previousIn(entry.currency),
+						)}
+						label={comparisonLabel(preset, comparison.range)}
+						previous={previousIn(entry.currency)}
+						currency={entry.currency}
+					/>
 
-			{paysCommission && (
-				<p className="mt-1.5 text-sm text-muted-foreground">
-					de {formatMoney(summary.revenueTotal, currency)} generados · {rate}%
-				</p>
-			)}
+					{paysCommission && (
+						<p className="mt-1.5 text-sm text-muted-foreground">
+							de {formatMoney(entry.amount, entry.currency)} generados · {rate}%
+						</p>
+					)}
+				</div>
+			))}
 
 			{/*
 			 * El mes en curso, para quien está mirando un día o una semana. Es una
@@ -100,13 +128,19 @@ const EarningsHeadline: React.FC<Props> = ({ report }) => {
 			{preset !== 'month' && (
 				<p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
 					Este mes:{' '}
-					<Strong>{formatMoney(currentMonth.revenue, currency)}</Strong>{' '}
+					<Strong>{formatTotals(currentMonth.earnings, currency)}</Strong>{' '}
 					generados
-					{currentMonth.estimatedCommission !== null && (
+					{paysCommission && (
 						<>
 							{' · '}
 							<Strong>
-								{formatMoney(currentMonth.estimatedCommission, currency)}
+								{formatTotals(
+									currentMonth.earnings.map((entry) => ({
+										currency: entry.currency,
+										amount: entry.estimatedCommission ?? 0,
+									})),
+									currency,
+								)}
 							</Strong>{' '}
 							tuyos
 						</>

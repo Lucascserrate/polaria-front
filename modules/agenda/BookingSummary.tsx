@@ -1,11 +1,10 @@
 'use client';
 
-import { formatMoney } from '@/lib/money';
+import { formatTotals, type MoneyTotal } from '@/lib/money';
 
 interface Props {
 	totalMinutes: number;
-	totalPrice: number;
-	/** Moneda del negocio. Un precio sin unidad no dice cuánto es. */
+	totals: MoneyTotal[];
 	currency: string;
 }
 
@@ -19,7 +18,7 @@ interface Props {
  */
 const BookingSummary: React.FC<Props> = ({
 	totalMinutes,
-	totalPrice,
+	totals,
 	currency,
 }) => (
 	<div className="text-sm">
@@ -27,7 +26,7 @@ const BookingSummary: React.FC<Props> = ({
 			Total · {totalMinutes} min
 		</span>
 		<p className="text-base font-semibold tabular-nums">
-			{formatMoney(totalPrice, currency)}
+			{formatTotals(totals, currency)}
 		</p>
 	</div>
 );

@@ -100,10 +100,14 @@ const useBookingDraft = ({
 	const timeChanged = draftStart !== null && draftStart !== booking?.startTime;
 	const servicesChanged = itemsChanged(savedItems, items);
 
-	/** Precio ya pactado de cada servicio que la reserva ya tenía. */
 	const agreedPrices = useMemo(
 		() =>
-			new Map(segments.map((segment) => [segment.serviceId, segment.price])),
+			new Map(
+				segments.map((segment) => [
+					segment.serviceId,
+					{ price: segment.price, currency: segment.currency },
+				]),
+			),
 		[segments],
 	);
 

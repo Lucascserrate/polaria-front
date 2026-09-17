@@ -13,7 +13,6 @@ import { eligibleStaffFor } from './utils/eligibleStaff';
 interface Props {
 	services: EditableService[];
 	staff: StaffMember[];
-	currency: string;
 	onPick: (serviceId: string) => void;
 	pickedIds?: string[];
 }
@@ -33,7 +32,6 @@ interface Props {
 const BookingServicePicker: React.FC<Props> = ({
 	services,
 	staff,
-	currency,
 	onPick,
 	pickedIds = [],
 }) => {
@@ -110,7 +108,7 @@ const BookingServicePicker: React.FC<Props> = ({
 									</span>
 
 									<span className="shrink-0 tabular-nums">
-										{formatMoney(service.price, currency)}
+										{formatMoney(service.price, service.currency)}
 									</span>
 								</button>
 							</li>

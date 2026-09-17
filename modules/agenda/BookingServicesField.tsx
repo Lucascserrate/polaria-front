@@ -103,7 +103,7 @@ const BookingServicesField: React.FC<Props> = ({
 									{segment.serviceName ?? 'Servicio'}
 								</p>
 								<p className="shrink-0 tabular-nums">
-									{formatMoney(segment.price, currency)}
+									{formatMoney(segment.price, segment.currency)}
 								</p>
 							</div>
 							<p className="truncate text-sm text-muted-foreground">

@@ -27,6 +27,7 @@ const segment = (overrides: {
 	startTime: overrides.start,
 	endTime: overrides.end,
 	price: 50,
+	currency: 'BOB',
 	durationMinutes: 30,
 });
 
@@ -307,9 +308,9 @@ describe('buildStaffColumns', () => {
 			name: 'Sin asignar',
 			openRanges: BUSINESS,
 		});
-		expect(
-			withStaff.some((column) => column.key === UNASSIGNED_COLUMN),
-		).toBe(false);
+		expect(withStaff.some((column) => column.key === UNASSIGNED_COLUMN)).toBe(
+			false,
+		);
 	});
 
 	it('un día sin nadie deja una columna con el horario del negocio', () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { formatMoney } from '@/lib/money';
+import { formatTotals } from '@/lib/money';
 import type { StaffSummary } from '@/types/reports.types';
 import InfoHint from './InfoHint';
 
@@ -51,9 +51,20 @@ const MyWorkSummary: React.FC<Props> = ({ summary, currency }) => {
 					hint="Personas distintas. Quien volvió dos veces en el período cuenta una sola, así que este número puede ser menor que el de citas."
 				/>
 
+				{/*
+				 * Un promedio por moneda, escritos uno al lado del otro. Sumarlos para
+				 * sacar un promedio único daría una cifra que no corresponde a
+				 * ninguna cita real.
+				 */}
 				<Metric
 					label="Por cita"
-					value={formatMoney(summary.averageTicket, currency)}
+					value={formatTotals(
+						summary.earnings.map((entry) => ({
+							currency: entry.currency,
+							amount: entry.averageTicket,
+						})),
+						currency,
+					)}
 				/>
 			</div>
 
@@ -62,9 +73,7 @@ const MyWorkSummary: React.FC<Props> = ({ summary, currency }) => {
 					<span className="font-medium text-foreground tabular-nums">
 						{summary.cancelledCount}
 					</span>{' '}
-					{summary.cancelledCount === 1
-						? 'cita cancelada'
-						: 'citas canceladas'}{' '}
+					{summary.cancelledCount === 1 ? 'cita cancelada' : 'citas canceladas'}{' '}
 					en este período.
 				</p>
 			)}
