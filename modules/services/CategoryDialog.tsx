@@ -109,7 +109,18 @@ const CategoryForm: React.FC<{
 			if (category) {
 				await updateCategory.mutateAsync({ id: category.id, data });
 			} else {
-				onCreated?.(await createCategory.mutateAsync(data));
+				/*
+				 * La mutación se espera en su propia línea, y no dentro de
+				 * `onCreated?.(await …)`.
+				 *
+				 * Con el encadenamiento opcional, `a?.(b)` no evalúa `b` cuando `a` es
+				 * nulo: el `await` quedaba adentro de una llamada que no ocurría, así
+				 * que en la lista de servicios —donde nadie pasa `onCreated`— la
+				 * categoría nunca se creaba. Y como no había error, el diálogo se
+				 * cerraba como si hubiera guardado.
+				 */
+				const created = await createCategory.mutateAsync(data);
+				onCreated?.(created);
 			}
 			onDone();
 		} catch (cause) {
