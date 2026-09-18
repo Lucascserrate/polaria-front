@@ -1,25 +1,43 @@
-'use client';
-
 import GoogleButton from '@/components/GoogleButton';
 import { StarGlyph } from '../logo';
 import Link from 'next/link';
 import { SITES } from '@/constants/site';
+import AuthPhotos from '@/modules/auth/AuthPhotos';
 
 const AuthPage = () => {
 	return (
-		<div className="min-h-screen bg-[radial-gradient(circle_at_top,#f7fafc_0%,#eef2ff_38%,#ffffff_100%)] dark:bg-[radial-gradient(circle_at_top,#141a2b_0%,#101527_38%,#08090f_100%)] flex items-center justify-center p-4">
-			<div className="w-full max-w-md rounded-3xl border border-border bg-card/90 backdrop-blur shadow-[0_24px_80px_rgba(15,23,42,0.12)] p-8">
-				<div className="text-center mb-8">
-					<div className="flex justify-center items-center gap-2 mb-2">
-						<StarGlyph className="w-6 h-6" />
-						<h1 className="text-3xl font-semibold text-foreground ">Polaria</h1>
+		<div className="flex min-h-screen">
+			<div className="flex w-full flex-col bg-background bg-[radial-gradient(circle_at_top,oklch(0.55_0.18_264/0.13)_0%,transparent_65%)] px-6 py-12 sm:px-10 lg:w-1/2 lg:px-16">
+				<div className="flex flex-1 items-center">
+					<div className="mx-auto w-full max-w-sm">
+						<div className="mb-2 flex items-center gap-2">
+							<StarGlyph className="h-6 w-6" />
+							<h1 className="text-3xl font-semibold text-foreground">
+								Polaria
+							</h1>
+						</div>
+
+						<p className="mb-8 text-muted-foreground">
+							Tu asistente de reservas.
+						</p>
+
+						<GoogleButton />
+
+						<div className="mt-6 text-sm">
+							<p className="text-muted-foreground">
+								¿Sos cliente y querés reservar una cita?
+							</p>
+							<a
+								href={SITES.marketplace}
+								className="mt-1 inline-block font-medium text-foreground hover:underline"
+							>
+								Ir a Polaria para clientes
+							</a>
+						</div>
 					</div>
-					<p className="text-muted-foreground">Tu asistente de reservas.</p>
 				</div>
 
-				<GoogleButton />
-
-				<div className="text-xs mt-8">
+				<div className="mx-auto mt-12 w-full max-w-sm text-xs">
 					<span className="text-muted-foreground">
 						Al registrarse, usted confirma que acepta nuestras
 					</span>{' '}
@@ -37,19 +55,9 @@ const AuthPage = () => {
 						Política de privacidad
 					</Link>
 				</div>
-
-				<div className="mt-6 border-t border-border pt-6 text-center text-sm">
-					<p className="text-muted-foreground">
-						¿Sos cliente y querés reservar una cita?
-					</p>
-					<a
-						href={SITES.marketplace}
-						className="mt-1 inline-block font-medium text-foreground hover:underline"
-					>
-						Ir a Polaria para clientes
-					</a>
-				</div>
 			</div>
+
+			<AuthPhotos className="hidden lg:block lg:w-1/2" />
 		</div>
 	);
 };
