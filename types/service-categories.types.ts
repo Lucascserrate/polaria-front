@@ -27,6 +27,14 @@ export interface CreateServiceCategoryDto {
 
 export type UpdateServiceCategoryDto = Partial<CreateServiceCategoryDto>;
 
+/** Un lugar arriba o abajo. Espejo de `MoveDirection` del servidor. */
+export type MoveDirection = 'UP' | 'DOWN';
+
+export type MoveServiceCategoryInput = {
+	id: string;
+	direction: MoveDirection;
+};
+
 export type UpdateServiceCategoryInput = {
 	id: string;
 	data: UpdateServiceCategoryDto;

@@ -11,6 +11,7 @@ import CategoryFilter, {
 	UNCATEGORIZED,
 } from '@/modules/services/CategoryFilter';
 import DeleteCategoryDialog from '@/modules/services/DeleteCategoryDialog';
+import ReorderCategoriesDialog from '@/modules/services/ReorderCategoriesDialog';
 import ServicesTable from '@/modules/services/ServicesTable';
 import { groupByCategory } from '@/modules/services/utils/groupByCategory';
 import useGetServices from '@/services/services/useGetServices';
@@ -44,6 +45,7 @@ const ServicesPage = () => {
 	const [editing, setEditing] = useState<ServiceCategory | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [deleting, setDeleting] = useState<ServiceCategory | null>(null);
+	const [reordering, setReordering] = useState(false);
 
 	const groups = useMemo(
 		() => groupByCategory(services, categories),
@@ -129,6 +131,10 @@ const ServicesPage = () => {
 					value={filter}
 					onChange={setFilter}
 					onAdd={openNewCategory}
+					// Con una sola categoría no hay orden que elegir.
+					onReorder={
+						categories.length > 1 ? () => setReordering(true) : undefined
+					}
 				/>
 
 				<div className="min-w-0 flex-1">
@@ -147,6 +153,12 @@ const ServicesPage = () => {
 				open={dialogOpen}
 				category={editing}
 				onOpenChange={setDialogOpen}
+			/>
+
+			<ReorderCategoriesDialog
+				categories={categories}
+				open={reordering}
+				onOpenChange={setReordering}
 			/>
 
 			{deleting && (

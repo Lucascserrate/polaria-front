@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { ArrowUpDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ServiceGroup } from './utils/groupByCategory';
 import { UNCATEGORIZED_LABEL } from './utils/groupByCategory';
@@ -19,6 +19,8 @@ interface Props {
 	value: CategoryFilterValue;
 	onChange: (value: CategoryFilterValue) => void;
 	onAdd: () => void;
+	/** Ausente con menos de dos categorías: no hay nada que ordenar. */
+	onReorder?: () => void;
 }
 
 /**
@@ -46,6 +48,7 @@ const CategoryFilter: React.FC<Props> = ({
 	value,
 	onChange,
 	onAdd,
+	onReorder,
 }) => {
 	const options = [
 		{ key: ALL_CATEGORIES, label: 'Todas las categorías', count: total },
@@ -93,6 +96,17 @@ const CategoryFilter: React.FC<Props> = ({
 					<Plus className="size-4 shrink-0" />
 					Añadir categoría
 				</button>
+
+				{onReorder && (
+					<button
+						type="button"
+						onClick={onReorder}
+						className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+					>
+						<ArrowUpDown className="size-4 shrink-0" />
+						Ordenar categorías
+					</button>
+				)}
 			</nav>
 
 			{/*
@@ -126,6 +140,18 @@ const CategoryFilter: React.FC<Props> = ({
 					<Plus className="size-4" />
 					Categoría
 				</button>
+
+				{onReorder && (
+					<button
+						type="button"
+						onClick={onReorder}
+						aria-label="Ordenar categorías"
+						className="flex shrink-0 items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-sm whitespace-nowrap text-muted-foreground"
+					>
+						<ArrowUpDown className="size-4" />
+						Orden
+					</button>
+				)}
 			</div>
 		</>
 	);
