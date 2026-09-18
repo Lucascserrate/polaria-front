@@ -12,7 +12,13 @@ export interface Service {
 	name: string;
 	description?: string;
 	durationMinutes: number;
-	price: number;
+	/**
+	 * Cuánto cuesta, o `null` si se cotiza después de ver a la persona.
+	 *
+	 * `null` no es `0`: uno es "todavía no se sabe" y el otro es "no se cobra".
+	 * Donde iría el importe se escribe el aviso; ver `QUOTED_PRICE_LABEL`.
+	 */
+	price: number | null;
 	/**
 	 * La moneda de `price`, en ISO 4217.
 	 *
@@ -32,7 +38,8 @@ export interface CreateServiceDto {
 	name: string;
 	description?: string;
 	durationMinutes: number;
-	price: number;
+	/** `null` si el servicio se cotiza. Se manda siempre, aunque sea `null`. */
+	price: number | null;
 	/** Ausente hereda la moneda por defecto del negocio. */
 	currency?: string;
 	timezone: string;

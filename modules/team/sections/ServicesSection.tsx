@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { formatMoney } from '@/lib/money';
+import { formatServiceMoney } from '@/lib/money';
 import useGetServices from '@/services/services/useGetServices';
 import useGetSettings from '@/services/settings/useGetSettings';
 import SectionHeader from '../SectionHeader';
@@ -162,8 +162,8 @@ const ServicesSection: React.FC<Props> = ({
 											{describeDuration(service.durationMinutes)}
 										</span>
 									</span>
-									<span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-										{formatMoney(Number(service.price), currency)}
+									<span className="shrink-0 text-sm text-muted-foreground">
+										{formatServiceMoney(service.price, currency)}
 									</span>
 								</label>
 							);

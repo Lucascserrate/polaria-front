@@ -7,9 +7,11 @@ import type { EditableService } from './BookingServicesEditor';
 import {
 	itemsChanged,
 	offsetsOf,
+	pricesOf,
 	summarizeDraft,
 	toDraftItems,
 	type DraftItem,
+	type DraftPrice,
 	type DraftSummary,
 } from './utils/bookingDraft';
 import { dateKeyInTimeZone } from './utils/calendarLayout';
@@ -52,6 +54,8 @@ export interface BookingDraftState {
 	dayKey: string | null;
 	/** Minutos en que arranca cada tramo dentro de la reserva. */
 	offsets: number[];
+	/** Lo que se cobra por cada tramo, en el mismo orden que `items`. */
+	prices: DraftPrice[];
 	summary: DraftSummary;
 	/** Los tramos como los necesita la consulta de disponibilidad. */
 	slotItems: BookingSlotItem[];
@@ -116,6 +120,11 @@ const useBookingDraft = ({
 		[items, services],
 	);
 
+	const prices = useMemo(
+		() => pricesOf({ items, services, agreedPrices }),
+		[items, services, agreedPrices],
+	);
+
 	const summary = useMemo(
 		() => summarizeDraft({ items, services, agreedPrices }),
 		[items, services, agreedPrices],
@@ -150,6 +159,7 @@ const useBookingDraft = ({
 		startTime,
 		dayKey: startTime ? dateKeyInTimeZone(startTime, timezone) : null,
 		offsets,
+		prices,
 		summary,
 		slotItems,
 		timeChanged,

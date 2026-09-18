@@ -22,6 +22,14 @@ export interface ServiceDraft {
 	/** Como texto porque viene de un `input`: vacío es distinto de cero. */
 	duration: string;
 	price: string;
+	/**
+	 * Si el precio se define después de ver al cliente.
+	 *
+	 * Vive al lado de `price` y no lo reemplaza: quien lo marca sin querer
+	 * encuentra su número donde lo dejó al desmarcarlo, y quien lo marca a
+	 * propósito no tiene que borrar nada. Lo que se guarda lo decide `toPayload`.
+	 */
+	quoted: boolean;
 	/** La moneda de este precio, en ISO 4217. Ver `PriceField`. */
 	currency: string;
 	bookingPolicy: ServiceBookingPolicy;
@@ -32,7 +40,8 @@ export interface ServicePayload {
 	name: string;
 	description: string;
 	durationMinutes: number;
-	price: number;
+	/** `null` si se cotiza. Ver `QUOTED_PRICE_LABEL`. */
+	price: number | null;
 	currency: string;
 	bookingPolicy: ServiceBookingPolicy;
 }
@@ -78,7 +87,16 @@ const useServiceDraft = (
 			service?.durationMinutes === undefined
 				? ''
 				: String(service.durationMinutes),
-		price: service?.price === undefined ? '' : String(Number(service.price)),
+		/*
+		 * Sin precio el campo arranca vacío, no en cero: `String(Number(null))`
+		 * daba "0", y ese cero se guardaba como un servicio gratis en cuanto alguien
+		 * abría el servicio y apretaba guardar sin tocar nada.
+		 */
+		price:
+			service?.price === undefined || service.price === null
+				? ''
+				: String(Number(service.price)),
+		quoted: service?.price === null,
 		currency: service?.currency ?? defaultCurrency,
 		// Los servicios viejos no traen el campo, y siempre fueron reservables.
 		bookingPolicy: service?.bookingPolicy ?? 'CLIENT_BOOKS',
@@ -110,14 +128,23 @@ const useServiceDraft = (
 			 * 12,5 dejaría citas que no se pueden dibujar ni reservar.
 			 */
 			found.pricing = 'La duración tiene que ser un número de minutos.';
-		} else if (price === null) {
-			found.pricing = 'Falta el precio.';
-		} else if (price < 0) {
-			found.pricing = 'El precio no puede ser negativo.';
+		} else if (!draft.quoted) {
+			// El que se cotiza no valida precio: no falta, se decide después.
+			if (price === null) {
+				found.pricing = 'Falta el precio.';
+			} else if (price < 0) {
+				found.pricing = 'El precio no puede ser negativo.';
+			}
 		}
 
 		return found;
-	}, [draft.name, draft.description, draft.duration, draft.price]);
+	}, [
+		draft.name,
+		draft.description,
+		draft.duration,
+		draft.price,
+		draft.quoted,
+	]);
 
 	const canSave = Object.keys(errors).length === 0;
 
@@ -132,7 +159,7 @@ const useServiceDraft = (
 		name: draft.name.trim(),
 		description: draft.description.trim(),
 		durationMinutes: Number(draft.duration.trim()),
-		price: Number(draft.price.trim()),
+		price: draft.quoted ? null : Number(draft.price.trim()),
 		currency: draft.currency,
 		bookingPolicy: draft.bookingPolicy,
 	});

@@ -3,11 +3,14 @@
 import { CalendarX2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatLongDate } from '@/lib/date';
-import { formatTotals, sumByCurrency } from '@/lib/money';
+import { countUnpriced, formatTotals, sumByCurrency } from '@/lib/money';
 import { isAdminRole } from '@/modules/auth/session';
 import { useSessionActor } from '@/modules/auth/hooks/useAuth';
 import useGetSettings from '@/services/settings/useGetSettings';
 import useGetUnresolvedAppointments from '@/services/appointments/useGetUnresolvedAppointments';
+import FinishWithPricesDialog, {
+	useFinishWithPrices,
+} from './FinishWithPricesDialog';
 import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import type { Appointment } from '@/types/appointments.types';
 import {
@@ -58,6 +61,13 @@ const UnresolvedAppointmentsCard: React.FC = () => {
 		variables,
 	} = useUpdateAppointmentStatus();
 
+	/*
+	 * Cerrar una cita de acá también pide el precio que falte. Es donde más hace
+	 * falta: esta tarjeta existe justamente porque mientras la cita no se cierra no
+	 * cuenta como ingreso, y cerrarla sin precio la deja igual de invisible.
+	 */
+	const { requestFinish, finishingId, dialogProps } = useFinishWithPrices();
+
 	if (!isAdmin || !data?.total) return null;
 
 	// Sin configuración todavía, el código ISO es el del negocio por defecto.
@@ -89,11 +99,24 @@ const UnresolvedAppointmentsCard: React.FC = () => {
 						currency={currency}
 						// La fila que se está resolviendo sale de la mutación, así que no
 						// hace falta un estado aparte.
-						busy={isPending && variables?.id === appointment.id}
-						onResolve={(status) => setStatus({ id: appointment.id, status })}
+						busy={
+							(isPending && variables?.id === appointment.id) ||
+							finishingId === appointment.id
+						}
+						onResolve={(status) =>
+							status === 'completed'
+								? requestFinish({
+										id: appointment.id,
+										clientName: appointment.clientName,
+										segments: appointment.segments,
+									})
+								: setStatus({ id: appointment.id, status })
+						}
 					/>
 				))}
 			</ul>
+
+			<FinishWithPricesDialog {...dialogProps} />
 		</div>
 	);
 };
@@ -112,6 +135,7 @@ const UnresolvedRow: React.FC<{
 	onResolve: (status: 'completed' | 'cancelled') => void;
 }> = ({ appointment, timezone, currency, busy, onResolve }) => {
 	const totals = sumByCurrency(appointment.segments);
+	const unpriced = countUnpriced(appointment.segments);
 
 	return (
 		<li className="px-4 py-3">
@@ -123,7 +147,8 @@ const UnresolvedRow: React.FC<{
 			</p>
 			<p className="text-xs text-muted-foreground truncate mt-0.5">
 				{`${appointment.service} · ${appointment.staff}`}
-				{totals.length > 0 && ` · ${formatTotals(totals, currency)}`}
+				{(totals.length > 0 || unpriced > 0) &&
+					` · ${formatTotals(totals, currency, unpriced)}`}
 			</p>
 
 			<div className="flex items-center gap-1 mt-2">

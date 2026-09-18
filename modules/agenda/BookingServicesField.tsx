@@ -6,8 +6,8 @@ import type { StaffMember } from '@/types/staff.types';
 import BookingServicesEditor, {
 	type EditableService,
 } from './BookingServicesEditor';
-import type { DraftItem } from './utils/bookingDraft';
-import { formatMoney } from '@/lib/money';
+import type { DraftItem, DraftPrice } from './utils/bookingDraft';
+import { formatServiceMoney } from '@/lib/money';
 import { formatDuration } from '@/lib/duration';
 import { formatMinute, minutesInTimeZone } from './utils/calendarLayout';
 
@@ -18,6 +18,8 @@ interface Props {
 	staff: StaffMember[];
 	currency: string;
 	offsets: number[];
+	/** Lo que se cobra por cada tramo, en el mismo orden que `items`. */
+	prices: DraftPrice[];
 	/** Inicio de la reserva en ISO, para calcular la hora de cada tramo. */
 	startTime: string | null;
 	timezone?: string;
@@ -55,6 +57,7 @@ const BookingServicesField: React.FC<Props> = ({
 	staff,
 	currency,
 	offsets,
+	prices,
 	startTime,
 	timezone,
 	preferredStaffId,
@@ -78,6 +81,7 @@ const BookingServicesField: React.FC<Props> = ({
 				staff={staff}
 				currency={currency}
 				offsets={offsets}
+				prices={prices}
 				startMinute={startTime ? minutesInTimeZone(startTime, timezone) : null}
 				preferredStaffId={preferredStaffId}
 				onAddRequest={onAddRequest}
@@ -102,8 +106,14 @@ const BookingServicesField: React.FC<Props> = ({
 								<p className="truncate font-medium">
 									{segment.serviceName ?? 'Servicio'}
 								</p>
-								<p className="shrink-0 tabular-nums">
-									{formatMoney(segment.price, segment.currency)}
+								<p
+									className={
+										segment.price === null
+											? 'shrink-0 text-muted-foreground'
+											: 'shrink-0 tabular-nums'
+									}
+								>
+									{formatServiceMoney(segment.price, segment.currency)}
 								</p>
 							</div>
 							<p className="truncate text-sm text-muted-foreground">

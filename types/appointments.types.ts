@@ -27,8 +27,13 @@ export interface AppointmentSegmentApi {
 	serviceName: string | null;
 	startTime: string;
 	endTime: string;
-	/** Lo pactado al reservar, no lo que el servicio cuesta hoy. */
-	price: number;
+	/**
+	 * Lo pactado al reservar, no lo que el servicio cuesta hoy.
+	 *
+	 * `null` mientras el tramo no tenga precio: los servicios que se cotizan nacen
+	 * sin importe y lo reciben cuando el negocio lo escribe en la cita.
+	 */
+	price: number | null;
 	/** La moneda de `price`, también la pactada al reservar. */
 	currency: string;
 	durationMinutes: number;
@@ -108,7 +113,8 @@ export interface AppointmentSegment {
 	serviceName: string | null;
 	startTime: string;
 	endTime: string;
-	price: number;
+	/** `null` mientras el tramo no tenga precio. */
+	price: number | null;
 	/** La moneda de `price`, congelada al reservar con él. */
 	currency: string;
 	durationMinutes: number;
@@ -118,7 +124,8 @@ export interface ServiceApi {
 	id: string;
 	name: string;
 	description?: string;
-	price: number;
+	/** `null` si el servicio se cotiza después de ver a la persona. */
+	price: number | null;
 	timezone: string;
 	durationMinutes: number;
 	isActive: boolean;

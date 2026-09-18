@@ -92,6 +92,7 @@ describe('summarizeDraft', () => {
 		).toEqual({
 			totalMinutes: 50,
 			totals: [{ currency: 'BOB', amount: 75 }],
+			unpriced: 0,
 			unknownServiceIds: [],
 		});
 	});
@@ -156,8 +157,27 @@ describe('summarizeDraft', () => {
 		expect(summarizeDraft({ items: [], services: SERVICES })).toEqual({
 			totalMinutes: 0,
 			totals: [],
+			unpriced: 0,
 			unknownServiceIds: [],
 		});
+	});
+
+	it('cuenta aparte los tramos que todavía no tienen precio', () => {
+		// La coloración se cotiza: el total de la cita es lo que ya hay **más
+		// algo**, y decir "Bs 50" sería decir lo que no se va a cobrar.
+		const summary = summarizeDraft({
+			items: [
+				{ serviceId: 'corte', staffId: 'diego' },
+				{ serviceId: 'color', staffId: 'diego' },
+			],
+			services: [
+				...SERVICES,
+				{ id: 'color', durationMinutes: 60, price: null, currency: 'BOB' },
+			],
+		});
+
+		expect(summary.totals).toEqual([{ currency: 'BOB', amount: 50 }]);
+		expect(summary.unpriced).toBe(1);
 	});
 });
 

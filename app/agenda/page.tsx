@@ -11,6 +11,9 @@ import CalendarGrid, {
 	type CalendarColumn,
 } from '@/modules/agenda/CalendarGrid';
 import FloatingAttention from '@/modules/agenda/FloatingAttention';
+import FinishWithPricesDialog, {
+	useFinishWithPrices,
+} from '@/modules/agenda/FinishWithPricesDialog';
 import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
 import BookingDrawer from '@/modules/agenda/BookingDrawer';
 import NewBookingDrawer, {
@@ -168,9 +171,29 @@ const AgendaPage = () => {
 		isError: statusError,
 	} = useUpdateAppointmentStatus();
 
+	/*
+	 * Finalizar puede abrir una pregunta antes: si la cita tiene servicios que se
+	 * cotizan, el precio se escribe ahí, que es cuando el negocio lo sabe. La cita
+	 * que no aparece en el rango —o que no trae tramos— se finaliza directo, que
+	 * es lo que hacía siempre.
+	 */
+	const {
+		requestFinish,
+		finishingId,
+		dialogProps: finishDialog,
+	} = useFinishWithPrices();
+
 	const handleMarkAttended = useCallback(
-		(id: string) => updateStatus({ id, status: 'completed' }),
-		[updateStatus],
+		(id: string) => {
+			const appointment = range?.items.find((item) => item.id === id);
+
+			requestFinish({
+				id,
+				clientName: appointment?.clientName ?? null,
+				segments: appointment?.segments ?? [],
+			});
+		},
+		[range?.items, requestFinish],
 	);
 
 	const handleCancel = useCallback(
@@ -210,11 +233,13 @@ const AgendaPage = () => {
 	 * aparte. Borrar también cuenta: mientras la petición viaja, sus acciones se
 	 * apagan igual que al cambiar de estado.
 	 */
-	const updatingId = isUpdatingStatus
-		? (statusVariables?.id ?? null)
-		: isDeleting
-			? (deletingId ?? null)
-			: null;
+	const updatingId =
+		finishingId ??
+		(isUpdatingStatus
+			? (statusVariables?.id ?? null)
+			: isDeleting
+				? (deletingId ?? null)
+				: null);
 
 	/*
 	 * Los bloqueos del mismo rango que las citas.
@@ -641,6 +666,9 @@ const AgendaPage = () => {
 			<BlockDrawer seed={blockSlot} onClose={() => setBlockSlot(null)} />
 
 			<FloatingAttention />
+
+			{/* El precio que falta, pedido al finalizar desde el menú de la tarjeta. */}
+			<FinishWithPricesDialog {...finishDialog} />
 		</>
 	);
 };

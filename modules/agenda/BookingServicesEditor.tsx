@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/select';
 import { eligibleStaffFor } from './utils/eligibleStaff';
 import type { StaffMember } from '@/types/staff.types';
-import type { DraftItem } from './utils/bookingDraft';
-import { formatMoney } from '@/lib/money';
+import type { DraftItem, DraftPrice } from './utils/bookingDraft';
+import { formatServiceMoney } from '@/lib/money';
 import { formatDuration } from '@/lib/duration';
 import { formatMinute } from './utils/calendarLayout';
 
@@ -26,7 +26,8 @@ import { formatMinute } from './utils/calendarLayout';
 export interface EditableService {
 	id: string;
 	name: string;
-	price: number;
+	/** `null` si se cotiza: el precio se escribe en la cita. */
+	price: number | null;
 	currency: string;
 	durationMinutes: number;
 	/** Un servicio dado de baja no se ofrece para agregar. */
@@ -41,6 +42,8 @@ interface Props {
 	currency: string;
 	/** Minutos en que arranca cada tramo, para mostrar su hora. */
 	offsets: number[];
+	/** Lo que se cobra por cada tramo, en el mismo orden que `items`. */
+	prices: DraftPrice[];
 	/** Minuto del día en que arranca la reserva, o `null` si no se sabe. */
 	startMinute: number | null;
 	/**
@@ -82,6 +85,7 @@ const BookingServicesEditor: React.FC<Props> = ({
 	staff,
 	currency,
 	offsets,
+	prices,
 	startMinute,
 	preferredStaffId,
 	onAddRequest,
@@ -159,10 +163,24 @@ const BookingServicesEditor: React.FC<Props> = ({
 										{service?.name ?? 'Servicio que ya no existe'}
 									</p>
 									<div className="flex shrink-0 items-center gap-1">
-										<p className="tabular-nums">
-											{formatMoney(
-												service?.price ?? 0,
-												service?.currency ?? currency,
+										{/*
+										 * Lo pactado en **esta** reserva, no el precio de hoy del
+										 * catálogo: un servicio que subió de precio no le cambia el
+										 * total a una cita que ya estaba tomada. El que se cotiza
+										 * dice que no tiene precio; se escribe al finalizar la cita.
+										 */}
+										<p
+											className={
+												prices[index]?.price === null
+													? 'text-muted-foreground'
+													: 'tabular-nums'
+											}
+										>
+											{formatServiceMoney(
+												prices[index]?.price ?? null,
+												prices[index]?.currency ||
+													service?.currency ||
+													currency,
 											)}
 										</p>
 										<Button

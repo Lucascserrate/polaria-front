@@ -9,7 +9,7 @@ import type { Appointment } from '@/types/appointments.types';
 import useGetSettings from '@/services/settings/useGetSettings';
 import { describeReminder } from './utils/reminderStatus';
 import { cn } from '@/lib/utils';
-import { formatTotals, sumByCurrency } from '@/lib/money';
+import { countUnpriced, formatTotals, sumByCurrency } from '@/lib/money';
 
 /**
  * El detalle de una cita, con el estado arriba y teñido según cuál sea.
@@ -37,6 +37,7 @@ const AppointmentPreview: React.FC<{
 	// Lo pactado al reservar, sumando los tramos: es lo que se cobra, no lo que
 	// los servicios cuesten hoy. Por moneda, porque una cita puede mezclar dos.
 	const totals = sumByCurrency(appointment.segments ?? []);
+	const unpriced = countUnpriced(appointment.segments ?? []);
 
 	return (
 		<>
@@ -64,11 +65,16 @@ const AppointmentPreview: React.FC<{
 					</p>
 				</div>
 
-				{totals.length > 0 && (
+				{/*
+				 * También cuando lo único que hay es un servicio sin precio: ahí el
+				 * total no es cero, es que falta cotizarlo, y esconder la línea lo
+				 * haría pasar por una cita sin importe.
+				 */}
+				{(totals.length > 0 || unpriced > 0) && (
 					<p className="flex items-center justify-between border-t border-border pt-2 text-xs">
 						<span className="text-muted-foreground">Total</span>
 						<span className="font-medium tabular-nums">
-							{formatTotals(totals, currency)}
+							{formatTotals(totals, currency, unpriced)}
 						</span>
 					</p>
 				)}

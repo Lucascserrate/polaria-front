@@ -12,7 +12,8 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { ROUTES } from '@/constants/routes';
-import { formatMoney } from '@/lib/money';
+import { formatServiceMoney } from '@/lib/money';
+import { cn } from '@/lib/utils';
 import type { Service } from '@/types/services.types';
 
 interface Props {
@@ -86,8 +87,17 @@ const ServicesTable: React.FC<Props> = ({ services }) => {
 								<TableCell className="text-sm tabular-nums text-muted-foreground">
 									{`${service.durationMinutes} min`}
 								</TableCell>
-								<TableCell className="text-right font-medium tabular-nums">
-									{formatMoney(Number(service.price), service.currency)}
+								{/*
+								 * `tabular-nums` sólo cuando hay número: la columna alinea
+								 * importes, y el aviso de los que se cotizan es texto.
+								 */}
+								<TableCell
+									className={cn(
+										'text-right font-medium',
+										service.price !== null && 'tabular-nums',
+									)}
+								>
+									{formatServiceMoney(service.price, service.currency)}
 								</TableCell>
 							</TableRow>
 						))}
@@ -114,8 +124,13 @@ const ServicesTable: React.FC<Props> = ({ services }) => {
 									<ConsultationFirst />
 								)}
 							</span>
-							<span className="shrink-0 font-medium tabular-nums">
-								{formatMoney(Number(service.price), service.currency)}
+							<span
+								className={cn(
+									'shrink-0 font-medium',
+									service.price !== null && 'tabular-nums',
+								)}
+							>
+								{formatServiceMoney(service.price, service.currency)}
 							</span>
 						</Link>
 					</li>

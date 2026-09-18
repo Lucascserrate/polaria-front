@@ -32,7 +32,7 @@ export const createAppointment = async (
 export interface CreateBookingPayload {
 	clientId: string;
 	startTime: string;
-	items: Array<{ serviceId: string; staffId: string }>;
+	items: BookingItemPayload[];
 }
 
 /**
@@ -106,10 +106,21 @@ export const getAppointmentDetail = async (
 	return data;
 };
 
+/**
+ * Un servicio de la reserva, con su profesional.
+ *
+ * Sin precio: lo que se cobra no se edita junto con la reserva, se escribe al
+ * finalizar la cita por `setSegmentPrices`.
+ */
+export interface BookingItemPayload {
+	serviceId: string;
+	staffId: string;
+}
+
 /** Estado deseado de lo editable: cuándo empieza y qué servicios tiene. */
 export interface EditBookingPayload {
 	startTime: string;
-	items: Array<{ serviceId: string; staffId: string }>;
+	items: BookingItemPayload[];
 }
 
 export const editBooking = async (
@@ -132,4 +143,21 @@ export const editBooking = async (
  */
 export const deleteAppointment = async (id: string): Promise<void> => {
 	await axiosInstance.delete(`/appointments/${id}`);
+};
+
+/**
+ * Escribe lo que se cobra en una cita que ya existe.
+ *
+ * Ruta propia y no la edición de la reserva: esa manda el estado deseado completo
+ * y reacomoda los tramos, lo que expone una cita ya atendida a fallar por
+ * horario. Acá sólo se escribe el importe.
+ */
+export const setSegmentPrices = async (
+	id: string,
+	prices: Array<{ serviceId: string; price: number | null }>,
+): Promise<AppointmentDetailApi> => {
+	const { data } = await axiosInstance.patch(`/appointments/${id}/prices`, {
+		prices,
+	});
+	return data;
 };

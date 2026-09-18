@@ -10,7 +10,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { ROUTES } from '@/constants/routes';
 import { cn } from '@/lib/utils';
 import { currencyLabel } from '@/lib/currencies';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, QUOTED_PRICE_LABEL } from '@/lib/money';
 import type { Service } from '@/types/services.types';
 import useServiceDraft, {
 	SERVICE_TEXT_MAX_LENGTH,
@@ -84,16 +84,22 @@ const ServiceEditor: React.FC<Props> = ({
 	 * precio formateado y no sólo el código: "Bs 45.000" en una pantalla
 	 * colombiana salta a la vista, un "BOB" suelto en una etiqueta no tanto. Sin
 	 * precio escrito no hay nada que formatear, así que queda sólo el aviso.
+	 *
+	 * Cotizado se dice qué pasa con la moneda igual: no se usa hoy, pero es la que
+	 * va a proponer la cita cuando se escriba el importe, y por eso se sigue
+	 * eligiendo acá.
 	 */
 	const price = Number(draft.price);
-	const priceHint = [
-		Number.isFinite(price) && draft.price.trim()
-			? `Así lo ve tu cliente: ${formatMoney(price, draft.currency)}.`
-			: null,
-		`Se cobra en ${currencyLabel(draft.currency).toLowerCase()}.`,
-	]
-		.filter(Boolean)
-		.join(' ');
+	const priceHint = draft.quoted
+		? `El cliente ve "${QUOTED_PRICE_LABEL}" en lugar del precio. Lo escribís en la cita, en ${currencyLabel(draft.currency).toLowerCase()}.`
+		: [
+				Number.isFinite(price) && draft.price.trim()
+					? `Así lo ve tu cliente: ${formatMoney(price, draft.currency)}.`
+					: null,
+				`Se cobra en ${currencyLabel(draft.currency).toLowerCase()}.`,
+			]
+				.filter(Boolean)
+				.join(' ');
 
 	return (
 		<div className="space-y-6">
@@ -252,12 +258,14 @@ const ServiceEditor: React.FC<Props> = ({
 									/>
 								</Field>
 
-								<Field label="Precio" required hint={priceHint}>
+								<Field label="Precio" required={!draft.quoted} hint={priceHint}>
 									<PriceField
 										value={draft.price}
 										onChange={(next) => set('price', next)}
 										currency={draft.currency}
 										onCurrencyChange={(next) => set('currency', next)}
+										quoted={draft.quoted}
+										onQuotedChange={(next) => set('quoted', next)}
 									/>
 								</Field>
 							</div>
@@ -297,9 +305,7 @@ const ServiceEditor: React.FC<Props> = ({
 							<div className="border-t border-border pt-3 text-xs text-muted-foreground">
 								<p>Con consulta previa, el servicio sigue existiendo:</p>
 								<ul className="mt-1.5 list-disc space-y-1 pl-4">
-									<li>
-										Se muestra en tu página, con su precio, sin poder elegirlo.
-									</li>
+									<li>Se muestra en tu página, sin poder elegirlo.</li>
 									<li>
 										Si un cliente pregunta por WhatsApp, Polaria le explica que
 										hace falta coordinar una consulta.

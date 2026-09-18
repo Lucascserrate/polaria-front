@@ -311,6 +311,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 								staff={staff}
 								currency={currency}
 								offsets={draft.offsets}
+								prices={draft.prices}
 								startMinute={
 									draft.startTime
 										? minutesInTimeZone(draft.startTime, timezone)
@@ -357,7 +358,11 @@ const NewBookingForm: React.FC<FormProps> = ({
 						</p>
 						<div className="flex items-baseline gap-2 sm:block">
 							<p className="text-xl font-semibold tabular-nums">
-								{formatTotals(draft.summary.totals, currency)}
+								{formatTotals(
+									draft.summary.totals,
+									currency,
+									draft.summary.unpriced,
+								)}
 							</p>
 							<p className="text-xs text-muted-foreground tabular-nums">
 								{draft.summary.totalMinutes} min

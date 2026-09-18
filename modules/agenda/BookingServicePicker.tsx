@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { formatMoney } from '@/lib/money';
+import { formatServiceMoney } from '@/lib/money';
 import { formatDuration } from '@/lib/duration';
 import { cn } from '@/lib/utils';
 import type { StaffMember } from '@/types/staff.types';
@@ -107,8 +107,14 @@ const BookingServicePicker: React.FC<Props> = ({
 										</span>
 									</span>
 
-									<span className="shrink-0 tabular-nums">
-										{formatMoney(service.price, service.currency)}
+									<span
+										className={
+											service.price === null
+												? 'shrink-0 text-sm text-muted-foreground'
+												: 'shrink-0 tabular-nums'
+										}
+									>
+										{formatServiceMoney(service.price, service.currency)}
 									</span>
 								</button>
 							</li>

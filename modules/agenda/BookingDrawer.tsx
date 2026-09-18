@@ -14,14 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import useGetAppointmentDetail from '@/services/appointments/useGetAppointmentDetail';
 import useEditBooking from '@/services/appointments/useEditBooking';
-import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useGetSettings from '@/services/settings/useGetSettings';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import useGetServices from '@/services/services/useGetServices';
 import useGetStaff from '@/services/staff/useGetStaff';
 import useGetSlotsForBooking from '@/services/availability/useGetSlotsForBooking';
 import { cn } from '@/lib/utils';
-import { formatTotals } from '@/lib/money';
+import { countUnpriced, formatTotals } from '@/lib/money';
 import { formatDuration } from '@/lib/duration';
 import BookingClientPanel from './BookingClientPanel';
 import BookingMobileBar from './BookingMobileBar';
@@ -30,6 +29,9 @@ import BookingServicePicker from './BookingServicePicker';
 import BookingServicesField from './BookingServicesField';
 import BookingWhenField from './BookingWhenField';
 import useBookingDraft from './useBookingDraft';
+import FinishWithPricesDialog, {
+	useFinishWithPrices,
+} from './FinishWithPricesDialog';
 import { getAppointmentStatusText } from '@/modules/appointments/utils/constants';
 import { describeReminder } from './utils/reminderStatus';
 import { eligibleStaffFor } from './utils/eligibleStaff';
@@ -92,8 +94,18 @@ const BookingEditor: React.FC<EditorProps> = ({
 	const { data: staff = [] } = useGetStaff();
 	const { data: settings } = useGetSettings();
 	const { mutateAsync: save, isPending: saving } = useEditBooking();
-	const { mutateAsync: setStatus, isPending: finishing } =
-		useUpdateAppointmentStatus();
+
+	/*
+	 * Finalizar puede abrir una pregunta antes: si la cita tiene servicios que se
+	 * cotizan, el precio se escribe acá, que es cuando se sabe. La decisión vive en
+	 * el hook para que las tres puertas que finalizan una cita —esta, el menú de la
+	 * tarjeta y la cola de citas sin cerrar— se comporten igual.
+	 */
+	const { requestFinish, finishingId, dialogProps } = useFinishWithPrices({
+		onFinished: onClose,
+		onError: setSaveError,
+	});
+	const finishing = finishingId !== null;
 
 	const busy = saving || finishing;
 
@@ -183,17 +195,15 @@ const BookingEditor: React.FC<EditorProps> = ({
 	const isPendingResolution =
 		booking?.status === 'pending' || booking?.status === 'confirmed';
 
-	const handleFinish = async () => {
+	const handleFinish = () => {
 		if (!booking) return;
 
 		setSaveError(null);
-
-		try {
-			await setStatus({ id: appointmentId, status: 'completed' });
-			onClose();
-		} catch {
-			setSaveError('No se pudo marcar como atendida. Intentá de nuevo.');
-		}
+		requestFinish({
+			id: appointmentId,
+			clientName: booking.client?.name ?? booking.clientName ?? null,
+			segments,
+		});
 	};
 
 	const handleSave = async () => {
@@ -315,6 +325,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 								staff={staff}
 								currency={currency}
 								offsets={draft.offsets}
+								prices={draft.prices}
 								startTime={draft.startTime}
 								timezone={timezone}
 								editable={draft.canEdit}
@@ -381,6 +392,9 @@ const BookingEditor: React.FC<EditorProps> = ({
 										? draft.summary.totals
 										: (booking.totals ?? []),
 									currency,
+									draft.hasChanges
+										? draft.summary.unpriced
+										: countUnpriced(segments),
 								)}
 							</p>
 							<p className="text-xs tabular-nums text-muted-foreground">
@@ -439,7 +453,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 									size="lg"
 									className="flex-1 sm:flex-none"
 									disabled={busy}
-									onClick={() => void handleFinish()}
+									onClick={handleFinish}
 								>
 									{finishing ? (
 										<Spinner className="size-3.5" />
@@ -461,6 +475,12 @@ const BookingEditor: React.FC<EditorProps> = ({
 					)}
 				</footer>
 			</div>
+
+			{/*
+			 * Fuera del panel que hace scroll: el diálogo se dibuja en su propio
+			 * portal, y anidarlo adentro lo dejaría atado al alto del contenido.
+			 */}
+			<FinishWithPricesDialog {...dialogProps} />
 		</div>
 	);
 };

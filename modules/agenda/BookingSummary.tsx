@@ -5,6 +5,8 @@ import { formatTotals, type MoneyTotal } from '@/lib/money';
 interface Props {
 	totalMinutes: number;
 	totals: MoneyTotal[];
+	/** Tramos que todavía no tienen precio. Se cuentan, no se suman. */
+	unpriced?: number;
 	currency: string;
 }
 
@@ -19,6 +21,7 @@ interface Props {
 const BookingSummary: React.FC<Props> = ({
 	totalMinutes,
 	totals,
+	unpriced = 0,
 	currency,
 }) => (
 	<div className="text-sm">
@@ -26,7 +29,7 @@ const BookingSummary: React.FC<Props> = ({
 			Total · {totalMinutes} min
 		</span>
 		<p className="text-base font-semibold tabular-nums">
-			{formatTotals(totals, currency)}
+			{formatTotals(totals, currency, unpriced)}
 		</p>
 	</div>
 );

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { formatMoney } from '@/lib/money';
+import { countUnpriced, formatServiceMoney, formatTotals } from '@/lib/money';
 import type { AppointmentApi } from '@/types/appointments.types';
 import {
 	getAppointmentStatusText,
@@ -129,7 +129,12 @@ const AppointmentCard: React.FC<{
 }> = ({ appointment, currency }) => {
 	const colors = STATUS_COLORS[appointment.status] ?? STATUS_COLORS.confirmed;
 	const segments = appointment.segments ?? [];
-	const total = segments.reduce((sum, segment) => sum + segment.price, 0);
+	// Lo que no tiene precio no suma como cero: se cuenta aparte y se dice.
+	const total = segments.reduce(
+		(sum, segment) => sum + (segment.price ?? 0),
+		0,
+	);
+	const unpriced = countUnpriced(segments);
 
 	return (
 		<li className={cn('rounded-xl border p-3', colors.surface)}>
@@ -164,8 +169,8 @@ const AppointmentCard: React.FC<{
 								{segment.staffName ? ` · ${segment.staffName}` : ''}
 							</span>
 						</span>
-						<span className="shrink-0 tabular-nums text-muted-foreground">
-							{formatMoney(segment.price, currency)}
+						<span className="shrink-0 text-muted-foreground tabular-nums">
+							{formatServiceMoney(segment.price, currency)}
 						</span>
 					</li>
 				))}
@@ -173,7 +178,11 @@ const AppointmentCard: React.FC<{
 
 			{segments.length > 1 && (
 				<p className="mt-2 border-t border-border pt-2 text-right text-sm font-medium tabular-nums">
-					{formatMoney(total, currency)}
+					{formatTotals(
+						total > 0 || unpriced === 0 ? [{ currency, amount: total }] : [],
+						currency,
+						unpriced,
+					)}
 				</p>
 			)}
 		</li>
