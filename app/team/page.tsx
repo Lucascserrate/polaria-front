@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
 import type { StaffMember } from '@/types/staff.types';
 import TeamTable from '@/modules/team/TeamTable';
+import JoinRequestsCard from '@/modules/team/JoinRequestsCard';
 import DeleteStaffDialog from '@/modules/staff/DeleteStaffDialog';
 import useGetStaff from '@/services/staff/useGetStaff';
 import useUpdateStaff from '@/services/staff/useUpdateStaff';
@@ -91,6 +92,8 @@ const TeamPage = () => {
 					{message}
 				</p>
 			)}
+
+			<JoinRequestsCard />
 
 			<TeamTable
 				members={members}

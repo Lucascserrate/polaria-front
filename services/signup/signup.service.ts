@@ -9,6 +9,8 @@ import { axiosInstance } from '@/lib/axios';
  */
 export const signupKeys = {
 	session: ['signup', 'session'] as const,
+	businesses: (query: string) => ['signup', 'businesses', query] as const,
+	joinRequests: ['signup', 'join-requests'] as const,
 };
 
 export interface SignupSession {
@@ -25,6 +27,51 @@ export const getSignupSession = async (): Promise<SignupSession> => {
 export const createBusiness = async (): Promise<{ tenantId: string }> => {
 	const { data } = await axiosInstance.post<{ tenantId: string }>(
 		'/signup/business',
+	);
+	return data;
+};
+
+/** Un negocio en el buscador: lo justo para reconocerlo. */
+export interface JoinableBusiness {
+	id: string;
+	name: string;
+	/** "Juan G.", para distinguir dos locales que se llaman parecido. */
+	ownerName: string | null;
+	logoUrl: string | null;
+}
+
+export interface PendingJoinRequest {
+	id: string;
+	businessName: string;
+	createdAt: string;
+}
+
+/** Lo que el servidor exige para buscar. Se repite acá para no pedir de menos. */
+export const MIN_SEARCH_LENGTH = 3;
+
+export const searchBusinesses = async (
+	query: string,
+): Promise<JoinableBusiness[]> => {
+	const { data } = await axiosInstance.get<JoinableBusiness[]>(
+		'/signup/businesses',
+		{ params: { q: query } },
+	);
+	return data;
+};
+
+export const requestToJoin = async (
+	tenantId: string,
+): Promise<{ id: string }> => {
+	const { data } = await axiosInstance.post<{ id: string }>(
+		'/signup/join-requests',
+		{ tenantId },
+	);
+	return data;
+};
+
+export const getMyJoinRequests = async (): Promise<PendingJoinRequest[]> => {
+	const { data } = await axiosInstance.get<PendingJoinRequest[]>(
+		'/signup/join-requests',
 	);
 	return data;
 };

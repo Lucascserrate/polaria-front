@@ -9,7 +9,9 @@ import { ROUTES } from '@/constants/routes';
 import { StarGlyph } from '../logo';
 import useCreateBusiness from '@/services/signup/useCreateBusiness';
 import useSignupSession from '@/services/signup/useSignupSession';
-import JoinInstructions from '@/modules/signup/JoinInstructions';
+import BusinessSearch from '@/modules/signup/BusinessSearch';
+import JoinWaiting from '@/modules/signup/JoinWaiting';
+import { useMyJoinRequests } from '@/services/signup/useJoinRequests';
 
 /**
  * Qué querés hacer en Polaria: crear un negocio, o entrar al de alguien.
@@ -27,6 +29,7 @@ import JoinInstructions from '@/modules/signup/JoinInstructions';
  */
 const WelcomePage = () => {
 	const { data, isLoading, isError } = useSignupSession();
+	const { data: requests = [] } = useMyJoinRequests();
 	const { mutateAsync: create, isPending } = useCreateBusiness();
 	const [choice, setChoice] = useState<'join' | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -77,11 +80,18 @@ const WelcomePage = () => {
 					</div>
 				) : isError ? (
 					<Expired />
+				) : requests.length > 0 ? (
+					/*
+					 * Con un pedido en curso no se vuelve a preguntar.
+					 *
+					 * Quien ya pidió y entra de nuevo —porque se impacientó, que es lo que
+					 * va a pasar— tiene que ver en qué quedó, no las dos opciones otra vez.
+					 * Ofrecer "crear un negocio" ahí sería empujarlo al error que esto
+					 * vino a evitar.
+					 */
+					<JoinWaiting requests={requests} email={data?.email ?? null} />
 				) : choice === 'join' ? (
-					<JoinInstructions
-						email={data?.email ?? null}
-						onBack={() => setChoice(null)}
-					/>
+					<BusinessSearch onBack={() => setChoice(null)} />
 				) : (
 					<div className="space-y-3">
 						<Choice
