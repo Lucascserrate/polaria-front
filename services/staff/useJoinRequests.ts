@@ -25,9 +25,8 @@ export const usePendingJoinRequests = () =>
 	useQuery({
 		queryKey: joinRequestKeys.pending,
 		queryFn: async () => {
-			const { data } = await axiosInstance.get<JoinRequest[]>(
-				'/staff/join-requests',
-			);
+			const { data } =
+				await axiosInstance.get<JoinRequest[]>('/join-requests');
 			return data;
 		},
 	});
@@ -44,7 +43,7 @@ export const useResolveJoinRequest = () => {
 	return useMutation({
 		mutationFn: async (input: { id: string; approve: boolean }) => {
 			const action = input.approve ? 'approve' : 'reject';
-			await axiosInstance.post(`/staff/join-requests/${input.id}/${action}`);
+			await axiosInstance.post(`/join-requests/${input.id}/${action}`);
 			return input;
 		},
 		onSuccess: (input) => {

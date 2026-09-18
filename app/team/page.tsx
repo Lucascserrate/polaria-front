@@ -3,12 +3,20 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
-import { Plus } from 'lucide-react';
+import { MoreVertical, Plus, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
 import type { StaffMember } from '@/types/staff.types';
 import TeamTable from '@/modules/team/TeamTable';
 import JoinRequestsCard from '@/modules/team/JoinRequestsCard';
+import JoinRequestsDialog from '@/modules/team/JoinRequestsDialog';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { usePendingJoinRequests } from '@/services/staff/useJoinRequests';
 import DeleteStaffDialog from '@/modules/staff/DeleteStaffDialog';
 import useGetStaff from '@/services/staff/useGetStaff';
 import useUpdateStaff from '@/services/staff/useUpdateStaff';
@@ -21,6 +29,16 @@ const TeamPage = () => {
 
 	const [deleting, setDeleting] = useState<StaffMember | null>(null);
 	const [message, setMessage] = useState<string | null>(null);
+	const [showingRequests, setShowingRequests] = useState(false);
+
+	/*
+	 * Se pide acá además de dentro del diálogo, para el número del menú.
+	 *
+	 * Es la misma consulta y React Query la resuelve una sola vez, así que no son
+	 * dos peticiones: es la misma respuesta leída desde los dos lugares que la
+	 * necesitan.
+	 */
+	const { data: requests = [] } = usePendingJoinRequests();
 
 	const handleToggleActive = (id: string) => {
 		const member = members.find((candidate) => candidate.id === id);
@@ -79,12 +97,50 @@ const TeamPage = () => {
 					</p>
 				</div>
 
-				<Button asChild className="gap-2">
-					<Link href={ROUTES.teamNew}>
-						<Plus className="size-4" />
-						Añadir
-					</Link>
-				</Button>
+				<div className="flex items-center gap-2">
+					<Button asChild className="gap-2">
+						<Link href={ROUTES.teamNew}>
+							<Plus className="size-4" />
+							Añadir
+						</Link>
+					</Button>
+
+					{/*
+					 * La puerta permanente a las solicitudes.
+					 *
+					 * Existe aunque no haya ninguna: es donde el dueño confirma que no
+					 * hay —o que sí— cuando alguien le avisa por WhatsApp que ya pidió.
+					 * La tarjeta de arriba es el aviso y aparece sola; esto es para ir a
+					 * buscar.
+					 */}
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button
+								variant="outline"
+								size="icon"
+								aria-label="Más opciones del equipo"
+							>
+								<MoreVertical className="size-4" />
+							</Button>
+						</DropdownMenuTrigger>
+
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem onSelect={() => setShowingRequests(true)}>
+								<UserPlus />
+								Ver solicitudes
+								{/*
+								 * El número al costado: el menú cerrado no dice si hay algo, y
+								 * abrirlo para encontrar un cero es el click que esto evita.
+								 */}
+								{requests.length > 0 && (
+									<span className="ml-auto rounded-full bg-warning/15 px-1.5 text-xs font-medium tabular-nums text-warning">
+										{requests.length}
+									</span>
+								)}
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
 			</div>
 
 			{message && (
@@ -99,6 +155,11 @@ const TeamPage = () => {
 				members={members}
 				onToggleActive={handleToggleActive}
 				onDelete={setDeleting}
+			/>
+
+			<JoinRequestsDialog
+				open={showingRequests}
+				onOpenChange={setShowingRequests}
 			/>
 
 			<DeleteStaffDialog
