@@ -17,6 +17,7 @@ import useServiceDraft, {
 	type ServicePayload,
 	type ServiceSection,
 } from './useServiceDraft';
+import CategoryField from './CategoryField';
 import DeleteServiceDialog from './DeleteServiceDialog';
 import PriceField from './PriceField';
 
@@ -213,6 +214,16 @@ const ServiceEditor: React.FC<Props> = ({
 									placeholder="Corte de pelo"
 									maxLength={SERVICE_TEXT_MAX_LENGTH}
 									onChange={(event) => set('name', event.target.value)}
+								/>
+							</Field>
+
+							<Field
+								label="Categoría"
+								hint="Opcional. Agrupa el catálogo cuando son muchos servicios."
+							>
+								<CategoryField
+									value={draft.categoryId}
+									onChange={(next) => set('categoryId', next)}
 								/>
 							</Field>
 

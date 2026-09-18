@@ -11,6 +11,19 @@ export interface Service {
 	id: string;
 	name: string;
 	description?: string;
+	/**
+	 * La categoría a la que pertenece, o `null`/ausente si a ninguna.
+	 *
+	 * Sin categoría es un estado normal y definitivo, no un dato a medio cargar:
+	 * es lo que tiene todo servicio creado antes de que las categorías
+	 * existieran, y lo que va a seguir teniendo el catálogo chico que no necesita
+	 * agruparse. Se muestran juntos al final de la lista.
+	 *
+	 * Viaja el id y no la categoría entera para que renombrarla no deje el nombre
+	 * viejo pegado en la caché de cada servicio. El nombre sale de
+	 * `useGetServiceCategories`.
+	 */
+	categoryId?: string | null;
 	durationMinutes: number;
 	/**
 	 * Cuánto cuesta, o `null` si se cotiza después de ver a la persona.
@@ -37,6 +50,8 @@ export interface Service {
 export interface CreateServiceDto {
 	name: string;
 	description?: string;
+	/** `null` lo saca de la categoría que tenía. Ausente la deja como está. */
+	categoryId?: string | null;
 	durationMinutes: number;
 	/** `null` si el servicio se cotiza. Se manda siempre, aunque sea `null`. */
 	price: number | null;

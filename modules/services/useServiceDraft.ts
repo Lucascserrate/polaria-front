@@ -19,6 +19,14 @@ export const SERVICE_TEXT_MAX_LENGTH = 255;
 export interface ServiceDraft {
 	name: string;
 	description: string;
+	/**
+	 * La categoría elegida, o cadena vacía para "sin categoría".
+	 *
+	 * Cadena vacía y no `null` porque el valor sale de un `<select>`, y un `null`
+	 * en un control nativo lo deja sin controlar. La traducción a `null` la hace
+	 * `toPayload`, que es el único lugar que habla con el servidor.
+	 */
+	categoryId: string;
 	/** Como texto porque viene de un `input`: vacío es distinto de cero. */
 	duration: string;
 	price: string;
@@ -39,6 +47,8 @@ export interface ServiceDraft {
 export interface ServicePayload {
 	name: string;
 	description: string;
+	/** `null` si no está en ninguna categoría. */
+	categoryId: string | null;
 	durationMinutes: number;
 	/** `null` si se cotiza. Ver `QUOTED_PRICE_LABEL`. */
 	price: number | null;
@@ -83,6 +93,7 @@ const useServiceDraft = (
 	const [draft, setDraft] = useState<ServiceDraft>(() => ({
 		name: service?.name ?? '',
 		description: service?.description ?? '',
+		categoryId: service?.categoryId ?? '',
 		duration:
 			service?.durationMinutes === undefined
 				? ''
@@ -158,6 +169,7 @@ const useServiceDraft = (
 	const toPayload = (): ServicePayload => ({
 		name: draft.name.trim(),
 		description: draft.description.trim(),
+		categoryId: draft.categoryId || null,
 		durationMinutes: Number(draft.duration.trim()),
 		price: draft.quoted ? null : Number(draft.price.trim()),
 		currency: draft.currency,
