@@ -128,16 +128,23 @@ const CategoryForm: React.FC<{
 		}
 	};
 
+	/**
+	 * Enter guarda, que es como se completa un formulario de dos líneas.
+	 *
+	 * A mano y no con un `<form>`: el diálogo se renderiza en un portal fuera de
+	 * la raíz de React, y ahí el `onSubmit` del formulario no llega a ejecutarse
+	 * —el `submit` nativo sale, React nunca lo despacha— así que el botón no
+	 * hacía nada y no se llegaba a pedir nada al servidor. El resto de los
+	 * diálogos del panel ya guardaban con `onClick` por esto mismo.
+	 */
+	const handleEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+		if (event.key !== 'Enter') return;
+		event.preventDefault();
+		void handleSubmit();
+	};
+
 	return (
-		// `form` y no dos botones sueltos: así Enter en cualquiera de los dos campos
-		// guarda, que es como se completa un formulario de dos líneas.
-		<form
-			className="space-y-4"
-			onSubmit={(event) => {
-				event.preventDefault();
-				void handleSubmit();
-			}}
-		>
+		<div className="space-y-4">
 			<div>
 				<Label htmlFor={nameId} className="mb-1.5 block">
 					Nombre
@@ -150,6 +157,7 @@ const CategoryForm: React.FC<{
 					placeholder="Cabello y peinado"
 					maxLength={TEXT_MAX_LENGTH}
 					onChange={(event) => setName(event.target.value)}
+					onKeyDown={handleEnter}
 				/>
 			</div>
 
@@ -163,6 +171,7 @@ const CategoryForm: React.FC<{
 					placeholder="Cortes, color y peinados"
 					maxLength={TEXT_MAX_LENGTH}
 					onChange={(event) => setDescription(event.target.value)}
+					onKeyDown={handleEnter}
 				/>
 				<div className="mt-1 flex items-start justify-between gap-3">
 					<p className="text-xs text-muted-foreground">
@@ -188,20 +197,18 @@ const CategoryForm: React.FC<{
 			)}
 
 			<DialogFooter>
-				<Button
-					type="button"
-					variant="outline"
-					disabled={saving}
-					onClick={onCancel}
-				>
+				<Button variant="outline" disabled={saving} onClick={onCancel}>
 					Cancelar
 				</Button>
-				<Button type="submit" disabled={!trimmed || saving}>
+				<Button
+					disabled={!trimmed || saving}
+					onClick={() => void handleSubmit()}
+				>
 					{saving && <Spinner className="size-3.5" />}
 					{category ? 'Guardar' : 'Añadir'}
 				</Button>
 			</DialogFooter>
-		</form>
+		</div>
 	);
 };
 
