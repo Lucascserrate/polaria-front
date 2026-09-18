@@ -3,6 +3,7 @@
 import GoogleButton from '@/components/GoogleButton';
 import { StarGlyph } from '../logo';
 import Link from 'next/link';
+import { SITES } from '@/constants/site';
 
 const AuthPage = () => {
 	return (
@@ -35,6 +36,18 @@ const AuthPage = () => {
 					>
 						Política de privacidad
 					</Link>
+				</div>
+
+				<div className="mt-6 border-t border-border pt-6 text-center text-sm">
+					<p className="text-muted-foreground">
+						¿Sos cliente y querés reservar una cita?
+					</p>
+					<a
+						href={SITES.marketplace}
+						className="mt-1 inline-block font-medium text-foreground hover:underline"
+					>
+						Ir a Polaria para clientes
+					</a>
 				</div>
 			</div>
 		</div>
