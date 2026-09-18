@@ -43,10 +43,10 @@ const WelcomePage = () => {
 			/*
 			 * Recarga entera y no navegación: el servidor acaba de cambiar la cookie
 			 * del trámite por las de sesión, y todo lo que ya existe —el cliente de
-			 * React Query, el menú, la configuración inicial— tiene que arrancar
-			 * leyendo una sesión de dueño en lugar de la memoria de esta pantalla.
+			 * React Query, el menú— tiene que arrancar leyendo una sesión de dueño en
+			 * lugar de la memoria de esta pantalla.
 			 */
-			window.location.href = ROUTES.setup;
+			window.location.href = '/';
 		} catch {
 			setError('No pudimos crear tu negocio. Probá de nuevo.');
 		}
