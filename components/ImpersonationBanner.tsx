@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { TENANTS_BASE_ROUTE } from '@/modules/tenants/routes';
 import { exitImpersonation } from '@/services/account/account.service';
 import useGetAccount from '@/services/account/useGetAccount';
 
@@ -15,10 +16,6 @@ import useGetAccount from '@/services/account/useGetAccount';
  * uno se olvida. Estar a un click de tocarle algo al negocio de otro creyendo que
  * es el propio es el accidente que esta franja existe para evitar, así que va
  * arriba de todo, ocupa alto y no se puede cerrar.
- *
- * Salir recarga la página entera en vez de invalidar las consultas: lo que
- * cambia no es un dato sino de quién son **todos** los datos en memoria, y una
- * caché a medio limpiar mostraría las citas de un negocio con el nombre de otro.
  */
 const ImpersonationBanner: React.FC = () => {
 	const { data: account } = useGetAccount();
@@ -30,7 +27,8 @@ const ImpersonationBanner: React.FC = () => {
 		setLeaving(true);
 		try {
 			await exitImpersonation();
-		} finally {
+			window.location.href = TENANTS_BASE_ROUTE;
+		} catch {
 			window.location.reload();
 		}
 	};
