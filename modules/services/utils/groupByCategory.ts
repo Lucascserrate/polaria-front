@@ -11,6 +11,15 @@ export interface ServiceGroup {
 export const UNCATEGORIZED_LABEL = 'Sin categoría';
 
 /**
+ * Cómo se nombra ese grupo donde hace falta un id: el filtro y el arrastre.
+ *
+ * Vive acá, al lado de su etiqueta, porque lo usan tres pantallas y no es de
+ * ninguna: la columna lo usa para filtrar, la lista para marcarse como destino
+ * y la página para traducirlo al `null` que entiende el servidor.
+ */
+export const UNCATEGORIZED_ID = 'none';
+
+/**
  * Reparte el catálogo en sus grupos, listos para dibujar.
  *
  * El orden lo ponen las categorías, que ya vienen ordenadas del servidor, y el

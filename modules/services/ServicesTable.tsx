@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown, Plus, Stethoscope } from 'lucide-react';
+import { ChevronDown, GripVertical, Plus, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -16,12 +16,19 @@ import { cn } from '@/lib/utils';
 import type { Service } from '@/types/services.types';
 import type { ServiceCategory } from '@/types/service-categories.types';
 import type { ServiceGroup } from './utils/groupByCategory';
-import { UNCATEGORIZED_LABEL } from './utils/groupByCategory';
+import { UNCATEGORIZED_ID, UNCATEGORIZED_LABEL } from './utils/groupByCategory';
+import { DROP_ATTRIBUTE } from './useServiceDrag';
 
 interface Props {
 	groups: ServiceGroup[];
 	onEditCategory: (category: ServiceCategory) => void;
 	onDeleteCategory: (category: ServiceCategory) => void;
+	/** Ausente sin categorías: no habría a dónde arrastrar. */
+	onDragStart?: (event: React.PointerEvent, service: Service) => void;
+	/** El que se está arrastrando ahora, para atenuarlo. */
+	draggingId?: string | null;
+	/** El grupo sobre el que caería ahora mismo lo que se arrastra. */
+	dropTarget?: string | null;
 }
 
 /**
@@ -51,6 +58,9 @@ const ServicesTable: React.FC<Props> = ({
 	groups,
 	onEditCategory,
 	onDeleteCategory,
+	onDragStart,
+	draggingId,
+	dropTarget,
 }) => {
 	if (groups.length === 0) {
 		return (
@@ -84,6 +94,9 @@ const ServicesTable: React.FC<Props> = ({
 					headed={headed}
 					onEdit={onEditCategory}
 					onDelete={onDeleteCategory}
+					onDragStart={onDragStart}
+					draggingId={draggingId}
+					dropTarget={dropTarget}
 				/>
 			))}
 		</div>
@@ -102,11 +115,41 @@ const CategoryGroup: React.FC<{
 	headed: boolean;
 	onEdit: (category: ServiceCategory) => void;
 	onDelete: (category: ServiceCategory) => void;
-}> = ({ group, headed, onEdit, onDelete }) => {
+	onDragStart?: (event: React.PointerEvent, service: Service) => void;
+	draggingId?: string | null;
+	dropTarget?: string | null;
+}> = ({
+	group,
+	headed,
+	onEdit,
+	onDelete,
+	onDragStart,
+	draggingId,
+	dropTarget,
+}) => {
 	const { category, services } = group;
+	const target = category?.id ?? UNCATEGORIZED_ID;
+	const over = dropTarget === target;
 
 	return (
-		<section className="space-y-2">
+		/*
+		 * El grupo entero es destino de arrastre, no sólo la categoría de la
+		 * columna. Es donde la mano va sola: la lista ya está dividida por
+		 * categoría, así que mover un servicio es llevarlo al bloque de al lado.
+		 * Con destino únicamente en la columna, el gesto natural no hacía nada y
+		 * parecía que el arrastre estaba roto.
+		 *
+		 * El recuadro es la respuesta a "¿dónde va a caer esto?", que sin nada
+		 * dibujado hay que adivinar. Va en la sección entera —encabezado incluido—
+		 * porque es la unidad que se elige.
+		 */
+		<section
+			{...(onDragStart && { [DROP_ATTRIBUTE]: target })}
+			className={cn(
+				'scroll-mt-4 space-y-2 rounded-xl transition-colors',
+				over && 'bg-primary/5',
+			)}
+		>
 			{headed && (
 				<div className="flex items-center justify-between gap-3">
 					<div className="min-w-0">
@@ -150,14 +193,29 @@ const CategoryGroup: React.FC<{
 			)}
 
 			{services.length === 0 ? (
-				<p className="rounded-xl border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">
-					Sin servicios. Se los asigna desde la ficha de cada uno, en Categoría.
+				<p
+					className={cn(
+						'rounded-xl border border-dashed px-4 py-4 text-sm transition-colors',
+						over
+							? 'border-primary text-foreground'
+							: 'border-border text-muted-foreground',
+					)}
+				>
+					{over
+						? 'Soltá acá para mover el servicio a esta categoría.'
+						: 'Sin servicios. Arrastrá uno hasta acá, o asignalo desde su ficha.'}
 				</p>
 			) : (
 				<ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
 					{services.map((service) => (
-						<li key={service.id}>
-							<ServiceRow service={service} />
+						<li key={service.id} className="flex items-center">
+							{onDragStart && (
+								<DragHandle service={service} onDragStart={onDragStart} />
+							)}
+							<ServiceRow
+								service={service}
+								dragging={draggingId === service.id}
+							/>
 						</li>
 					))}
 				</ul>
@@ -166,10 +224,43 @@ const CategoryGroup: React.FC<{
 	);
 };
 
-const ServiceRow: React.FC<{ service: Service }> = ({ service }) => (
+/**
+ * El asa de arrastre, a la izquierda de la fila y **fuera** del enlace.
+ *
+ * Fuera porque la fila entera lleva al editor: si el arrastre empezara en
+ * cualquier punto, cada intento de abrir un servicio sería un arrastre fallido.
+ * Con asa, cada gesto dice qué quiere.
+ *
+ * Solo en pantallas anchas, que son las que tienen a la vista la columna de
+ * categorías. Sin destino visible no hay a dónde soltar, y en el teléfono la
+ * categoría se elige desde la ficha del servicio.
+ */
+const DragHandle: React.FC<{
+	service: Service;
+	onDragStart: (event: React.PointerEvent, service: Service) => void;
+}> = ({ service, onDragStart }) => (
+	<button
+		type="button"
+		aria-label={`Arrastrar ${service.name} a otra categoría`}
+		// `touch-none` es lo que evita que el dedo desplace la página en lugar de
+		// arrastrar la fila.
+		className="hidden shrink-0 cursor-grab touch-none px-2 py-3 text-muted-foreground/50 transition-colors hover:text-foreground active:cursor-grabbing lg:block"
+		onPointerDown={(event) => onDragStart(event, service)}
+	>
+		<GripVertical className="size-4" />
+	</button>
+);
+
+const ServiceRow: React.FC<{ service: Service; dragging?: boolean }> = ({
+	service,
+	dragging,
+}) => (
 	<Link
 		href={`${ROUTES.services}/${service.id}`}
-		className="flex items-center justify-between gap-4 px-3 py-2.5 transition-colors hover:bg-muted/50 sm:px-4"
+		className={cn(
+			'flex flex-1 items-center justify-between gap-4 px-3 py-2.5 transition-colors hover:bg-muted/50 sm:px-4',
+			dragging && 'opacity-40',
+		)}
 	>
 		<span className="min-w-0">
 			<span className="block truncate text-sm font-medium">{service.name}</span>

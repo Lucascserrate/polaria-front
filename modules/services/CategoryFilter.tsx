@@ -3,13 +3,14 @@
 import { ArrowUpDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ServiceGroup } from './utils/groupByCategory';
-import { UNCATEGORIZED_LABEL } from './utils/groupByCategory';
+import { UNCATEGORIZED_ID, UNCATEGORIZED_LABEL } from './utils/groupByCategory';
+import { DROP_ATTRIBUTE } from './useServiceDrag';
 
 /** Lo que significa "no hay ninguna categoría seleccionada". */
 export const ALL_CATEGORIES = 'all';
 
 /** El valor con el que se filtra el cajón de los que no tienen categoría. */
-export const UNCATEGORIZED = 'none';
+export const UNCATEGORIZED = UNCATEGORIZED_ID;
 
 export type CategoryFilterValue = string;
 
@@ -21,6 +22,8 @@ interface Props {
 	onAdd: () => void;
 	/** Ausente con menos de dos categorías: no hay nada que ordenar. */
 	onReorder?: () => void;
+	/** La categoría sobre la que está el servicio que se arrastra, si hay uno. */
+	dropTarget?: string | null;
 }
 
 /**
@@ -41,6 +44,9 @@ interface Props {
  *
  * Renombrar y eliminar no están acá: viven en el encabezado de cada grupo, al
  * lado de los servicios que la decisión afecta.
+ *
+ * En escritorio cada categoría es además el destino donde se sueltan los
+ * servicios que se arrastran desde la lista. Ver `useServiceDrag`.
  */
 const CategoryFilter: React.FC<Props> = ({
 	groups,
@@ -49,11 +55,17 @@ const CategoryFilter: React.FC<Props> = ({
 	onChange,
 	onAdd,
 	onReorder,
+	dropTarget,
 }) => {
+	/*
+	 * "Todas" no es un destino de arrastre: soltar ahí no querría decir nada.
+	 * Los demás sí, incluido "Sin categoría", que es como se saca un servicio de
+	 * su categoría sin abrir su ficha.
+	 */
 	const options = [
 		{ key: ALL_CATEGORIES, label: 'Todas las categorías', count: total },
 		...groups.map((group) => ({
-			key: group.category?.id ?? UNCATEGORIZED,
+			key: group.category?.id ?? UNCATEGORIZED_ID,
 			label: group.category?.name ?? UNCATEGORIZED_LABEL,
 			count: group.services.length,
 		})),
@@ -73,12 +85,16 @@ const CategoryFilter: React.FC<Props> = ({
 							<button
 								type="button"
 								aria-current={value === option.key ? 'true' : undefined}
+								{...(option.key !== ALL_CATEGORIES && {
+									[DROP_ATTRIBUTE]: option.key,
+								})}
 								onClick={() => onChange(option.key)}
 								className={cn(
 									'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors',
 									value === option.key
 										? 'bg-muted font-medium text-foreground'
 										: 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+									dropTarget === option.key && 'bg-primary/10',
 								)}
 							>
 								<span className="min-w-0 flex-1 truncate">{option.label}</span>

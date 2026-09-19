@@ -8,15 +8,20 @@ import { ROUTES } from '@/constants/routes';
 import CategoryDialog from '@/modules/services/CategoryDialog';
 import CategoryFilter, {
 	ALL_CATEGORIES,
-	UNCATEGORIZED,
 } from '@/modules/services/CategoryFilter';
 import DeleteCategoryDialog from '@/modules/services/DeleteCategoryDialog';
 import ReorderCategoriesDialog from '@/modules/services/ReorderCategoriesDialog';
 import ServicesTable from '@/modules/services/ServicesTable';
-import { groupByCategory } from '@/modules/services/utils/groupByCategory';
+import useServiceDrag from '@/modules/services/useServiceDrag';
+import {
+	groupByCategory,
+	UNCATEGORIZED_ID,
+	UNCATEGORIZED_LABEL,
+} from '@/modules/services/utils/groupByCategory';
 import useGetServices from '@/services/services/useGetServices';
 import useGetServiceCategories from '@/services/service-categories/useGetServiceCategories';
 import useDeleteServiceCategory from '@/services/service-categories/useDeleteServiceCategory';
+import useAssignServiceCategory from '@/services/services/useAssignServiceCategory';
 import type { ServiceCategory } from '@/types/service-categories.types';
 
 /**
@@ -40,12 +45,35 @@ const ServicesPage = () => {
 	const { data: services = [], isPending, isError, error } = useGetServices();
 	const { data: categories = [] } = useGetServiceCategories();
 	const deleteCategory = useDeleteServiceCategory();
+	const assignCategory = useAssignServiceCategory();
 
 	const [filter, setFilter] = useState<string>(ALL_CATEGORIES);
 	const [editing, setEditing] = useState<ServiceCategory | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [deleting, setDeleting] = useState<ServiceCategory | null>(null);
 	const [reordering, setReordering] = useState(false);
+
+	/*
+	 * Soltar un servicio sobre una categoría de la columna lo mueve ahí. Soltarlo
+	 * sobre "Sin categoría" lo saca de la suya, que es el `null`.
+	 */
+	const drag = useServiceDrag((serviceId, target) => {
+		const categoryId = target === UNCATEGORIZED_ID ? null : target;
+
+		// Soltar un servicio donde ya estaba no es un cambio: pedirle al servidor
+		// que lo deje igual haría parpadear la lista por nada.
+		const current = services.find((service) => service.id === serviceId);
+		if ((current?.categoryId ?? null) === categoryId) return;
+
+		assignCategory.mutate({ id: serviceId, categoryId });
+	});
+
+	/** El nombre del grupo donde caería ahora, para decirlo mientras se arrastra. */
+	const dropName =
+		drag.over === UNCATEGORIZED_ID
+			? UNCATEGORIZED_LABEL
+			: (categories.find((category) => category.id === drag.over)?.name ??
+				null);
 
 	const groups = useMemo(
 		() => groupByCategory(services, categories),
@@ -60,7 +88,7 @@ const ServicesPage = () => {
 	 */
 	const visibleGroups = groups.filter((group) => {
 		if (filter === ALL_CATEGORIES) return true;
-		if (filter === UNCATEGORIZED) return group.category === null;
+		if (filter === UNCATEGORIZED_ID) return group.category === null;
 		return group.category?.id === filter;
 	});
 
@@ -96,7 +124,16 @@ const ServicesPage = () => {
 	}
 
 	return (
-		<div className="space-y-6">
+		/*
+		 * `select-none` en la pantalla entera, no sólo mientras se arrastra.
+		 *
+		 * Quien va a arrastrar aprieta sobre una fila antes de encontrar el asa, y
+		 * ahí el navegador ya empezó a pintar de azul el nombre y el precio. Para
+		 * cuando el arrastre arranca y se podría apagar la selección, el estropicio
+		 * está hecho. El precio es no poder copiar un nombre desde la lista, que en
+		 * una pantalla de administración no es algo que se haga.
+		 */
+		<div className="space-y-6 select-none">
 			<div className="flex flex-wrap items-start justify-between gap-4">
 				<div>
 					<h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -131,6 +168,7 @@ const ServicesPage = () => {
 					value={filter}
 					onChange={setFilter}
 					onAdd={openNewCategory}
+					dropTarget={drag.over}
 					// Con una sola categoría no hay orden que elegir.
 					onReorder={
 						categories.length > 1 ? () => setReordering(true) : undefined
@@ -145,9 +183,36 @@ const ServicesPage = () => {
 							setDialogOpen(true);
 						}}
 						onDeleteCategory={setDeleting}
+						// Sin categorías creadas no hay a dónde arrastrar.
+						onDragStart={categories.length > 0 ? drag.start : undefined}
+						draggingId={drag.dragging?.id ?? null}
+						dropTarget={drag.over}
 					/>
 				</div>
 			</div>
+
+			{/*
+			 * El servicio que viaja con el cursor. Sin esto el arrastre no se ve en
+			 * táctil, donde el dedo tapa justo la fila que se está moviendo.
+			 *
+			 * `pointer-events-none` no es cosmético: sin eso, el fantasma queda
+			 * debajo del cursor y `elementFromPoint` lo devuelve a él en lugar de la
+			 * categoría de abajo, así que nunca habría destino.
+			 */}
+			{drag.dragging && drag.point && (
+				<div
+					className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-primary bg-background px-3 py-1.5 text-sm shadow-lg"
+					style={{ left: drag.point.x, top: drag.point.y }}
+				>
+					<span className="font-medium">{drag.dragging.name}</span>
+					{/* Decir el destino acá y no sólo recuadrarlo: el cursor es donde
+					    están puestos los ojos, y el grupo resaltado puede quedar medio
+					    fuera de la pantalla. */}
+					{dropName && (
+						<span className="text-muted-foreground"> → {dropName}</span>
+					)}
+				</div>
+			)}
 
 			<CategoryDialog
 				open={dialogOpen}
