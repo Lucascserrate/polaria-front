@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/app/logo';
 import { useBottomNav } from '@/components/BottomNav';
 import { adminNavItems, professionalNavItems } from '@/components/nav-items';
-import { ROUTES } from '@/constants/routes';
 import { toggleSidebarPreference } from '@/components/sidebar-preference';
 import {
 	setMobileSidebar,
@@ -20,6 +19,8 @@ import {
 	useMobileSidebar,
 } from '@/components/sidebar-mobile';
 import { useSetupProgress } from '@/modules/onboarding/useSetupProgress';
+import { useTour } from '@/modules/onboarding/tour/TourContext';
+import { navAnchor } from '@/modules/onboarding/tour/anchors';
 import TrialStatus from '@/modules/onboarding/TrialStatus';
 import AccountBadge from '@/modules/account/AccountBadge';
 
@@ -80,6 +81,13 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 	 * dice lo mismo. El estado lo decide el backend, así que se va sola.
 	 */
 	const setup = useSetupProgress(isAdmin);
+
+	/*
+	 * "Empezar" ya no lleva a ninguna pantalla: abre el cajón de los primeros
+	 * pasos encima de donde se esté. Es lo que hace que el tutorial guiado pueda
+	 * arrancar sin sacar al usuario de la pantalla que va a tener que usar.
+	 */
+	const { setDrawerOpen } = useTour();
 
 	return (
 		<>
@@ -159,10 +167,13 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 					{/* Navigation */}
 					<nav className="flex-1 p-4 space-y-1 collapsed:px-2">
 						{setup.pending && (
-							<Link
-								href={ROUTES.setup}
-								onClick={() => setMobileSidebar(false)}
-								className={itemClasses(pathname === ROUTES.setup)}
+							<button
+								type="button"
+								onClick={() => {
+									setMobileSidebar(false);
+									setDrawerOpen(true);
+								}}
+								className={cn(itemClasses(false), 'w-full cursor-pointer')}
 							>
 								<span className="relative flex shrink-0">
 									<Rocket className="w-4 h-4" />
@@ -178,7 +189,7 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 								<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-warning collapsed:hidden">
 									{setup.completed} de {setup.total}
 								</span>
-							</Link>
+							</button>
 						)}
 
 						{/* "Empezar" no es una sección del producto: el separador lo dice. */}
@@ -196,6 +207,13 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 								<Link
 									key={item.href}
 									href={item.href}
+									/*
+									 * El tutorial guiado ilumina estas filas cuando enseña a
+									 * llegar a Servicios, al equipo o a la agenda. El resto de
+									 * las entradas no lleva nada: `navAnchor` no les devuelve
+									 * ninguno y el atributo no se dibuja.
+									 */
+									data-tour={navAnchor(item.href)}
 									onClick={() => setMobileSidebar(false)}
 									className={itemClasses(isActive)}
 								>

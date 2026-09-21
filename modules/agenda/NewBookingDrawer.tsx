@@ -11,6 +11,7 @@ import {
 	DrawerTitle,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useIsCompact } from '@/lib/useIsCompact';
@@ -50,14 +51,21 @@ interface Props {
 	todayKey: string;
 	onClose: () => void;
 	/** Advertencias con las que el backend aceptó la reserva. */
-	onSaved?: (warnings: BookingWarning[]) => void;
+	/**
+	 * Lo guardado, para que la agenda pueda reaccionar.
+	 *
+	 * El día viaja además de los avisos porque la fecha se puede cambiar acá
+	 * adentro: guardada para otro día, la cita queda fuera de lo que se está
+	 * mirando y el cambio parece no haber pasado.
+	 */
+	onSaved?: (warnings: BookingWarning[], dayKey: string | null) => void;
 }
 
 interface FormProps {
 	seed: BookingSeed;
 	todayKey: string;
 	onClose: () => void;
-	onSaved?: (warnings: BookingWarning[]) => void;
+	onSaved?: (warnings: BookingWarning[], dayKey: string | null) => void;
 	/**
 	 * El buscador de clientes, controlado desde afuera.
 	 *
@@ -191,7 +199,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 				items: draft.items,
 			});
 
-			onSaved?.(created.warnings);
+			onSaved?.(created.warnings, draft.dayKey);
 			onClose();
 		} catch (error) {
 			// El 409 trae el motivo real —ocupado, cerrado, recién tomado— y es lo
@@ -216,7 +224,10 @@ const NewBookingForm: React.FC<FormProps> = ({
 		 * el `order` de cada uno los intercala con la tarjeta del cliente. Ver el
 		 * comentario de cada pieza.
 		 */
-		<div className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
+		<div
+			className="relative flex min-h-0 flex-1 flex-col sm:flex-row"
+			data-tour={TOUR.bookingForm}
+		>
 			{/*
 			 * Eligiendo servicio, la tarjeta del cliente va arriba de la lista: es lo
 			 * que ya se decidió y lo que da contexto a lo que se está por elegir.

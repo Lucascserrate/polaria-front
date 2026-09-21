@@ -1,6 +1,7 @@
 'use client';
 
 import TimelineAppointmentCard from './TimelineAppointmentCard';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import type { AppointmentBlock } from './utils/calendarBlocks';
 import { blockGeometry, buildColumnLayout } from './utils/calendarLayout';
 
@@ -53,6 +54,8 @@ const AppointmentBlocks: React.FC<Props> = ({
 					 * click iba a crear algo.
 					 */
 					data-appointment=""
+					// El tutorial ilumina la primera para enseñar a finalizarla.
+					data-tour={TOUR.appointmentCard}
 					className="absolute z-10 cursor-default"
 					style={{
 						top: geometry.top,

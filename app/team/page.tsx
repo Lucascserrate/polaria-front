@@ -6,6 +6,7 @@ import axios from 'axios';
 import { MoreVertical, Plus, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import type { StaffMember } from '@/types/staff.types';
 import TeamTable from '@/modules/team/TeamTable';
 import JoinRequestsCard from '@/modules/team/JoinRequestsCard';
@@ -98,7 +99,7 @@ const TeamPage = () => {
 				</div>
 
 				<div className="flex items-center gap-2">
-					<Button asChild className="gap-2">
+					<Button asChild className="gap-2" data-tour={TOUR.teamNew}>
 						<Link href={ROUTES.teamNew}>
 							<Plus className="size-4" />
 							Añadir

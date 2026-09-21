@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import TeamPhotoField from '../TeamPhotoField';
 import SectionHeader from '../SectionHeader';
 import { ASSIGNABLE_ROLES, PHONE_CODES, ROLE_LABELS } from '../utils/roles';
@@ -36,7 +37,13 @@ const ProfileSection: React.FC<Props> = ({
 	memberId,
 	photoUrl,
 }) => (
-	<div className="space-y-8">
+	/*
+	 * El anclaje va en la sección y no en el panel que la envuelve: el panel tiene
+	 * el mismo alto para todas las solapas, así que el tutorial terminaba
+	 * iluminando un recuadro que sobraba por todos lados respecto de lo que estaba
+	 * señalando.
+	 */
+	<div className="space-y-8" data-tour={TOUR.teamProfile}>
 		<SectionHeader
 			title="Perfil"
 			description="Quién es la persona y cómo se la reconoce en la agenda."

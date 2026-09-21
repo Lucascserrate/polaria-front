@@ -49,14 +49,21 @@ interface Props {
 	 * registrar excepciones— así que se muestran afuera, donde queda la agenda, y
 	 * no en un panel que se está cerrando.
 	 */
-	onSaved?: (warnings: BookingWarning[]) => void;
+	/**
+	 * Lo guardado, para que la agenda pueda reaccionar.
+	 *
+	 * El día viaja además de los avisos porque la fecha se puede cambiar acá
+	 * adentro: guardada para otro día, la cita queda fuera de lo que se está
+	 * mirando y el cambio parece no haber pasado.
+	 */
+	onSaved?: (warnings: BookingWarning[], dayKey: string | null) => void;
 }
 
 interface EditorProps {
 	appointmentId: string;
 	todayKey: string;
 	onClose: () => void;
-	onSaved?: (warnings: BookingWarning[]) => void;
+	onSaved?: (warnings: BookingWarning[], dayKey: string | null) => void;
 }
 
 /**
@@ -217,7 +224,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 				payload: { startTime: draft.startTime, items: draft.items },
 			});
 
-			onSaved?.(edited.warnings);
+			onSaved?.(edited.warnings, draft.dayKey);
 			onClose();
 		} catch (error) {
 			// El 409 trae el motivo real —ocupado, cerrado, recién tomado— y es lo

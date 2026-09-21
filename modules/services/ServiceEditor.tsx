@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { ROUTES } from '@/constants/routes';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import { cn } from '@/lib/utils';
 import { currencyLabel } from '@/lib/currencies';
 import { formatMoney, QUOTED_PRICE_LABEL } from '@/lib/money';
@@ -136,6 +137,7 @@ const ServiceEditor: React.FC<Props> = ({
 						<Link href={ROUTES.services}>Cancelar</Link>
 					</Button>
 					<Button
+						data-tour={TOUR.serviceSave}
 						disabled={!canSave || saving}
 						onClick={() => onSave(toPayload())}
 					>
@@ -157,7 +159,7 @@ const ServiceEditor: React.FC<Props> = ({
 				 * del formulario: ahí el alto es lo escaso. Mismo criterio que los otros
 				 * dos editores.
 				 */}
-				<nav className="shrink-0 lg:w-60">
+				<nav className="shrink-0 lg:w-60" data-tour={TOUR.serviceSections}>
 					<div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:space-y-1 lg:overflow-visible lg:rounded-xl lg:border lg:border-border lg:p-3">
 						<p className="hidden px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase lg:block">
 							Datos del servicio
@@ -203,19 +205,22 @@ const ServiceEditor: React.FC<Props> = ({
 								</p>
 							</div>
 
-							<Field
-								label="Nombre"
-								required
-								count={draft.name.length}
-								max={SERVICE_TEXT_MAX_LENGTH}
-							>
-								<Input
-									value={draft.name}
-									placeholder="Corte de pelo"
-									maxLength={SERVICE_TEXT_MAX_LENGTH}
-									onChange={(event) => set('name', event.target.value)}
-								/>
-							</Field>
+							{/* El envoltorio existe para el tutorial: `Field` no reenvía props. */}
+							<div data-tour={TOUR.serviceName}>
+								<Field
+									label="Nombre"
+									required
+									count={draft.name.length}
+									max={SERVICE_TEXT_MAX_LENGTH}
+								>
+									<Input
+										value={draft.name}
+										placeholder="Corte de pelo"
+										maxLength={SERVICE_TEXT_MAX_LENGTH}
+										onChange={(event) => set('name', event.target.value)}
+									/>
+								</Field>
+							</div>
 
 							<Field
 								label="Categoría"
@@ -252,7 +257,10 @@ const ServiceEditor: React.FC<Props> = ({
 								</p>
 							</div>
 
-							<div className="grid gap-4 sm:grid-cols-2">
+							<div
+								className="grid gap-4 sm:grid-cols-2"
+								data-tour={TOUR.servicePricing}
+							>
 								<Field
 									label="Duración"
 									required

@@ -16,6 +16,7 @@ import { DEFAULT_BUSINESS_HOURS } from '@/modules/settings/utils/constants';
 import useGetSettings from '@/services/settings/useGetSettings';
 import useUpdateSettings from '@/services/settings/useUpdateSettings';
 import { ROUTES } from '@/constants/routes';
+import { useTour } from '@/modules/onboarding/tour/TourContext';
 import { detectTimezone } from './constants';
 import BusinessTypeStep from './steps/BusinessTypeStep';
 import HoursStep from './steps/HoursStep';
@@ -65,6 +66,7 @@ const TITLES: Record<Step, { title: string; hint: string }> = {
 
 const BusinessSetupWizard: React.FC = () => {
 	const router = useRouter();
+	const { setDrawerOpen } = useTour();
 	const { data: settings, isLoading } = useGetSettings();
 	const { mutateAsync: save, isPending, isError } = useUpdateSettings();
 
@@ -132,9 +134,8 @@ const BusinessSetupWizard: React.FC = () => {
 			businessHours: fromScheduleDraft(currentSchedule),
 		});
 
-		// A los pasos que faltan y no a la agenda: crear el negocio es la mitad
-		// del camino, y ahí es donde el usuario ve qué sigue.
-		router.replace(ROUTES.setup);
+		setDrawerOpen(true);
+		router.replace(ROUTES.agenda);
 	};
 
 	if (isLoading) {

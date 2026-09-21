@@ -20,7 +20,6 @@ import {
 	BOTTOM_BAR_ROUTES,
 	type NavItem,
 } from '@/components/nav-items';
-import { ROUTES } from '@/constants/routes';
 import ThemeToggle from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { useSessionActor } from '@/modules/auth/hooks/useAuth';
@@ -30,6 +29,7 @@ import {
 	useSetupProgress,
 	type SetupProgress,
 } from '@/modules/onboarding/useSetupProgress';
+import { useTour } from '@/modules/onboarding/tour/TourContext';
 import useGetAccount from '@/services/account/useGetAccount';
 
 /**
@@ -189,10 +189,11 @@ const MoreSheet: React.FC<MoreSheetProps> = ({ items, setup, pathname }) => {
 	const { data } = useGetAccount();
 	const { mutate: logout } = useLogout();
 
+	const { setDrawerOpen } = useTour();
+
 	const showSetup = Boolean(setup?.pending);
 	const hasItems = items.length > 0;
-	const active =
-		items.some((item) => pathname === item.href) || pathname === ROUTES.setup;
+	const active = items.some((item) => pathname === item.href);
 
 	return (
 		<Drawer>
@@ -221,11 +222,19 @@ const MoreSheet: React.FC<MoreSheetProps> = ({ items, setup, pathname }) => {
 				<div className="space-y-1 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))]">
 					{showSetup && setup && (
 						<>
-							<SheetLink href={ROUTES.setup} icon={Rocket} label="Empezar">
-								<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-warning">
-									{setup.completed} de {setup.total}
-								</span>
-							</SheetLink>
+							<DrawerClose asChild>
+								<button
+									type="button"
+									onClick={() => setDrawerOpen(true)}
+									className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-muted"
+								>
+									<Rocket className="size-4 shrink-0 text-muted-foreground" />
+									Empezar
+									<span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-warning">
+										{setup.completed} de {setup.total}
+									</span>
+								</button>
+							</DrawerClose>
 
 							<div className="my-2 border-t border-border" aria-hidden="true" />
 						</>

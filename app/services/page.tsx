@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import CategoryDialog from '@/modules/services/CategoryDialog';
 import CategoryFilter, {
 	ALL_CATEGORIES,
@@ -147,7 +148,7 @@ const ServicesPage = () => {
 					</p>
 				</div>
 
-				<Button asChild className="gap-2">
+				<Button asChild className="gap-2" data-tour={TOUR.servicesNew}>
 					<Link href={ROUTES.servicesNew}>
 						<Plus className="size-4" />
 						Nuevo

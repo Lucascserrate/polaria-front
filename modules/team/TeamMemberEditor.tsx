@@ -6,6 +6,7 @@ import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { ROUTES } from '@/constants/routes';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import { cn } from '@/lib/utils';
 import type { StaffMember, TeamMemberPayload } from '@/types/staff.types';
 import { formatCommissionRate } from '@/modules/staff/utils/commission';
@@ -141,6 +142,7 @@ const TeamMemberEditor: React.FC<Props> = ({
 						<Link href={ROUTES.team}>Cancelar</Link>
 					</Button>
 					<Button
+						data-tour={TOUR.teamSave}
 						disabled={!canSave || saving}
 						onClick={() => onSave(toPayload())}
 					>
@@ -161,7 +163,7 @@ const TeamMemberEditor: React.FC<Props> = ({
 				 * En móvil el nav es una fila de pestañas con scroll horizontal, no un
 				 * bloque de siete filas antes del formulario: ahí el alto es lo escaso.
 				 */}
-				<nav className="shrink-0 lg:w-60">
+				<nav className="shrink-0 lg:w-60" data-tour={TOUR.teamSections}>
 					<div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:space-y-1 lg:overflow-visible lg:rounded-xl lg:border lg:border-border lg:p-3">
 						{navFor(!member).map((group) => (
 							<div key={group.label} className="contents lg:block lg:space-y-1">

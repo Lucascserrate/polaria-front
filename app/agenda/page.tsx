@@ -15,6 +15,7 @@ import FinishWithPricesDialog, {
 	useFinishWithPrices,
 } from '@/modules/agenda/FinishWithPricesDialog';
 import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import BookingDrawer from '@/modules/agenda/BookingDrawer';
 import NewBookingDrawer, {
 	type BookingSeed,
@@ -213,20 +214,39 @@ const AgendaPage = () => {
 		[deleteBooking],
 	);
 
-	const announceWarnings = useCallback((warnings: BookingWarning[]) => {
-		if (warnings.length === 0) {
-			toast.success('Cita guardada.');
-			return;
-		}
+	/**
+	 * Lo que pasa después de guardar una cita.
+	 *
+	 * La agenda se mueve al día de la cita guardada. La fecha se elige dentro del
+	 * cajón, así que se puede guardar para un día que no es el que está en
+	 * pantalla: quedarse donde estaba dejaba al usuario mirando un calendario sin
+	 * rastro de lo que acababa de hacer, sin nada que le dijera que salió bien más
+	 * allá del cartelito. Mostrarle el resultado de su acción es lo que despeja la
+	 * duda.
+	 *
+	 * Vale igual al editar: mover una cita de día y seguirla hasta ahí es lo
+	 * mismo que crearla ahí.
+	 */
+	const handleSaved = useCallback(
+		(warnings: BookingWarning[], dayKey: string | null) => {
+			// Sin condición: poner la fecha que ya estaba puesta no cambia nada.
+			if (dayKey) setPicked(dayKey);
 
-		for (const warning of warnings) {
-			toast.warning('Cita guardada.', {
-				description: warning.message,
-				duration: Infinity,
-				closeButton: true,
-			});
-		}
-	}, []);
+			if (warnings.length === 0) {
+				toast.success('Cita guardada.');
+				return;
+			}
+
+			for (const warning of warnings) {
+				toast.warning('Cita guardada.', {
+					description: warning.message,
+					duration: Infinity,
+					closeButton: true,
+				});
+			}
+		},
+		[],
+	);
 
 	/*
 	 * La cita en curso sale de la mutación, así que no hace falta un estado
@@ -582,7 +602,11 @@ const AgendaPage = () => {
 				}
 				busy={isFetching}
 				action={
-					<Button className="gap-2" onClick={openBlankBooking}>
+					<Button
+						className="gap-2"
+						data-tour={TOUR.agendaNew}
+						onClick={openBlankBooking}
+					>
 						<Plus className="h-4 w-4" />
 						Agregar cita
 					</Button>
@@ -649,14 +673,14 @@ const AgendaPage = () => {
 				appointmentId={editingId}
 				todayKey={todayKey}
 				onClose={() => setEditingId(null)}
-				onSaved={announceWarnings}
+				onSaved={handleSaved}
 			/>
 
 			<NewBookingDrawer
 				seed={editingId === null ? draftSlot : null}
 				todayKey={todayKey}
 				onClose={() => setDraftSlot(null)}
-				onSaved={announceWarnings}
+				onSaved={handleSaved}
 			/>
 
 			{/*

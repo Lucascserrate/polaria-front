@@ -2,7 +2,6 @@ export const ROUTES = {
 	agenda: '/agenda',
 	auth: '/auth',
 	onboarding: '/onboarding',
-	setup: '/setup',
 	chat: '/chat',
 	analytics: '/analytics',
 	services: '/services',

@@ -10,6 +10,7 @@ import {
 	getAppointmentStatusText,
 	OPEN_STATUSES,
 } from '@/modules/appointments/utils/constants';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import type { Appointment } from '@/types/appointments.types';
 
 /**
@@ -42,11 +43,12 @@ const TimelineCardMenu: React.FC<{
 	const isOpen = OPEN_STATUSES.includes(appointment.status);
 
 	return (
-		<ContextMenuContent>
+		<ContextMenuContent data-tour={TOUR.appointmentMenu}>
 			{isOpen && onMarkAttended && onRequestCancel ? (
 				<>
 					<ContextMenuItem
 						disabled={isUpdating}
+						data-tour={TOUR.appointmentFinish}
 						onSelect={() => onMarkAttended(appointment.id)}
 					>
 						<Check />

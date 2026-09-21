@@ -5,6 +5,7 @@ import { Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import { formatServiceMoney } from '@/lib/money';
 import useGetServices from '@/services/services/useGetServices';
 import useGetSettings from '@/services/settings/useGetSettings';
@@ -82,7 +83,7 @@ const ServicesSection: React.FC<Props> = ({
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6" data-tour={TOUR.teamServices}>
 			<SectionHeader
 				title="Servicios"
 				description="Los servicios que presta este miembro del equipo."

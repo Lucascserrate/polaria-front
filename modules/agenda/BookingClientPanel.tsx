@@ -16,6 +16,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { clientRoute } from '@/constants/routes';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { cn } from '@/lib/utils';
+import { TOUR } from '@/modules/onboarding/tour/anchors';
 import ClientAvatar from '@/modules/clients/ClientAvatar';
 import NewClientDialog from '@/modules/clients/NewClientDialog';
 import { formatClientPhone } from '@/modules/clients/utils/phone';
@@ -97,6 +98,7 @@ const BookingClientPanel: React.FC<Props> = ({
 
 	return (
 		<aside
+			data-tour={TOUR.bookingClient}
 			className={cn(
 				'flex shrink-0 flex-col border-b border-border bg-muted/30 transition-[width] duration-200 sm:border-r sm:border-b-0',
 				/*
@@ -283,7 +285,15 @@ const Chosen: React.FC<{
 	dialCode?: string;
 	onClear?: () => void;
 }> = ({ client, dialCode, onClear }) => (
-	<div className="flex items-center gap-3 px-4 py-3 sm:flex-1 sm:flex-col sm:gap-2 sm:pt-8 sm:text-center">
+	<div
+		/*
+		 * Sólo con cliente elegido. Esta misma ficha se dibuja vacía —"Sin
+		 * cliente"— cuando la columna es de sólo lectura, y el tutorial la usa
+		 * justamente para saber que ya hay uno.
+		 */
+		data-tour={client.id ? TOUR.bookingClientChosen : undefined}
+		className="flex items-center gap-3 px-4 py-3 sm:flex-1 sm:flex-col sm:gap-2 sm:pt-8 sm:text-center"
+	>
 		{client.id ? (
 			<ClientAvatar
 				client={{ id: client.id, name: client.name }}
