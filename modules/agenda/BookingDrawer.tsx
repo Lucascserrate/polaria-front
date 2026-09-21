@@ -319,6 +319,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 							staff={staff}
 							onPick={addService}
 							pickedIds={draft.items.map((item) => item.serviceId)}
+							preferredStaffId={draft.items[0]?.staffId ?? null}
 						/>
 					) : (
 						<div className="space-y-5">

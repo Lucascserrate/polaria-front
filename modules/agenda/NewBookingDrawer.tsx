@@ -305,6 +305,13 @@ const NewBookingForm: React.FC<FormProps> = ({
 							staff={staff}
 							onPick={addService}
 							pickedIds={draft.items.map((item) => item.serviceId)}
+							/*
+							 * El mismo orden de preferencia que usa `addService` al elegir
+							 * quién lo hace: primero quien ya está en la reserva, si no el de
+							 * la columna donde se clickeó. Partir la lista por otro criterio
+							 * que el de la asignación sería mostrar una cosa y hacer otra.
+							 */
+							preferredStaffId={draft.items[0]?.staffId ?? seed.staffId}
 						/>
 					) : (
 						<div className="space-y-5">
