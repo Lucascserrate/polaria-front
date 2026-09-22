@@ -156,14 +156,6 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 					colors.surface,
 					tinted && 'appt-tinted',
 				)}
-				/*
-				 * Los tres colores viajan como variables y el dibujo lo hace
-				 * `.appt-tinted` en la hoja de estilos.
-				 *
-				 * No es prolijidad: el tratamiento cambia entre temas —tinte y franja en
-				 * claro, bloque sólido en oscuro— y un `backgroundImage` en línea le gana
-				 * a cualquier regla, así que no habría forma de que `.dark` lo pisara.
-				 */
 				style={
 					staffScheme && isOpen
 						? ({

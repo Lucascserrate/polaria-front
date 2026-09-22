@@ -123,6 +123,25 @@ interface Props {
 }
 
 /**
+ * Hace falta porque los menús y las vistas previas viven en portales: cuelgan de
+ * `body`, así que en el DOM están fuera de la columna, pero React hace burbujear
+ * sus eventos por el árbol de componentes y no por el DOM. Sin este filtro, un
+ * click adentro del menú de un hueco llegaba a `handleClick` como si fuera un
+ * click en la columna.
+ *
+ * Eso es lo que rompía la "X" de ese menú: cerraba el menú y el mismo click lo
+ * volvía a abrir en el hueco que quedaba debajo de la cruz. Y mover el mouse por
+ * encima del menú —o de la vista previa de una cita— iba iluminando los huecos de
+ * atrás, como si la tarjeta fuera transparente al cursor.
+ *
+ * Se pregunta por `contains` y no por un atributo en cada cosa que se dibuja
+ * encima: la regla no es de quién es el evento, sino si pasó dentro de la
+ * columna. Así vale para cualquier cosa que se porte encima, ahora y después.
+ */
+const fromGrid = (event: React.MouseEvent<HTMLDivElement>) =>
+	event.currentTarget.contains(event.target as Node);
+
+/**
  * La grilla del calendario: horas en vertical, columnas en horizontal.
  *
  * El lienzo son siempre las 24 horas, iguales en todas las columnas, y lo
@@ -215,7 +234,7 @@ const CalendarGrid: React.FC<Props> = ({
 		column: CalendarColumn,
 		event: React.MouseEvent<HTMLDivElement>,
 	) => {
-		if (!onSlotClick) return;
+		if (!onSlotClick || !fromGrid(event)) return;
 
 		const minute = slotAt(column, event);
 		if (minute === null) return;
@@ -227,7 +246,13 @@ const CalendarGrid: React.FC<Props> = ({
 		column: CalendarColumn,
 		event: React.MouseEvent<HTMLDivElement>,
 	) => {
-		if (!onSlotClick) return;
+		/*
+		 * Lo que viene de encima no mueve el resaltado, y tampoco lo apaga: al
+		 * entrar a la tarjeta el `mouseleave` de la columna ya lo apagó. Devolverlo
+		 * a `null` acá sería apagar el de *otra* columna, que es la que puede
+		 * quedar debajo de un menú ancho.
+		 */
+		if (!onSlotClick || !fromGrid(event)) return;
 
 		/*
 		 * Sobre una cita no se ilumina nada. El evento igual llega hasta acá —no se
