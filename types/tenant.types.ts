@@ -5,6 +5,7 @@ export interface TenantSubscription {
 	state: string;
 	daysRemaining: number | null;
 	trialEndsAt: string | null;
+	subscriptionEndsAt: string | null;
 }
 
 /** Las coordenadas del local. Van juntas: una sola no ubica nada. */
@@ -89,28 +90,41 @@ export interface UpdateTenantDto {
 }
 
 /**
- * El estado de la prueba gratuita de un negocio, ya resuelto por el backend.
+ * El estado comercial de un negocio, ya resuelto por el backend.
  *
- * `state` llega derivado y no crudo a propósito: `TRIAL` guardado puede ser una
- * prueba en curso o una vencida según la hora, y hacer esa cuenta acá sería una
- * segunda copia de la regla que decide el acceso.
+ * Uno solo para la prueba y para la suscripción paga: son dos tramos del mismo
+ * recorrido —se prueba, se paga, se renueva— y el negocio está en uno por vez.
+ *
+ * `state` llega derivado y no crudo a propósito: `TRIAL` o `ACTIVE` guardados
+ * pueden ser algo en curso o algo vencido según la hora, y hacer esa cuenta acá
+ * sería una segunda copia de la regla que decide el acceso.
  */
-export interface TrialSummary {
+export interface SubscriptionSummary {
 	/** `NOT_STARTED` | `TRIAL_ACTIVE` | `TRIAL_EXPIRED` | `ACTIVE` | `EXPIRED` | `CANCELED`. */
 	state: string;
-	/** Días completos que faltan. Sólo con la prueba en curso. */
+	/** Días completos que faltan: de la prueba en curso o de lo que está pago. */
 	daysRemaining: number | null;
 	trialStartedAt: string | null;
 	trialEndsAt: string | null;
+	/** Hasta cuándo está paga la suscripción. `null` si nunca pagó. */
+	subscriptionEndsAt: string | null;
 	/** Si extenderle la prueba a este negocio tiene sentido. Lo decide el backend. */
-	canExtend: boolean;
+	canExtendTrial: boolean;
 	/**
-	 * Las extensiones que se ofrecen, con el vencimiento al que llevaría cada una.
+	 * Las extensiones de prueba que se ofrecen, con el vencimiento al que
+	 * llevaría cada una.
 	 *
 	 * La fecha proyectada la calcula el backend con la misma función que después
 	 * la aplica. Hacerla acá sería copiar la regla —"se suma al vencimiento
 	 * vigente, salvo que ya haya vencido"—, que es justo lo que diverge sin que
 	 * nadie se entere. Vacío cuando no se puede extender.
 	 */
-	options: Array<{ days: number; trialEndsAt: string }>;
+	trialOptions: Array<{ days: number; trialEndsAt: string }>;
+	/**
+	 * Los plazos que se pueden cobrar, con la fecha hasta la que cubriría cada
+	 * uno. Proyectados por el backend por lo mismo que los de la prueba: la
+	 * cuenta de los meses de calendario no puede tener una segunda
+	 * implementación acá.
+	 */
+	paymentOptions: Array<{ months: number; subscriptionEndsAt: string }>;
 }

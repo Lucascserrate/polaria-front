@@ -2,9 +2,9 @@ import { axiosInstance } from '@/lib/axios';
 import type { EmbeddedSignupResult } from '@/modules/settings/WhatsappEmbeddedSignupButton';
 import type {
 	CreateTenantDto,
+	SubscriptionSummary,
 	Tenant,
 	TenantListItem,
-	TrialSummary,
 	UpdateTenantDto,
 } from '@/types/tenant.types';
 
@@ -73,10 +73,10 @@ class TenantsService {
 		);
 	}
 
-	/** El estado de la prueba gratuita de un negocio. */
-	async getTrial(tenantId: string): Promise<TrialSummary> {
+	/** El estado comercial de un negocio: su prueba y lo que tiene pago. */
+	async getSubscription(tenantId: string): Promise<SubscriptionSummary> {
 		const { data } = await axiosInstance.get(
-			`/support/tenants/${tenantId}/trial`,
+			`/support/tenants/${tenantId}/subscription`,
 		);
 		return data;
 	}
@@ -87,10 +87,31 @@ class TenantsService {
 	 * No es idempotente y no debe serlo: apretar dos veces "+7 días" son catorce.
 	 * Por eso el llamador tiene que evitar el doble envío, y no reintentar solo.
 	 */
-	async extendTrial(tenantId: string, days: number): Promise<TrialSummary> {
+	async extendTrial(
+		tenantId: string,
+		days: number,
+	): Promise<SubscriptionSummary> {
 		const { data } = await axiosInstance.post(
-			`/support/tenants/${tenantId}/trial/extend`,
+			`/support/tenants/${tenantId}/subscription/extend-trial`,
 			{ days },
+		);
+		return data;
+	}
+
+	/**
+	 * Registra que el negocio pagó. Da de alta la suscripción y también la renueva.
+	 *
+	 * Tampoco es idempotente: apretar dos veces "3 meses" son seis. Vale la misma
+	 * advertencia que para la prueba, y con más razón: acá lo que se mueve es la
+	 * fecha hasta la que el negocio tiene Polaria.
+	 */
+	async paySubscription(
+		tenantId: string,
+		months: number,
+	): Promise<SubscriptionSummary> {
+		const { data } = await axiosInstance.post(
+			`/support/tenants/${tenantId}/subscription/pay`,
+			{ months },
 		);
 		return data;
 	}

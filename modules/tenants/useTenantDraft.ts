@@ -30,7 +30,7 @@ export interface TenantDraft {
 }
 
 export type SectionKey =
-	'profile' | 'location' | 'whatsapp' | 'trial' | 'system';
+	'profile' | 'location' | 'whatsapp' | 'subscription' | 'system';
 
 export interface DraftIssues {
 	/** Impiden guardar. */

@@ -9,16 +9,16 @@ import { formatDay } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type {
 	Tenant,
-	TrialSummary,
+	SubscriptionSummary,
 	UpdateTenantDto,
 } from '@/types/tenant.types';
 import { TENANTS_BASE_ROUTE } from './routes';
 import useTenantDraft, { type SectionKey } from './useTenantDraft';
-import useTenantTrial from './useTenantTrial';
+import useTenantSubscription from './useTenantSubscription';
 import ProfileSection from './sections/ProfileSection';
 import LocationSection from './sections/LocationSection';
 import WhatsappSection from './sections/WhatsappSection';
-import TrialSection from './sections/TrialSection';
+import SubscriptionSection from './sections/SubscriptionSection';
 import SystemSection from './sections/SystemSection';
 
 interface Props {
@@ -57,7 +57,7 @@ const NAV: NavGroup[] = [
 	},
 	{
 		label: 'Comercial',
-		items: [{ key: 'trial', label: 'Prueba gratuita' }],
+		items: [{ key: 'subscription', label: 'Suscripción' }],
 	},
 	{
 		label: 'Sistema',
@@ -97,13 +97,14 @@ const TenantEditor: React.FC<Props> = ({
 	 * decir cuántos días quedan sin obligar a entrar. Es lo primero que soporte
 	 * quiere saber al abrir la ficha de un negocio que llamó por un problema.
 	 */
-	const trial = useTenantTrial(tenant.id);
+	const subscription = useTenantSubscription(tenant.id);
 
 	/** Lo que cada sección dice de sí misma en el nav. */
 	const badgeOf = (key: SectionKey): string | null => {
 		if (key === 'location') return draft.location ? 'En el mapa' : null;
 		if (key === 'whatsapp') return tenant.whatsappPhoneId ? 'Conectado' : null;
-		if (key === 'trial') return trialBadge(trial.trial);
+		if (key === 'subscription')
+			return subscriptionBadge(subscription.subscription);
 		if (key === 'system')
 			return draft.status === 'inactive' ? 'Inactivo' : null;
 		return null;
@@ -236,13 +237,14 @@ const TenantEditor: React.FC<Props> = ({
 						<WhatsappSection tenant={tenant} onRefresh={onRefresh} />
 					)}
 
-					{section === 'trial' && (
-						<TrialSection
-							trial={trial.trial}
-							loading={trial.loading}
-							pending={trial.pending}
-							error={trial.error}
-							onExtend={trial.extend}
+					{section === 'subscription' && (
+						<SubscriptionSection
+							subscription={subscription.subscription}
+							loading={subscription.loading}
+							pending={subscription.pending}
+							error={subscription.error}
+							onExtendTrial={subscription.extendTrial}
+							onPay={subscription.pay}
 						/>
 					)}
 
@@ -254,17 +256,24 @@ const TenantEditor: React.FC<Props> = ({
 };
 
 /**
- * Lo que la solapa dice de la prueba, en el ancho de una etiqueta.
+ * Lo que la solapa dice de la suscripción, en el ancho de una etiqueta.
  *
- * Sólo los estados que piden mirar: una prueba que corre —con sus días— y una
- * vencida. Un negocio pago o sin prueba iniciada no tiene nada urgente que
- * contar acá, y una etiqueta en cada solapa deja de señalar nada.
+ * Los días van sin unidad —"5 d"— porque en una etiqueta no entra más y porque
+ * al lado dice "Suscripción": lo que se está contando no está en duda. Lo
+ * vencido se nombra en palabras y no en días, que serían cero y no dicen nada.
+ * El negocio que nunca arrancó la prueba no lleva etiqueta: una en cada solapa
+ * deja de señalar nada.
  */
-const trialBadge = (trial: TrialSummary | null): string | null => {
-	if (!trial) return null;
-	if (trial.state === 'TRIAL_EXPIRED') return 'Vencida';
+const subscriptionBadge = (
+	subscription: SubscriptionSummary | null,
+): string | null => {
+	if (!subscription) return null;
+	if (subscription.state === 'TRIAL_EXPIRED') return 'Prueba vencida';
+	if (subscription.state === 'EXPIRED') return 'Vencida';
 
-	return trial.daysRemaining !== null ? `${trial.daysRemaining} d` : null;
+	return subscription.daysRemaining !== null
+		? `${subscription.daysRemaining} d`
+		: null;
 };
 
 export default TenantEditor;
