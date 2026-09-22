@@ -17,6 +17,7 @@ export const ROUTES = {
 	team: '/team',
 	teamNew: '/team/new',
 	clients: '/clients',
+	clientsImport: '/clients/import',
 	myAgenda: '/my-agenda',
 	myStats: '/my-stats',
 };

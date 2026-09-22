@@ -6,11 +6,19 @@ import type {
 	ClientSummaryApi,
 } from '@/types/appointments.types';
 
+export type ClientSort = 'name' | 'lastVisit';
+
 export interface ClientsQuery {
 	/** Busca en nombre, teléfono y email a la vez. */
 	search?: string;
 	page?: number;
 	limit?: number;
+	sort?: ClientSort;
+	/**
+	 * Se aplica al valor crudo de la columna. Para `lastVisit` eso es la fecha de
+	 * la visita: `asc` son los que hace más tiempo que no vienen.
+	 */
+	order?: 'asc' | 'desc';
 }
 
 export interface ClientPayload {

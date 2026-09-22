@@ -1,9 +1,10 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ROUTES, clientRoute } from '@/constants/routes';
@@ -12,7 +13,10 @@ import ClientDrawer, {
 	isClientTab,
 	type ClientTab,
 } from '@/modules/clients/ClientDrawer';
-import ClientsTable from '@/modules/clients/ClientsTable';
+import ClientsTable, {
+	DEFAULT_SORT,
+	type ClientSortState,
+} from '@/modules/clients/ClientsTable';
 import DeleteClientDialog from '@/modules/clients/DeleteClientDialog';
 import NewClientDialog from '@/modules/clients/NewClientDialog';
 import useDeleteClient from '@/services/clients/useDeleteClient';
@@ -29,16 +33,20 @@ const ClientsPage = () => {
 
 	const [search, setSearch] = useState('');
 	const [page, setPage] = useState(1);
+	const [sort, setSort] = useState<ClientSortState>(DEFAULT_SORT);
 	const [adding, setAdding] = useState(false);
 	const [deleting, setDeleting] = useState<ClientApi | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
 	const debouncedSearch = useDebouncedValue(search);
 	const { data: settings } = useGetSettings();
+
 	const { data, isLoading } = useGetClients({
 		search: debouncedSearch || undefined,
 		page,
 		limit: PAGE_SIZE,
+		sort: sort.by,
+		order: sort.by ? sort.order : undefined,
 	});
 
 	/*
@@ -107,10 +115,19 @@ const ClientsPage = () => {
 					</p>
 				</div>
 
-				<Button className="gap-2" onClick={() => setAdding(true)}>
-					<Plus className="size-4" />
-					Añadir
-				</Button>
+				<div className="flex gap-2">
+					<Button variant="outline" className="gap-2" asChild>
+						<Link href={ROUTES.clientsImport}>
+							<Upload className="size-4" />
+							Importar
+						</Link>
+					</Button>
+
+					<Button className="gap-2" onClick={() => setAdding(true)}>
+						<Plus className="size-4" />
+						Añadir
+					</Button>
+				</div>
 			</div>
 
 			{error && (
@@ -149,6 +166,11 @@ const ClientsPage = () => {
 					<ClientsTable
 						clients={clients}
 						dialCode={settings?.dialCode}
+						sort={sort}
+						onSortChange={(next) => {
+							setSort(next);
+							setPage(1);
+						}}
 						onOpen={(client) => openClient(client.id)}
 						onEdit={(client) =>
 							router.push(`${ROUTES.clients}/${client.id}/edit`)
@@ -210,13 +232,21 @@ const EmptyState: React.FC<{ searching: boolean; onAdd: () => void }> = ({
 		<p className="mb-4 text-muted-foreground">
 			{searching
 				? 'Ningún cliente coincide con esa búsqueda.'
-				: 'Todavía no hay clientes. Se cargan solos cuando alguien reserva por WhatsApp o desde la página.'}
+				: 'Todavía no hay clientes. Se cargan solos cuando alguien reserva por WhatsApp o desde la página, o podés traer los que ya tenés guardados.'}
 		</p>
 		{!searching && (
-			<Button onClick={onAdd}>
-				<Plus className="size-4" />
-				Añadir cliente
-			</Button>
+			<div className="flex flex-wrap justify-center gap-2">
+				<Button onClick={onAdd}>
+					<Plus className="size-4" />
+					Añadir cliente
+				</Button>
+				<Button variant="outline" asChild>
+					<Link href={ROUTES.clientsImport}>
+						<Upload className="size-4" />
+						Importar desde un CSV
+					</Link>
+				</Button>
+			</div>
 		)}
 	</div>
 );

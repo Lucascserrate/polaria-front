@@ -24,4 +24,5 @@ export const SOURCE_LABELS: Record<string, string> = {
 	whatsapp: 'WhatsApp',
 	web: 'Página web',
 	panel: 'Cargado a mano',
+	import: 'Importado',
 };
