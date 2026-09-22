@@ -148,6 +148,10 @@ const BookingEditor: React.FC<EditorProps> = ({
 	const [day, setDay] = useState<string | null>(null);
 	const shownDay = day ?? draft.dayKey ?? todayKey;
 
+	const hasServices = draft.items.length > 0;
+
+	const showPicker = draft.canEdit && (!hasServices || picking);
+
 	/*
 	 * Con los servicios cambiados hay que revisar que la hora siga en pie: media
 	 * hora más de trabajo puede no entrar antes del cierre o pisar la cita
@@ -187,6 +191,10 @@ const BookingEditor: React.FC<EditorProps> = ({
 	const canSave =
 		!busy &&
 		draft.hasChanges &&
+		// Vacía no se guarda: el backend la rechaza, y con razón —una reserva sin
+		// servicios no es nada—. Acá es donde vive esa regla, y no en la "X" de cada
+		// servicio: quitar el último es un paso del camino, guardarlo así no.
+		hasServices &&
 		timeMatchesDay &&
 		draft.summary.unknownServiceIds.length === 0;
 
@@ -326,28 +334,32 @@ const BookingEditor: React.FC<EditorProps> = ({
 			<BookingClientPanel
 				client={draft.client}
 				dialCode={settings?.dialCode}
-				className={cn('sm:order-1', picking ? 'order-1' : 'order-2')}
+				className={cn('sm:order-1', showPicker ? 'order-1' : 'order-2')}
 			/>
 
 			<div className="contents sm:order-2 sm:flex sm:min-h-0 sm:min-w-0 sm:flex-1 sm:flex-col">
 				<header
 					className={cn(
 						'border-b border-border px-4 py-3 sm:order-1 sm:px-5 sm:py-4',
-						picking ? 'order-2' : 'order-1',
+						showPicker ? 'order-2' : 'order-1',
 					)}
 				>
-					{picking ? (
+					{showPicker ? (
 						<div className="flex items-center gap-2">
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								aria-label="Volver a la reserva"
-								onClick={() => setPicking(false)}
-							>
-								<ChevronLeft className="size-4" />
-							</Button>
+							{/* Sin servicios no hay reserva a la que volver: el único camino
+							    hacia adelante es elegir uno. */}
+							{hasServices && (
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									aria-label="Volver a la reserva"
+									onClick={() => setPicking(false)}
+								>
+									<ChevronLeft className="size-4" />
+								</Button>
+							)}
 							<h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-								Añadir un servicio
+								{hasServices ? 'Añadir un servicio' : 'Seleccionar un servicio'}
 							</h2>
 						</div>
 					) : (
@@ -384,7 +396,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 				</header>
 
 				<div className="order-3 min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
-					{picking ? (
+					{showPicker ? (
 						<BookingServicePicker
 							services={services}
 							staff={staff}

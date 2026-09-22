@@ -183,16 +183,26 @@ const BookingServicesEditor: React.FC<Props> = ({
 													currency,
 											)}
 										</p>
+										{/*
+										 * Se puede quitar el último.
+										 *
+										 * Una reserva sin servicios no existe —el backend la
+										 * rechaza— pero eso es una regla sobre *guardar*, no sobre
+										 * quitar: entre sacar el servicio equivocado y poner el que
+										 * iba hay un momento con la lista vacía, y es el camino
+										 * normal de quien se equivocó al elegir. Apagando la X ese
+										 * camino no existía: había que agregar el correcto primero
+										 * y recién después sacar el otro, o cerrar el panel y
+										 * empezar de nuevo.
+										 *
+										 * Quién impide guardar vacío son los dos paneles, cada uno
+										 * en su `canSave`.
+										 */}
 										<Button
 											variant="ghost"
 											size="icon-xs"
 											aria-label={`Quitar ${service?.name ?? 'el servicio'}`}
-											disabled={disabled || items.length === 1}
-											title={
-												items.length === 1
-													? 'Una reserva necesita al menos un servicio'
-													: undefined
-											}
+											disabled={disabled}
 											onClick={() => remove(index)}
 										>
 											<X />
