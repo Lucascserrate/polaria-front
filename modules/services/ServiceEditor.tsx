@@ -19,7 +19,7 @@ import useServiceDraft, {
 	type ServiceSection,
 } from './useServiceDraft';
 import CategoryField from './CategoryField';
-import DeleteServiceDialog from './DeleteServiceDialog';
+import DeactivateServiceDialog from './DeactivateServiceDialog';
 import PriceField from './PriceField';
 
 const SECTIONS: Array<{ key: ServiceSection; label: string }> = [
@@ -39,26 +39,20 @@ interface Props {
 	 */
 	defaultCurrency: string;
 	saving?: boolean;
-	deleting?: boolean;
+	toggling?: boolean;
 	error?: string | null;
 	onSave: (payload: ServicePayload) => void;
-	/** Ausente al crear: no hay nada que eliminar todavía. */
-	onDelete?: () => void;
+	onToggleActive?: (isActive: boolean) => void;
 }
 
 /**
  * Un servicio en modo edición: una pantalla, no un diálogo.
  *
- * Es una pantalla por lo mismo que los editores del equipo y de clientes.
- * Eliminar vive acá, y un botón que saca un servicio del catálogo no debería
- * estar a un click de paso en una lista; y el diálogo que había antes obligaba a
- * elegir entre un alto incómodo o un scroll interno cada vez que se agregara un
- * campo.
- *
- * Son tres secciones y no un formulario largo porque responden tres preguntas
- * distintas: qué es el servicio, cuánto cuesta y cuánto ocupa en la agenda, y
- * quién puede reservarlo. La segunda es la que se ajusta seguido; la tercera se
- * decide una vez y casi nunca se toca, y por eso está última.
+ * Dar de baja vive acá **y** en el menú de la fila del catálogo. No es una
+ * duplicación por comodidad: al servicio ya dado de baja se llega desde la lista,
+ * así que volverlo a activar tiene que poder hacerse desde ahí; y una vez abierta
+ * su ficha, no ofrecerlo acá sería mandar a cerrar la pantalla para hacer algo que
+ * es de este servicio.
  *
  * El guardado es uno solo, en la cabecera, y manda el servicio entero: la
  * pantalla se recorre por secciones pero el servicio es uno.
@@ -67,30 +61,19 @@ const ServiceEditor: React.FC<Props> = ({
 	service,
 	defaultCurrency,
 	saving = false,
-	deleting = false,
+	toggling = false,
 	error,
 	onSave,
-	onDelete,
+	onToggleActive,
 }) => {
 	const [section, setSection] = useState<ServiceSection>('details');
-	const [confirmingDelete, setConfirmingDelete] = useState(false);
+	const [confirmingDeactivate, setConfirmingDeactivate] = useState(false);
+	const inactive = service?.isActive === false;
 	const { draft, set, errors, canSave, toPayload } = useServiceDraft(
 		service,
 		defaultCurrency,
 	);
 
-	/*
-	 * El precio escrito, tal como lo va a leer el cliente.
-	 *
-	 * Es la comprobación de que la moneda es la correcta, y por eso se muestra el
-	 * precio formateado y no sólo el código: "Bs 45.000" en una pantalla
-	 * colombiana salta a la vista, un "BOB" suelto en una etiqueta no tanto. Sin
-	 * precio escrito no hay nada que formatear, así que queda sólo el aviso.
-	 *
-	 * Cotizado se dice qué pasa con la moneda igual: no se usa hoy, pero es la que
-	 * va a proponer la cita cuando se escriba el importe, y por eso se sigue
-	 * eligiendo acá.
-	 */
 	const price = Number(draft.price);
 	const priceHint = draft.quoted
 		? `El cliente ve "${QUOTED_PRICE_LABEL}" en lugar del precio. Lo escribís en la cita, en ${currencyLabel(draft.currency).toLowerCase()}.`
@@ -123,16 +106,25 @@ const ServiceEditor: React.FC<Props> = ({
 				</div>
 
 				<div className="flex items-center gap-2">
-					{/* Solo al editar: al crear no hay nada que eliminar. */}
-					{onDelete && (
-						<Button
-							variant="ghost"
-							className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-							onClick={() => setConfirmingDelete(true)}
-						>
-							Eliminar
-						</Button>
-					)}
+					{onToggleActive &&
+						(inactive ? (
+							<Button
+								variant="outline"
+								disabled={toggling}
+								onClick={() => onToggleActive(true)}
+							>
+								Volver a activar
+							</Button>
+						) : (
+							<Button
+								variant="ghost"
+								disabled={toggling}
+								className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+								onClick={() => setConfirmingDeactivate(true)}
+							>
+								Desactivar
+							</Button>
+						))}
 					<Button asChild variant="outline">
 						<Link href={ROUTES.services}>Cancelar</Link>
 					</Button>
@@ -337,13 +329,13 @@ const ServiceEditor: React.FC<Props> = ({
 				</div>
 			</div>
 
-			{service && onDelete && (
-				<DeleteServiceDialog
+			{service && onToggleActive && (
+				<DeactivateServiceDialog
 					service={service}
-					open={confirmingDelete}
-					pending={deleting}
-					onOpenChange={setConfirmingDelete}
-					onConfirm={onDelete}
+					open={confirmingDeactivate}
+					pending={toggling}
+					onOpenChange={setConfirmingDeactivate}
+					onConfirm={() => onToggleActive(false)}
 				/>
 			)}
 		</div>

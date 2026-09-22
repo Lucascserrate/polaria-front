@@ -1,12 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown, GripVertical, Plus, Stethoscope } from 'lucide-react';
+import {
+	ChevronDown,
+	EllipsisVertical,
+	GripVertical,
+	Pencil,
+	Plus,
+	RotateCcw,
+	Stethoscope,
+	X,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ROUTES } from '@/constants/routes';
@@ -23,11 +34,10 @@ interface Props {
 	groups: ServiceGroup[];
 	onEditCategory: (category: ServiceCategory) => void;
 	onDeleteCategory: (category: ServiceCategory) => void;
-	/** Ausente sin categorías: no habría a dónde arrastrar. */
+	onToggleActive: (service: Service) => void;
+	togglingId?: string | null;
 	onDragStart?: (event: React.PointerEvent, service: Service) => void;
-	/** El que se está arrastrando ahora, para atenuarlo. */
 	draggingId?: string | null;
-	/** El grupo sobre el que caería ahora mismo lo que se arrastra. */
 	dropTarget?: string | null;
 }
 
@@ -49,15 +59,13 @@ interface Props {
  * Los grupos vacíos se muestran igual, con su aviso. La categoría recién creada
  * es justo la que hay que poder ver para empezar a llenarla, y es también donde
  * están sus acciones para renombrarla o borrarla si fue un error.
- *
- * Sin acciones por servicio: la fila entera lleva al editor y eliminar vive
- * adentro. Sacar un servicio del catálogo no debería estar a un click de paso
- * mientras alguien recorre la lista.
  */
 const ServicesTable: React.FC<Props> = ({
 	groups,
 	onEditCategory,
 	onDeleteCategory,
+	onToggleActive,
+	togglingId,
 	onDragStart,
 	draggingId,
 	dropTarget,
@@ -94,6 +102,8 @@ const ServicesTable: React.FC<Props> = ({
 					headed={headed}
 					onEdit={onEditCategory}
 					onDelete={onDeleteCategory}
+					onToggleActive={onToggleActive}
+					togglingId={togglingId}
 					onDragStart={onDragStart}
 					draggingId={draggingId}
 					dropTarget={dropTarget}
@@ -115,6 +125,8 @@ const CategoryGroup: React.FC<{
 	headed: boolean;
 	onEdit: (category: ServiceCategory) => void;
 	onDelete: (category: ServiceCategory) => void;
+	onToggleActive: (service: Service) => void;
+	togglingId?: string | null;
 	onDragStart?: (event: React.PointerEvent, service: Service) => void;
 	draggingId?: string | null;
 	dropTarget?: string | null;
@@ -123,6 +135,8 @@ const CategoryGroup: React.FC<{
 	headed,
 	onEdit,
 	onDelete,
+	onToggleActive,
+	togglingId,
 	onDragStart,
 	draggingId,
 	dropTarget,
@@ -216,6 +230,11 @@ const CategoryGroup: React.FC<{
 								service={service}
 								dragging={draggingId === service.id}
 							/>
+							<ServiceMenu
+								service={service}
+								disabled={togglingId === service.id}
+								onToggleActive={() => onToggleActive(service)}
+							/>
 						</li>
 					))}
 				</ul>
@@ -242,8 +261,6 @@ const DragHandle: React.FC<{
 	<button
 		type="button"
 		aria-label={`Arrastrar ${service.name} a otra categoría`}
-		// `touch-none` es lo que evita que el dedo desplace la página en lugar de
-		// arrastrar la fila.
 		className="hidden shrink-0 cursor-grab touch-none px-2 py-3 text-muted-foreground/50 transition-colors hover:text-foreground active:cursor-grabbing lg:block"
 		onPointerDown={(event) => onDragStart(event, service)}
 	>
@@ -258,12 +275,27 @@ const ServiceRow: React.FC<{ service: Service; dragging?: boolean }> = ({
 	<Link
 		href={`${ROUTES.services}/${service.id}`}
 		className={cn(
-			'flex flex-1 items-center justify-between gap-4 px-3 py-2.5 transition-colors hover:bg-muted/50 sm:px-4',
+			'flex min-w-0 flex-1 items-center justify-between gap-4 px-3 py-2.5 transition-colors hover:bg-muted/50 sm:px-4',
 			dragging && 'opacity-40',
+			/*
+			 * El desactivado se lee atenuado, pero no tachado.
+			 *
+			 * Tachar dice "esto ya no vale", y el precio y la duración de un servicio
+			 * dado de baja siguen valiendo: son los que tienen las citas que lo usaron.
+			 * Lo que no vale es ofrecerlo, y eso lo dice la insignia.
+			 */
+			service.isActive === false && 'opacity-60',
 		)}
 	>
 		<span className="min-w-0">
-			<span className="block truncate text-sm font-medium">{service.name}</span>
+			<span className="flex min-w-0 items-center gap-2">
+				<span className="truncate text-sm font-medium">{service.name}</span>
+				{service.isActive === false && (
+					<Badge variant="secondary" className="shrink-0 font-normal">
+						Desactivado
+					</Badge>
+				)}
+			</span>
 
 			{/*
 			 * Duración y aclaración en la misma línea, separadas por un punto. Eran
@@ -305,6 +337,73 @@ const ServiceRow: React.FC<{ service: Service; dragging?: boolean }> = ({
 		</span>
 	</Link>
 );
+
+/**
+ * El menú de un servicio.
+ *
+ * Tres acciones y una de ellas cambia de nombre según el estado, porque es una
+ * sola: un servicio activo se puede desactivar y uno desactivado se puede volver
+ * a activar. Mostrar las dos, con una apagada, sería ofrecer algo que no se puede
+ * hacer y obligar a leer cuál de las dos está viva.
+ *
+ * No hay "Eliminar". Nunca lo hubo de verdad: lo que el botón llamaba eliminar
+ * marcaba el servicio como inactivo y dejaba la fila, porque las citas que lo
+ * usaron la necesitan para conservar su precio y su duración. Ahora se llama como
+ * lo que es.
+ */
+const ServiceMenu: React.FC<{
+	service: Service;
+	disabled?: boolean;
+	onToggleActive: () => void;
+}> = ({ service, disabled = false, onToggleActive }) => {
+	const inactive = service.isActive === false;
+
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					disabled={disabled}
+					className="mr-1 shrink-0 text-muted-foreground"
+					aria-label={`Acciones de ${service.name}`}
+				>
+					<EllipsisVertical className="size-4" />
+				</Button>
+			</DropdownMenuTrigger>
+
+			<DropdownMenuContent align="end" className="w-auto min-w-48">
+				{/*
+				 * Es un enlace y no un `onSelect` que navegue: así abre en otra pestaña
+				 * con el clic del medio y se puede copiar la dirección, igual que la
+				 * fila. Hoy lleva al mismo formulario que la fila; cuando el clic en la
+				 * fila lleve a una ficha de detalle, éste seguirá siendo el atajo a
+				 * editar.
+				 */}
+				<DropdownMenuItem asChild>
+					<Link href={`${ROUTES.services}/${service.id}`}>
+						<Pencil />
+						Editar servicio
+					</Link>
+				</DropdownMenuItem>
+
+				<DropdownMenuSeparator />
+
+				{inactive ? (
+					<DropdownMenuItem onSelect={onToggleActive}>
+						<RotateCcw />
+						Volver a activar
+					</DropdownMenuItem>
+				) : (
+					<DropdownMenuItem variant="destructive" onSelect={onToggleActive}>
+						<X />
+						Desactivar...
+					</DropdownMenuItem>
+				)}
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+};
 
 const Dot: React.FC = () => (
 	<span aria-hidden className="shrink-0">

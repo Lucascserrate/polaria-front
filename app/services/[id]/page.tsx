@@ -10,7 +10,7 @@ import ServiceEditor from '@/modules/services/ServiceEditor';
 import type { ServicePayload } from '@/modules/services/useServiceDraft';
 import useService from '@/services/services/useService';
 import useUpdateService from '@/services/services/useUpdateService';
-import useDeleteService from '@/services/services/useDeleteService';
+import useSetServiceActive from '@/services/services/useSetServiceActive';
 import useBusinessCurrency from '@/modules/settings/useBusinessCurrency';
 
 const messageOf = (cause: unknown, fallback: string): string =>
@@ -26,7 +26,7 @@ const ServicePage = () => {
 	const { data: service, isLoading, isError } = useService(id ?? '');
 	const { currency } = useBusinessCurrency();
 	const updateService = useUpdateService();
-	const deleteService = useDeleteService();
+	const setServiceActive = useSetServiceActive();
 	const [error, setError] = useState<string | null>(null);
 
 	const handleSave = async (payload: ServicePayload) => {
@@ -41,15 +41,22 @@ const ServicePage = () => {
 		}
 	};
 
-	const handleDelete = async () => {
+	const handleToggleActive = async (isActive: boolean) => {
 		if (!id) return;
 		setError(null);
 
 		try {
-			await deleteService.mutateAsync(id);
-			router.push(ROUTES.services);
+			await setServiceActive.mutateAsync({ id, isActive });
+			if (!isActive) router.push(ROUTES.services);
 		} catch (cause) {
-			setError(messageOf(cause, 'No se pudo eliminar el servicio.'));
+			setError(
+				messageOf(
+					cause,
+					isActive
+						? 'No se pudo volver a activar el servicio.'
+						: 'No se pudo desactivar el servicio.',
+				),
+			);
 		}
 	};
 
@@ -80,10 +87,10 @@ const ServicePage = () => {
 			service={service}
 			defaultCurrency={currency}
 			saving={updateService.isPending}
-			deleting={deleteService.isPending}
+			toggling={setServiceActive.isPending}
 			error={error}
 			onSave={(payload) => void handleSave(payload)}
-			onDelete={() => void handleDelete()}
+			onToggleActive={(isActive) => void handleToggleActive(isActive)}
 		/>
 	);
 };

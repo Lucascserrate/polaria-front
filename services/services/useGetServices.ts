@@ -1,12 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { getServices } from './services.service';
 import { serviceKeys } from './serviceKeys';
-import type { Service } from '@/types/services.types';
+import type { Service, ServiceScope } from '@/types/services.types';
 
-const useGetServices = () => {
+/**
+ * El catálogo del negocio.
+ *
+ * Por defecto solo los activos, que es lo que quiere todo el que va a elegir un
+ * servicio. El catálogo del panel pide `all` porque es el único lugar donde un
+ * servicio desactivado sirve para algo: verlo y volver a activarlo.
+ */
+const useGetServices = (scope: ServiceScope = 'active') => {
 	return useQuery<Service[]>({
-		queryKey: serviceKeys.list(),
-		queryFn: getServices,
+		queryKey: serviceKeys.list(scope),
+		queryFn: () => getServices(scope),
 	});
 };
 

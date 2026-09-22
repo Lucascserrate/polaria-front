@@ -64,6 +64,15 @@ export interface CreateServiceDto {
 
 export type UpdateServiceDto = Partial<CreateServiceDto>;
 
+/**
+ * Qué parte del catálogo se pide. Espejo de `SERVICE_SCOPES` del servidor.
+ *
+ * `active` es lo que ofrece el negocio hoy y es lo que pide todo el mundo. `all`
+ * suma los desactivados, y lo pide sólo el catálogo del panel: es el único lugar
+ * donde un servicio dado de baja sirve para algo, que es volver a activarlo.
+ */
+export type ServiceScope = 'active' | 'all';
+
 export type UpdateServiceInput = {
 	id: string;
 	data: UpdateServiceDto;

@@ -10,7 +10,9 @@ import CategoryDialog from '@/modules/services/CategoryDialog';
 import CategoryFilter, {
 	ALL_CATEGORIES,
 } from '@/modules/services/CategoryFilter';
+import DeactivateServiceDialog from '@/modules/services/DeactivateServiceDialog';
 import DeleteCategoryDialog from '@/modules/services/DeleteCategoryDialog';
+import InactiveServicesBar from '@/modules/services/InactiveServicesBar';
 import ReorderCategoriesDialog from '@/modules/services/ReorderCategoriesDialog';
 import ServicesTable from '@/modules/services/ServicesTable';
 import useServiceDrag from '@/modules/services/useServiceDrag';
@@ -23,7 +25,9 @@ import useGetServices from '@/services/services/useGetServices';
 import useGetServiceCategories from '@/services/service-categories/useGetServiceCategories';
 import useDeleteServiceCategory from '@/services/service-categories/useDeleteServiceCategory';
 import useAssignServiceCategory from '@/services/services/useAssignServiceCategory';
+import useSetServiceActive from '@/services/services/useSetServiceActive';
 import type { ServiceCategory } from '@/types/service-categories.types';
+import type { Service } from '@/types/services.types';
 
 /**
  * El catálogo de servicios, agrupado por categoría.
@@ -32,27 +36,43 @@ import type { ServiceCategory } from '@/types/service-categories.types';
  * treinta filas no se recorre, ni acá ni —sobre todo— en la lista de WhatsApp que
  * ve el cliente. Acá se arman y se asignan; el menú por categorías del canal es
  * el paso siguiente.
- *
- * El negocio que no las necesita no paga nada por ellas: sin ninguna creada, la
- * lista es la de siempre, sin encabezados de grupo.
- *
- * Ya no hay tarjetas de resumen arriba. Eran tres —total, duración promedio,
- * precio promedio— y ninguna se usaba para decidir nada: el total ya lo dice la
- * lista, y los promedios de un catálogo de cinco servicios no describen al negocio
- * ni a ninguno de ellos. Ocupaban la primera pantalla completa antes de mostrar lo
- * que se venía a ver.
  */
 const ServicesPage = () => {
-	const { data: services = [], isPending, isError, error } = useGetServices();
+	const {
+		data: catalog = [],
+		isPending,
+		isError,
+		error,
+	} = useGetServices('all');
 	const { data: categories = [] } = useGetServiceCategories();
 	const deleteCategory = useDeleteServiceCategory();
 	const assignCategory = useAssignServiceCategory();
+	const setServiceActive = useSetServiceActive();
 
 	const [filter, setFilter] = useState<string>(ALL_CATEGORIES);
 	const [editing, setEditing] = useState<ServiceCategory | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [deleting, setDeleting] = useState<ServiceCategory | null>(null);
 	const [reordering, setReordering] = useState(false);
+	const [showInactive, setShowInactive] = useState(false);
+	const [deactivating, setDeactivating] = useState<Service | null>(null);
+
+	const inactiveCount = catalog.filter(
+		(service) => service.isActive === false,
+	).length;
+
+	/**
+	 * Lo que se lista. Sin los dados de baja, salvo que se hayan pedido.
+	 *
+	 * Los contadores —el del título y los de la columna— cuentan sobre esto y no
+	 * sobre el catálogo entero: si dijeran otra cosa que la lista que están al
+	 * lado de, el filtro parecería roto. Que el número suba al tocar "Ver todo" es
+	 * correcto; lo pidió quien lo tocó, y el renglón del final dice cuántos de esos
+	 * están desactivados.
+	 */
+	const services = showInactive
+		? catalog
+		: catalog.filter((service) => service.isActive !== false);
 
 	/*
 	 * Soltar un servicio sobre una categoría de la columna lo mueve ahí. Soltarlo
@@ -63,7 +83,7 @@ const ServicesPage = () => {
 
 		// Soltar un servicio donde ya estaba no es un cambio: pedirle al servidor
 		// que lo deje igual haría parpadear la lista por nada.
-		const current = services.find((service) => service.id === serviceId);
+		const current = catalog.find((service) => service.id === serviceId);
 		if ((current?.categoryId ?? null) === categoryId) return;
 
 		assignCategory.mutate({ id: serviceId, categoryId });
@@ -98,12 +118,29 @@ const ServicesPage = () => {
 		setDialogOpen(true);
 	};
 
+	const handleToggleActive = (service: Service) => {
+		if (service.isActive === false) {
+			setServiceActive.mutate({ id: service.id, isActive: true });
+			return;
+		}
+
+		setDeactivating(service);
+	};
+
+	const confirmDeactivate = async () => {
+		if (!deactivating) return;
+
+		await setServiceActive.mutateAsync({
+			id: deactivating.id,
+			isActive: false,
+		});
+		setDeactivating(null);
+	};
+
 	const handleDelete = async () => {
 		if (!deleting) return;
 
 		await deleteCategory.mutateAsync(deleting.id);
-		// El filtro apuntaba a la categoría que ya no existe: sin esto, la lista
-		// queda vacía sin decir por qué.
 		if (filter === deleting.id) setFilter(ALL_CATEGORIES);
 		setDeleting(null);
 	};
@@ -125,15 +162,6 @@ const ServicesPage = () => {
 	}
 
 	return (
-		/*
-		 * `select-none` en la pantalla entera, no sólo mientras se arrastra.
-		 *
-		 * Quien va a arrastrar aprieta sobre una fila antes de encontrar el asa, y
-		 * ahí el navegador ya empezó a pintar de azul el nombre y el precio. Para
-		 * cuando el arrastre arranca y se podría apagar la selección, el estropicio
-		 * está hecho. El precio es no poder copiar un nombre desde la lista, que en
-		 * una pantalla de administración no es algo que se haga.
-		 */
 		<div className="space-y-6 select-none">
 			<div className="flex flex-wrap items-start justify-between gap-4">
 				<div>
@@ -184,11 +212,24 @@ const ServicesPage = () => {
 							setDialogOpen(true);
 						}}
 						onDeleteCategory={setDeleting}
+						onToggleActive={handleToggleActive}
+						togglingId={
+							setServiceActive.isPending
+								? (setServiceActive.variables?.id ?? null)
+								: null
+						}
 						// Sin categorías creadas no hay a dónde arrastrar.
 						onDragStart={categories.length > 0 ? drag.start : undefined}
 						draggingId={drag.dragging?.id ?? null}
 						dropTarget={drag.over}
 					/>
+					<div className="mt-4">
+						<InactiveServicesBar
+							count={inactiveCount}
+							showing={showInactive}
+							onToggle={() => setShowInactive((current) => !current)}
+						/>
+					</div>
 				</div>
 			</div>
 
@@ -226,6 +267,18 @@ const ServicesPage = () => {
 				open={reordering}
 				onOpenChange={setReordering}
 			/>
+
+			{deactivating && (
+				<DeactivateServiceDialog
+					service={deactivating}
+					open
+					pending={setServiceActive.isPending}
+					onOpenChange={(open) => {
+						if (!open) setDeactivating(null);
+					}}
+					onConfirm={() => void confirmDeactivate()}
+				/>
+			)}
 
 			{deleting && (
 				<DeleteCategoryDialog

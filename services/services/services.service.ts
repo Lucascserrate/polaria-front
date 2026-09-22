@@ -3,6 +3,7 @@ import { toPrice } from '@/lib/money';
 import type {
 	Service,
 	CreateServiceDto,
+	ServiceScope,
 	UpdateServiceDto,
 } from '@/types/services.types';
 
@@ -23,8 +24,12 @@ const toService = (service: Service): Service => ({
 	price: toPrice(service.price),
 });
 
-export const getServices = async (): Promise<Service[]> => {
-	const response = await axiosInstance.get<Service[]>('/services');
+export const getServices = async (
+	scope: ServiceScope = 'active',
+): Promise<Service[]> => {
+	const response = await axiosInstance.get<Service[]>('/services', {
+		params: { scope },
+	});
 	return response.data.map(toService);
 };
 
@@ -51,7 +56,9 @@ export const updateService = async (
 	return response.data;
 };
 
-export const deleteService = async (id: string): Promise<void> => {
-	await axiosInstance.delete(`/services/${id}`);
-};
+/*
+ * No hay `deleteService`. El `DELETE` del servidor tampoco existe: marcaba el
+ * servicio como inactivo, o sea que era la baja con otro nombre. Desactivar y
+ * volver a activar van los dos por `updateService` con `isActive`.
+ */
 export type { Service, CreateServiceDto, UpdateServiceDto };
