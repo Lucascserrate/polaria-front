@@ -9,10 +9,8 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { Appointment } from '@/types/appointments.types';
-import { formatMinute } from './utils/calendarLayout';
+import describeAppointment from './utils/describeAppointment';
 
-/** Qué se está confirmando, o `null` si no hay nada abierto. */
 export type ConfirmingAction = 'cancel' | 'delete' | null;
 
 /**
@@ -26,22 +24,21 @@ export type ConfirmingAction = 'cancel' | 'delete' | null;
  * El texto no es intercambiable. Cancelar libera el horario y la cita queda;
  * eliminar la borra y no se recupera, así que decirlo con las mismas palabras
  * sería esconder la diferencia justo donde hay que verla.
+ *
+ * Y es el mismo diálogo para las dos puertas que ofrecen estas acciones —el menú
+ * de la tarjeta en la agenda y el de la reserva abierta—: una misma acción tiene
+ * que advertir lo mismo, o la segunda puerta parece hacer algo distinto. Por eso
+ * recibe el nombre y la hora ya escritos en vez de la cita: las dos pantallas
+ * tienen la reserva en una forma distinta, y de ésta sólo hace falta cómo se lee.
  */
-const TimelineCardConfirmDialog: React.FC<{
-	appointment: Appointment;
-	startMinute: number;
+const AppointmentConfirmDialog: React.FC<{
+	clientName?: string | null;
+	timeLabel?: string | null;
 	action: ConfirmingAction;
 	onOpenChange: (open: boolean) => void;
-	onCancel?: (id: string) => void;
-	onDelete?: (id: string) => void;
-}> = ({
-	appointment,
-	startMinute,
-	action,
-	onOpenChange,
-	onCancel,
-	onDelete,
-}) => (
+	onCancel?: () => void;
+	onDelete?: () => void;
+}> = ({ clientName, timeLabel, action, onOpenChange, onCancel, onDelete }) => (
 	<AlertDialog open={action !== null} onOpenChange={onOpenChange}>
 		<AlertDialogContent>
 			{action === 'delete' ? (
@@ -58,7 +55,7 @@ const TimelineCardConfirmDialog: React.FC<{
 					<div className="flex justify-end gap-2">
 						<AlertDialogCancel>Cancelar</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => onDelete?.(appointment.id)}
+							onClick={onDelete}
 							className="bg-destructive hover:bg-destructive/90"
 						>
 							Eliminar reserva
@@ -70,13 +67,13 @@ const TimelineCardConfirmDialog: React.FC<{
 					<AlertDialogHeader>
 						<AlertDialogTitle>¿Cancelar la cita?</AlertDialogTitle>
 						<AlertDialogDescription>
-							{`La cita de ${appointment.clientName} a las ${formatMinute(startMinute)} deja de contar y su horario vuelve a ofrecerse.`}
+							{`${describeAppointment(clientName, timeLabel)} deja de contar y su horario vuelve a ofrecerse.`}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<div className="flex justify-end gap-2">
 						<AlertDialogCancel>Volver</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => onCancel?.(appointment.id)}
+							onClick={onCancel}
 							className="bg-destructive hover:bg-destructive/90"
 						>
 							Cancelar cita
@@ -88,4 +85,4 @@ const TimelineCardConfirmDialog: React.FC<{
 	</AlertDialog>
 );
 
-export default TimelineCardConfirmDialog;
+export default AppointmentConfirmDialog;

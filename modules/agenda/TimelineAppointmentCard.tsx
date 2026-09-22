@@ -11,9 +11,9 @@ import type { Appointment } from '@/types/appointments.types';
 import AppointmentPreview from './AppointmentPreview';
 import TimelineCardFace from './TimelineCardFace';
 import TimelineCardMenu from './TimelineCardMenu';
-import TimelineCardConfirmDialog, {
+import AppointmentConfirmDialog, {
 	type ConfirmingAction,
-} from './TimelineCardConfirmDialog';
+} from './AppointmentConfirmDialog';
 import { formatMinute } from './utils/calendarLayout';
 import { blockSchemeOf } from './utils/blockColor';
 import { cn } from '@/lib/utils';
@@ -70,7 +70,7 @@ interface Props {
  *
  * Lo que queda acá es el reparto del espacio; el detalle, el menú y las
  * confirmaciones viven aparte —`AppointmentPreview`, `TimelineCardMenu`,
- * `TimelineCardConfirmDialog`—. Es lo único que este archivo decide de verdad, y
+ * `AppointmentConfirmDialog`—. Es lo único que este archivo decide de verdad, y
  * mezclado con los otros tres se leía como un archivo sobre cuatro temas.
  *
  * Las acciones viven en el menú del click derecho y no en el detalle: son dos
@@ -228,15 +228,15 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 				onRequestDelete={onDelete ? () => setConfirming('delete') : undefined}
 			/>
 
-			<TimelineCardConfirmDialog
-				appointment={appointment}
-				startMinute={startMinute}
+			<AppointmentConfirmDialog
+				clientName={appointment.clientName}
+				timeLabel={formatMinute(startMinute)}
 				action={confirming}
 				onOpenChange={(open) => {
 					if (!open) setConfirming(null);
 				}}
-				onCancel={onCancel}
-				onDelete={onDelete}
+				onCancel={onCancel ? () => onCancel(appointment.id) : undefined}
+				onDelete={onDelete ? () => onDelete(appointment.id) : undefined}
 			/>
 		</ContextMenu>
 	);

@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import useGetAppointmentDetail from '@/services/appointments/useGetAppointmentDetail';
 import useEditBooking from '@/services/appointments/useEditBooking';
+import useDeleteBooking from '@/services/appointments/useDeleteBooking';
+import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useGetSettings from '@/services/settings/useGetSettings';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
 import useGetServices from '@/services/services/useGetServices';
@@ -22,6 +24,10 @@ import useGetSlotsForBooking from '@/services/availability/useGetSlotsForBooking
 import { cn } from '@/lib/utils';
 import { countUnpriced, formatTotals } from '@/lib/money';
 import { formatDuration } from '@/lib/duration';
+import AppointmentConfirmDialog, {
+	type ConfirmingAction,
+} from './AppointmentConfirmDialog';
+import BookingActionsMenu from './BookingActionsMenu';
 import BookingClientPanel from './BookingClientPanel';
 import BookingMobileBar from './BookingMobileBar';
 import BookingNotices from './BookingNotices';
@@ -33,6 +39,7 @@ import FinishWithPricesDialog, {
 	useFinishWithPrices,
 } from './FinishWithPricesDialog';
 import { getAppointmentStatusText } from '@/modules/appointments/utils/constants';
+import { formatMinute, minutesInTimeZone } from './utils/calendarLayout';
 import { describeReminder } from './utils/reminderStatus';
 import { eligibleStaffFor } from './utils/eligibleStaff';
 
@@ -86,6 +93,8 @@ interface EditorProps {
  * - **Hay algo que descartar.** Se guarda sobre la misma reserva, con su id y su
  *   historial, así que existe un estado "con cambios sin guardar" que en la
  *   creación no tiene sentido.
+ * - **Hay algo que deshacer.** Una reserva que existe se puede cancelar o
+ *   eliminar, y eso no tiene equivalente al crearla: ver `BookingActionsMenu`.
  */
 const BookingEditor: React.FC<EditorProps> = ({
 	appointmentId,
@@ -95,12 +104,16 @@ const BookingEditor: React.FC<EditorProps> = ({
 }) => {
 	const [picking, setPicking] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
+	const [confirming, setConfirming] = useState<ConfirmingAction>(null);
 
 	const { data: booking, isLoading } = useGetAppointmentDetail(appointmentId);
 	const { data: services = [] } = useGetServices();
 	const { data: staff = [] } = useGetStaff();
 	const { data: settings } = useGetSettings();
 	const { mutateAsync: save, isPending: saving } = useEditBooking();
+	const { mutate: updateStatus, isPending: cancelling } =
+		useUpdateAppointmentStatus();
+	const { mutate: deleteBooking, isPending: deleting } = useDeleteBooking();
 
 	/*
 	 * Finalizar puede abrir una pregunta antes: si la cita tiene servicios que se
@@ -114,7 +127,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 	});
 	const finishing = finishingId !== null;
 
-	const busy = saving || finishing;
+	const busy = saving || finishing || cancelling || deleting;
 
 	const timezone = booking?.timezone ?? settings?.timezone;
 	// Sin configuración todavía, el código ISO es el del negocio por defecto.
@@ -213,6 +226,42 @@ const BookingEditor: React.FC<EditorProps> = ({
 		});
 	};
 
+	/*
+	 * Cancelar y eliminar cierran el panel.
+	 *
+	 * Las dos resuelven la reserva, así que no queda nada que editar acá adentro:
+	 * dejar el panel abierto sobre una cita que ya no existe —o que ya está
+	 * cancelada— era mostrar un formulario que no lleva a ninguna parte. Lo que
+	 * pasó se ve atrás, en la agenda, que es donde la tarjeta desaparece o queda
+	 * tachada.
+	 *
+	 * El error, en cambio, mantiene el panel abierto y lo escribe donde ya se
+	 * escriben los de guardar: cerrar sin haber hecho nada se lee como que salió
+	 * bien.
+	 */
+	const handleCancelBooking = () => {
+		setSaveError(null);
+
+		updateStatus(
+			{ id: appointmentId, status: 'cancelled' },
+			{
+				onSuccess: () => onClose(),
+				onError: () =>
+					setSaveError('No se pudo cancelar la cita. Intentá de nuevo.'),
+			},
+		);
+	};
+
+	const handleDeleteBooking = () => {
+		setSaveError(null);
+
+		deleteBooking(appointmentId, {
+			onSuccess: () => onClose(),
+			onError: () =>
+				setSaveError('No se pudo eliminar la reserva. Intentá de nuevo.'),
+		});
+	};
+
 	const handleSave = async () => {
 		if (!draft.startTime || !canSave) return;
 
@@ -245,6 +294,17 @@ const BookingEditor: React.FC<EditorProps> = ({
 			</div>
 		);
 	}
+
+	/**
+	 * La hora guardada de la reserva, para el aviso de cancelar.
+	 *
+	 * La del borrador no sirve: se puede haber movido sin guardar, y cancelar
+	 * cancela la cita que está en la agenda, no la que se estaba armando. Decir la
+	 * otra hora habría hecho dudar de qué se está por cancelar.
+	 */
+	const savedMinute = booking.startTime
+		? minutesInTimeZone(booking.startTime, timezone)
+		: null;
 
 	return (
 		/*
@@ -291,24 +351,35 @@ const BookingEditor: React.FC<EditorProps> = ({
 							</h2>
 						</div>
 					) : (
-						<BookingWhenField
-							dayKey={shownDay}
-							onDayChange={(next) => {
-								setDay(next);
-								setSaveError(null);
-							}}
-							startTime={draft.startTime}
-							onStartTimeChange={(next) => {
-								draft.setStartTime(next);
-								setSaveError(null);
-							}}
-							todayKey={todayKey}
-							timezone={timezone}
-							items={draft.slotItems}
-							totalMinutes={draft.summary.totalMinutes}
-							excludeAppointmentId={appointmentId}
-							disabled={busy || !draft.canEdit}
-						/>
+						<div className="flex items-start justify-between gap-3">
+							<div className="min-w-0 flex-1">
+								<BookingWhenField
+									dayKey={shownDay}
+									onDayChange={(next) => {
+										setDay(next);
+										setSaveError(null);
+									}}
+									startTime={draft.startTime}
+									onStartTimeChange={(next) => {
+										draft.setStartTime(next);
+										setSaveError(null);
+									}}
+									todayKey={todayKey}
+									timezone={timezone}
+									items={draft.slotItems}
+									totalMinutes={draft.summary.totalMinutes}
+									excludeAppointmentId={appointmentId}
+									disabled={busy || !draft.canEdit}
+								/>
+							</div>
+
+							<BookingActionsMenu
+								status={booking.status}
+								disabled={busy}
+								onRequestCancel={() => setConfirming('cancel')}
+								onRequestDelete={() => setConfirming('delete')}
+							/>
+						</div>
 					)}
 				</header>
 
@@ -489,6 +560,17 @@ const BookingEditor: React.FC<EditorProps> = ({
 			 * portal, y anidarlo adentro lo dejaría atado al alto del contenido.
 			 */}
 			<FinishWithPricesDialog {...dialogProps} />
+
+			<AppointmentConfirmDialog
+				clientName={booking.client?.name ?? booking.clientName ?? null}
+				timeLabel={savedMinute === null ? null : formatMinute(savedMinute)}
+				action={confirming}
+				onOpenChange={(open) => {
+					if (!open) setConfirming(null);
+				}}
+				onCancel={handleCancelBooking}
+				onDelete={handleDeleteBooking}
+			/>
 		</div>
 	);
 };
