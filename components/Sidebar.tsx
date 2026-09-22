@@ -23,6 +23,7 @@ import { useTour } from '@/modules/onboarding/tour/TourContext';
 import { navAnchor } from '@/modules/onboarding/tour/anchors';
 import TrialStatus from '@/modules/onboarding/TrialStatus';
 import AccountBadge from '@/modules/account/AccountBadge';
+import InstallApp from '@/components/InstallApp';
 
 /** Una fila del menú, colapsada o no. El `title` es el nombre cuando no se ve. */
 const itemClasses = (isActive: boolean) =>
@@ -240,6 +241,8 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 								<TrialStatus />
 							</div>
 						)}
+
+						<InstallApp />
 
 						<button
 							className="flex w-full items-center gap-2 cursor-pointer collapsed:justify-center"

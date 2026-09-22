@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from '@/lib/query-provider';
@@ -6,6 +6,7 @@ import SetupExperience from '@/modules/onboarding/SetupExperience';
 import { Toaster } from '@/components/ui/sonner';
 import { SIDEBAR_PREFERENCE_SCRIPT } from '@/components/sidebar-preference';
 import { THEME_PREFERENCE_SCRIPT } from '@/components/theme-preference';
+import { INSTALL_PROMPT_SCRIPT } from '@/components/install-prompt';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -26,6 +27,26 @@ export const metadata: Metadata = {
 		template: '%s - Polaria',
 	},
 	description: 'Asistente de reservas',
+};
+
+export const viewport: Viewport = {
+	/*
+	 * El color de la barra de título cuando Polaria corre instalada, en ventana
+	 * propia y sin barra de direcciones.
+	 *
+	 * Está acá y no solo en el manifest porque el manifest admite un color y esto
+	 * admite dos: el de allá se lee una vez, al instalar, y quedaría fijo mientras
+	 * el resto de la aplicación cambia de tema. Con estas dos líneas la ventana
+	 * acompaña —y también acompaña al sistema, que es el valor por defecto de la
+	 * preferencia—.
+	 *
+	 * Los dos colores son `--background` de `globals.css` en sRGB, no un gris
+	 * elegido de nuevo: si allá cambia el fondo, acá hay que tocarlo igual.
+	 */
+	themeColor: [
+		{ media: '(prefers-color-scheme: light)', color: '#ffffff' },
+		{ media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+	],
 };
 
 export default function RootLayout({
@@ -56,14 +77,20 @@ export default function RootLayout({
 				className={`${geistSans.className} antialiased h-full flex flex-col`}
 			>
 				{/*
-				 * Los dos corren antes que nada de lo que sigue: deciden el ancho del
-				 * menú y el color del fondo, y las dos cosas tienen que estar resueltas
-				 * en el primer pintado. Van juntos en un solo `script` para no pagar
-				 * dos veces el corte del parseo del documento.
+				 * Los tres corren antes que nada de lo que sigue, y van juntos en un
+				 * solo `script` para no pagar tres veces el corte del parseo del
+				 * documento.
+				 *
+				 * Los dos primeros deciden el ancho del menú y el color del fondo, y las
+				 * dos cosas tienen que estar resueltas en el primer pintado. El tercero
+				 * está acá por otro motivo: no pinta nada, pero se queda escuchando el
+				 * aviso de que el sitio se puede instalar, que Chrome manda apenas lee
+				 * el manifest —normalmente antes de que hidrate la aplicación, y una
+				 * sola vez—.
 				 */}
 				<script
 					dangerouslySetInnerHTML={{
-						__html: `${THEME_PREFERENCE_SCRIPT}${SIDEBAR_PREFERENCE_SCRIPT}`,
+						__html: `${THEME_PREFERENCE_SCRIPT}${SIDEBAR_PREFERENCE_SCRIPT}${INSTALL_PROMPT_SCRIPT}`,
 					}}
 				/>
 				<QueryProvider>
