@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import Breadcrumb from '@/components/Breadcrumb';
 import { ROUTES } from '@/constants/routes';
-import ImportColumnMapping from '@/modules/clients/import/ImportColumnMapping';
 import ImportDone from '@/modules/clients/import/ImportDone';
 import ImportDropzone from '@/modules/clients/import/ImportDropzone';
-import ImportOptions from '@/modules/clients/import/ImportOptions';
+import ImportMappingCard from '@/modules/clients/import/ImportMappingCard';
 import ImportPreview from '@/modules/clients/import/ImportPreview';
 import ImportSummary from '@/modules/clients/import/ImportSummary';
 import useImportClients from '@/services/clients/useImportClients';
@@ -145,8 +144,6 @@ const ImportClientsPage = () => {
 		setError(null);
 	};
 
-	const missingPhoneColumn = analysis?.mapping.phoneColumns.length === 0;
-
 	return (
 		<div className="flex min-h-0 flex-1 flex-col gap-6">
 			<div>
@@ -182,37 +179,16 @@ const ImportClientsPage = () => {
 					<div className="space-y-6 pb-2">
 						<ImportSummary analysis={analysis} fileName={file.name} />
 
-						<section className="space-y-4 rounded-xl border border-border p-4 sm:p-6">
-							<div>
-								<h2 className="font-medium">Columnas del archivo</h2>
-								<p className="text-sm text-muted-foreground">
-									Detectamos de dónde sale cada dato. Cambialo si no coincide.
-								</p>
-							</div>
-
-							<ImportColumnMapping
-								headers={analysis.headers}
-								mapping={analysis.mapping}
-								detected={detected}
-								disabled={preview.isPending || run.isPending}
-								onChange={handleMappingChange}
-							/>
-
-							{missingPhoneColumn && (
-								<p className="text-sm text-warning">
-									Sin la columna del teléfono no se puede importar: es lo que
-									permite reconocer a cada cliente cuando escriba por WhatsApp.
-								</p>
-							)}
-
-							<ImportOptions
-								dialCode={dialCode ?? analysis.dialCode}
-								fillMissing={fillMissing}
-								disabled={preview.isPending || run.isPending}
-								onDialCodeChange={handleDialCodeChange}
-								onFillMissingChange={setFillMissing}
-							/>
-						</section>
+						<ImportMappingCard
+							analysis={analysis}
+							detected={detected}
+							dialCode={dialCode ?? analysis.dialCode}
+							fillMissing={fillMissing}
+							disabled={preview.isPending || run.isPending}
+							onMappingChange={handleMappingChange}
+							onDialCodeChange={handleDialCodeChange}
+							onFillMissingChange={setFillMissing}
+						/>
 
 						<ImportPreview
 							analysis={analysis}
