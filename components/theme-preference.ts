@@ -9,10 +9,6 @@
  * ver—. Tampoco va en una cookie, para no volver dinámicas pantallas que hoy se
  * sirven estáticas.
  *
- * "Sistema" es el valor por defecto y no una opción más: quien ya dejó el
- * teléfono en oscuro entra y lo ve oscuro sin buscar nada. Guardar `light` o
- * `dark` es fijarlo a mano, y entonces deja de seguir al sistema.
- *
  * Sin React acá adentro a propósito: este archivo lo importa el layout, que es
  * un componente de servidor, y allá `useSyncExternalStore` ni siquiera existe.
  * El hook vive al lado, en `use-theme-preference`.

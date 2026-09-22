@@ -15,11 +15,6 @@ interface Option {
 	icon: LucideIcon;
 }
 
-/**
- * "Sistema" va primero porque es el valor por defecto, y el orden de las otras
- * dos va de claro a oscuro: leído de izquierda a derecha, el control cuenta la
- * misma historia que hace.
- */
 const OPTIONS: Option[] = [
 	{ value: 'system', label: 'Sistema', icon: Monitor },
 	{ value: 'light', label: 'Claro', icon: Sun },
