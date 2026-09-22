@@ -16,6 +16,7 @@ import FinishWithPricesDialog, {
 } from '@/modules/agenda/FinishWithPricesDialog';
 import AppointmentBlocks from '@/modules/agenda/AppointmentBlocks';
 import { TOUR } from '@/modules/onboarding/tour/anchors';
+import TrialStatus from '@/modules/onboarding/TrialStatus';
 import BookingDrawer from '@/modules/agenda/BookingDrawer';
 import NewBookingDrawer, {
 	type BookingSeed,
@@ -589,6 +590,16 @@ const AgendaPage = () => {
 
 	return (
 		<>
+			{/*
+			 * Arriba de la barra y no debajo: la prueba es de la cuenta, no de lo que
+			 * esta pantalla hace. Debajo quedaría mezclada con los controles del
+			 * calendario, que son otra conversación.
+			 *
+			 * No se dibuja nada salvo que haya prueba de la que hablar, así que en el
+			 * caso normal la agenda arranca donde arrancaba.
+			 */}
+			<TrialStatus />
+
 			<AgendaToolbar
 				view={view}
 				onViewChange={setView}

@@ -1,11 +1,11 @@
 'use client';
 
-import { Clock } from 'lucide-react';
+import { Clock, TriangleAlert } from 'lucide-react';
+import { useSessionActor } from '@/modules/auth/hooks/useAuth';
+import { isAdminRole } from '@/modules/auth/session';
 import useGetOnboardingStatus from '@/services/onboarding/useGetOnboardingStatus';
 
 /**
- * Estado de la prueba gratuita, en el pie del menú.
- *
  * Solo aparece cuando hay algo que decir: durante la prueba y cuando venció. Un
  * negocio que todavía no conectó WhatsApp no tiene prueba de la que hablar, y
  * uno con suscripción paga no necesita que se lo recuerden.
@@ -14,7 +14,19 @@ import useGetOnboardingStatus from '@/services/onboarding/useGetOnboardingStatus
  * calcula nada: sería una segunda cuenta que puede no coincidir.
  */
 const TrialStatus: React.FC = () => {
-	const { data } = useGetOnboardingStatus();
+	/*
+	 * El rol se pregunta acá adentro y no lo decide quien lo dibuja.
+	 *
+	 * La agenda no tiene guarda de rol —simplemente no está en el menú del
+	 * profesional—, así que un profesional que escriba la ruta llega igual, y el
+	 * endpoint de onboarding es de administración: le responde 403. Con el gate
+	 * afuera, esto dependía de que cada lugar que lo use se acuerde de la regla;
+	 * adentro, no hay forma de usarlo mal.
+	 */
+	const { actor } = useSessionActor();
+	const isAdmin = isAdminRole(actor?.role);
+
+	const { data } = useGetOnboardingStatus(isAdmin);
 	const subscription = data?.subscription;
 
 	if (!subscription) return null;
@@ -23,7 +35,7 @@ const TrialStatus: React.FC = () => {
 		const days = subscription.trialDaysRemaining ?? 0;
 
 		return (
-			<div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-muted-foreground">
+			<div className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/50 px-3 py-1.5 text-muted-foreground">
 				<Clock className="h-3.5 w-3.5 shrink-0" />
 				<span className="text-xs">
 					Prueba gratuita ·{' '}
@@ -37,12 +49,13 @@ const TrialStatus: React.FC = () => {
 
 	if (subscription.state === 'TRIAL_EXPIRED') {
 		return (
-			<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2">
-				<p className="text-xs font-medium text-warning">
-					Tu prueba gratuita terminó
-				</p>
-				<p className="mt-0.5 text-xs text-muted-foreground">
-					Escribinos para seguir usando Polaria.
+			<div className="flex shrink-0 items-center gap-2 border-b border-amber-500/50 bg-amber-500/10 px-3 py-1.5">
+				<TriangleAlert className="h-3.5 w-3.5 shrink-0 text-warning" />
+				<p className="text-xs text-muted-foreground">
+					<span className="font-medium text-warning">
+						Tu prueba gratuita terminó
+					</span>{' '}
+					· Escribinos para seguir usando Polaria.
 				</p>
 			</div>
 		);

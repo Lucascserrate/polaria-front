@@ -21,7 +21,6 @@ import {
 import { useSetupProgress } from '@/modules/onboarding/useSetupProgress';
 import { useTour } from '@/modules/onboarding/tour/TourContext';
 import { navAnchor } from '@/modules/onboarding/tour/anchors';
-import TrialStatus from '@/modules/onboarding/TrialStatus';
 import AccountBadge from '@/modules/account/AccountBadge';
 import InstallApp from '@/components/InstallApp';
 
@@ -230,17 +229,6 @@ export function Sidebar({ floatingTrigger = true }: Props) {
 					{/* Footer */}
 					<div className="space-y-3 px-4 py-6 border-t border-sidebar-border collapsed:px-2">
 						<AccountBadge />
-
-						{/* Solo dice algo durante la prueba y cuando venció. */}
-						{/*
-						 * `contents` para no dejar un hueco cuando no hay prueba de la que
-						 * hablar: el envoltorio existe solo para poder esconderlo colapsado.
-						 */}
-						{isAdmin && (
-							<div className="contents collapsed:hidden">
-								<TrialStatus />
-							</div>
-						)}
 
 						<InstallApp />
 
