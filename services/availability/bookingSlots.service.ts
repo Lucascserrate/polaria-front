@@ -11,6 +11,14 @@ export interface BookingSlot {
 	startTime: string;
 	endTime: string;
 	eligibleStaffIds: string[];
+	/**
+	 * Empieza dentro del horario de atención pero termina después.
+	 *
+	 * Sólo llega con `scope: 'panel'`: al cliente se le ofrece únicamente lo que
+	 * entra entero. Acá se ofrece marcado, para que quien agenda vea lo que está
+	 * decidiendo en vez de no encontrar el horario.
+	 */
+	endsAfterHours?: boolean;
 }
 
 export const getBookingSlots = async (params: {

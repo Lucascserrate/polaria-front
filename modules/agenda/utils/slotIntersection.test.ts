@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { intersectSlotStarts } from './slotIntersection';
+import {
+	intersectSlotStarts,
+	startsEndingAfterHours,
+} from './slotIntersection';
 
 const at = (time: string) => `2026-08-24T${time}:00.000Z`;
 
@@ -82,6 +85,71 @@ describe('intersectSlotStarts', () => {
 				{ offsetMinutes: 0, startTimes: [at('13:00')] },
 				{ offsetMinutes: 30, startTimes: [] },
 			]),
+		).toEqual([]);
+	});
+});
+
+describe('startsEndingAfterHours', () => {
+	it('marca el inicio cuyo único tramo se pasa del cierre', () => {
+		// El local cierra a las 17:00 y el servicio dura una hora: las 16:30 se
+		// ofrecen, pero terminando de más.
+		expect(
+			startsEndingAfterHours(
+				[
+					{
+						offsetMinutes: 0,
+						startTimes: [at('16:00'), at('16:30')],
+						afterHours: [at('16:30')],
+					},
+				],
+				[at('16:00'), at('16:30')],
+			),
+		).toEqual([at('16:30')]);
+	});
+
+	it('alcanza con que se pase un tramo, aunque el primero entre justo', () => {
+		// Corte de 16:00 a 16:30 y barba de 16:30 a 17:30: el corte entra entero y
+		// la reserva igual termina fuera de horario.
+		expect(
+			startsEndingAfterHours(
+				[
+					{ offsetMinutes: 0, startTimes: [at('16:00')], afterHours: [] },
+					{
+						offsetMinutes: 30,
+						startTimes: [at('16:30')],
+						afterHours: [at('16:30')],
+					},
+				],
+				[at('16:00')],
+			),
+		).toEqual([at('16:00')]);
+	});
+
+	it('sin nada que se pase, no marca nada', () => {
+		expect(
+			startsEndingAfterHours(
+				[{ offsetMinutes: 0, startTimes: [at('10:00')] }],
+				[at('10:00')],
+			),
+		).toEqual([]);
+	});
+
+	/*
+	 * El desplazamiento se aplica al comparar: un tramo que se pasa en otro
+	 * horario no tiene nada que ver con el inicio que se está evaluando.
+	 */
+	it('no marca un inicio por lo que le pasa a otro', () => {
+		expect(
+			startsEndingAfterHours(
+				[
+					{
+						offsetMinutes: 30,
+						startTimes: [at('16:30'), at('17:30')],
+						afterHours: [at('17:30')],
+					},
+				],
+				[at('16:00')],
+			),
 		).toEqual([]);
 	});
 });

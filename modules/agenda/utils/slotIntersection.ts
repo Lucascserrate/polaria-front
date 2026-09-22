@@ -18,6 +18,8 @@ export interface SlotItemAvailability {
 	offsetMinutes: number;
 	/** Inicios que el motor ofrece para ese tramo, en ISO. */
 	startTimes: string[];
+	/** De esos, los que terminan después del horario de atención. */
+	afterHours?: string[];
 }
 
 const toMillis = (iso: string): number => new Date(iso).getTime();
@@ -61,3 +63,28 @@ export const intersectSlotStarts = (
 		return true;
 	});
 };
+
+/**
+ * Cuáles de esos inicios dejan la reserva terminando fuera del horario.
+ *
+ * Alcanza con que **un** tramo se pase: una reserva de corte y barba que cierra
+ * el local en el medio de la barba termina fuera de horario, aunque el corte
+ * entrara justo.
+ *
+ * Se resuelve aparte de la intersección y no dentro porque son dos preguntas
+ * distintas —cuáles se pueden y cuáles son raros—, y mezclarlas obligaría a que
+ * la intersección devolviera objetos en lugar de horarios.
+ */
+export const startsEndingAfterHours = (
+	items: SlotItemAvailability[],
+	bookingStarts: string[],
+): string[] =>
+	bookingStarts.filter((iso) => {
+		const start = toMillis(iso);
+
+		return items.some((item) =>
+			(item.afterHours ?? []).some(
+				(segment) => toMillis(segment) === start + item.offsetMinutes * 60_000,
+			),
+		);
+	});

@@ -45,8 +45,9 @@ interface Input {
  * Tiene dos fuentes, y la diferencia no es un detalle de implementación:
  *
  * - **Hoy y de acá en adelante**, los horarios salen del motor de disponibilidad
- *   —el mismo que usa WhatsApp— con la salvedad de que el panel no aplica la
- *   anticipación mínima. Lo que se ofrece es lo que se puede reservar.
+ *   —el mismo que usa WhatsApp— con dos salvedades del panel: no aplica la
+ *   anticipación mínima, y ofrece además los que empiezan dentro de la atención
+ *   y terminan después, marcados. Esos últimos no existen para un cliente.
  * - **Fechas pasadas** se ofrecen completas, en tramos de 15 minutos. Ahí no se
  *   está reservando: se está registrando lo que pasó, y el motor —que solo genera
  *   candidatos dentro de la jornada y hacia adelante— no tiene nada que decir.
@@ -74,6 +75,7 @@ const useBookingTimeOptions = ({
 
 	const {
 		startTimes,
+		afterHoursStartTimes,
 		isLoading: loadingSlots,
 		isError,
 	} = useGetSlotsForBooking({
@@ -108,7 +110,21 @@ const useBookingTimeOptions = ({
 					return [];
 				}
 
-				return [{ startTime, minute, notice: null }];
+				return [
+					{
+						startTime,
+						minute,
+						/*
+						 * Arranca dentro de la atención y termina después. Se ofrece
+						 * marcado en lugar de esconderse: quedarse de más con el último
+						 * cliente del día es una decisión del negocio, y esconder el
+						 * horario obligaba a mover el horario de atención para agendarlo.
+						 */
+						notice: afterHoursStartTimes.has(startTime)
+							? 'se pasa del horario'
+							: null,
+					},
+				];
 			});
 		}
 
@@ -147,6 +163,7 @@ const useBookingTimeOptions = ({
 	}, [
 		isPast,
 		startTimes,
+		afterHoursStartTimes,
 		timezone,
 		date,
 		dayBookings?.items,

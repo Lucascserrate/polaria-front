@@ -1,6 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import {
 	intersectSlotStarts,
+	startsEndingAfterHours,
 	type SlotItemAvailability,
 } from '@/modules/agenda/utils/slotIntersection';
 import { getBookingSlots } from './bookingSlots.service';
@@ -68,15 +69,28 @@ const useGetSlotsForBooking = (params: {
 	const ready = queries.every((query) => query.data !== undefined);
 
 	const availability: SlotItemAvailability[] = ready
-		? items.map((item, index) => ({
-				offsetMinutes: item.offsetMinutes,
-				startTimes: (queries[index].data ?? []).map((slot) => slot.startTime),
-			}))
+		? items.map((item, index) => {
+				const slots = queries[index].data ?? [];
+
+				return {
+					offsetMinutes: item.offsetMinutes,
+					startTimes: slots.map((slot) => slot.startTime),
+					afterHours: slots
+						.filter((slot) => slot.endsAfterHours)
+						.map((slot) => slot.startTime),
+				};
+			})
 		: [];
+
+	const startTimes = ready ? intersectSlotStarts(availability) : [];
 
 	return {
 		/** Inicios posibles de la reserva completa, en ISO y en orden. */
-		startTimes: ready ? intersectSlotStarts(availability) : [],
+		startTimes,
+		/** De esos, los que dejan la reserva terminando fuera del horario. */
+		afterHoursStartTimes: new Set(
+			startsEndingAfterHours(availability, startTimes),
+		),
 		isLoading,
 		isError,
 	};
