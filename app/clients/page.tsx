@@ -12,7 +12,10 @@ import ClientDrawer, {
 	isClientTab,
 	type ClientTab,
 } from '@/modules/clients/ClientDrawer';
-import ClientsTable from '@/modules/clients/ClientsTable';
+import ClientsTable, {
+	DEFAULT_SORT,
+	type ClientSortState,
+} from '@/modules/clients/ClientsTable';
 import DeleteClientDialog from '@/modules/clients/DeleteClientDialog';
 import NewClientDialog from '@/modules/clients/NewClientDialog';
 import useDeleteClient from '@/services/clients/useDeleteClient';
@@ -29,16 +32,20 @@ const ClientsPage = () => {
 
 	const [search, setSearch] = useState('');
 	const [page, setPage] = useState(1);
+	const [sort, setSort] = useState<ClientSortState>(DEFAULT_SORT);
 	const [adding, setAdding] = useState(false);
 	const [deleting, setDeleting] = useState<ClientApi | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
 	const debouncedSearch = useDebouncedValue(search);
 	const { data: settings } = useGetSettings();
+
 	const { data, isLoading } = useGetClients({
 		search: debouncedSearch || undefined,
 		page,
 		limit: PAGE_SIZE,
+		sort: sort.by,
+		order: sort.by ? sort.order : undefined,
 	});
 
 	/*
@@ -149,6 +156,11 @@ const ClientsPage = () => {
 					<ClientsTable
 						clients={clients}
 						dialCode={settings?.dialCode}
+						sort={sort}
+						onSortChange={(next) => {
+							setSort(next);
+							setPage(1);
+						}}
 						onOpen={(client) => openClient(client.id)}
 						onEdit={(client) =>
 							router.push(`${ROUTES.clients}/${client.id}/edit`)

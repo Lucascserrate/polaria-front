@@ -160,7 +160,7 @@ export interface ClientSummaryApi {
 	totalAppointments: number;
 	completedAppointments: number;
 	cancelledAppointments: number;
-	/** La última atendida, o `null` si nunca vino. */
+	/** La última que ya pasó y no se canceló, o `null` si nunca vino. */
 	lastAppointmentAt: string | null;
 	/** La próxima que ocupa agenda, o `null`. */
 	nextAppointmentAt: string | null;
@@ -177,9 +177,25 @@ export interface ClientAppointmentsPageApi {
 	hasMore: boolean;
 }
 
+/**
+ * Una fila de la lista de clientes.
+ *
+ * `lastVisitAt` sólo viaja acá, no en la ficha: es un cálculo sobre las citas
+ * que el listado hace de una sola vez para toda la página.
+ */
+export interface ClientListItemApi extends ClientApi {
+	/**
+	 * La última cita que ya pasó y que nadie canceló, o `null` si nunca vino.
+	 *
+	 * No se exige que esté marcada como atendida: marcarla es un gesto manual de
+	 * la agenda y hay negocios que no lo hacen.
+	 */
+	lastVisitAt: string | null;
+}
+
 /** Una página de la lista de clientes, tal como la devuelve `GET /clients`. */
 export interface ClientPageApi {
-	items: ClientApi[];
+	items: ClientListItemApi[];
 	total: number;
 	page: number;
 	limit: number;
