@@ -92,6 +92,27 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 }) => {
 	const [confirming, setConfirming] = useState<ConfirmingAction>(null);
 
+	/**
+	 * El detalle del hover y el menú de la cita, que no pueden estar los dos.
+	 *
+	 * El detalle es para mirar y el menú para hacer, así que en cuanto se abre el
+	 * menú el detalle se va: quedaba encima de los ítems —o justo del lado al que
+	 * había que llevar el puntero— y tapaba lo que se acababa de pedir. Lo mismo al
+	 * entrar a editar.
+	 *
+	 * Son dos estados y no uno porque hacen dos cosas distintas. `previewOpen` es
+	 * el detalle, que se cierra al abrir el menú; `menuOpen` es la red para el
+	 * caso al que no llega ese cierre: la demora del hover puede estar corriendo
+	 * cuando se hace click derecho, y entonces el detalle pide abrirse *después*,
+	 * con el menú ya en pantalla.
+	 *
+	 * Una vez cerrado no vuelve solo. Radix reabre con un `pointerenter` nuevo, y
+	 * mientras el puntero no se haya ido de la cita no hay ninguno: hay que salir y
+	 * volver a entrar, que es exactamente cuando alguien quiere mirar de nuevo.
+	 */
+	const [previewOpen, setPreviewOpen] = useState(false);
+	const [menuOpen, setMenuOpen] = useState(false);
+
 	const colors = STATUS_COLORS[appointment.status] ?? STATUS_COLORS.confirmed;
 	const isOpen = OPEN_STATUSES.includes(appointment.status);
 
@@ -123,7 +144,12 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 	const tinted = Boolean(staffScheme) && isOpen;
 
 	return (
-		<ContextMenu>
+		<ContextMenu
+			onOpenChange={(open) => {
+				setMenuOpen(open);
+				setPreviewOpen(false);
+			}}
+		>
 			<ContextMenuTrigger
 				className={cn(
 					'block h-full select-none overflow-hidden rounded border py-0.5 pr-1 pl-1.5 text-left transition-shadow hover:shadow-md',
@@ -149,7 +175,16 @@ const TimelineAppointmentCard: React.FC<Props> = ({
 				}
 			>
 				<TimelineCardFace
-					onOpen={onEdit ? () => onEdit(appointment.id) : undefined}
+					onOpen={
+						onEdit
+							? () => {
+									setPreviewOpen(false);
+									onEdit(appointment.id);
+								}
+							: undefined
+					}
+					previewOpen={previewOpen && !menuOpen}
+					onPreviewOpenChange={setPreviewOpen}
 					preview={
 						<AppointmentPreview
 							appointment={appointment}

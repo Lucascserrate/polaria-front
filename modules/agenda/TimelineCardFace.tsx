@@ -30,15 +30,27 @@ import {
 const TimelineCardFace: React.FC<{
 	/** Ausente deja la card en modo detalle. */
 	onOpen?: () => void;
+	/**
+	 * Si el detalle del hover está abierto, gobernado desde afuera.
+	 *
+	 * No alcanza con que lo maneje Radix solo: el detalle es para *mirar*, y en
+	 * cuanto se pasa a hacer algo —abrir el menú de la cita, entrar a editarla—
+	 * tiene que irse, porque si no se queda tapando justo eso. Quién está haciendo
+	 * algo lo sabe la card, no esta cara.
+	 *
+	 * Ausente, el hover se gobierna solo, que es lo que hacía antes.
+	 */
+	previewOpen?: boolean;
+	onPreviewOpenChange?: (open: boolean) => void;
 	preview: React.ReactNode;
 	children: React.ReactNode;
-}> = ({ onOpen, preview, children }) => {
+}> = ({ onOpen, previewOpen, onPreviewOpenChange, preview, children }) => {
 	const className =
 		'block h-full w-full cursor-pointer rounded-sm text-left leading-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 	if (onOpen) {
 		return (
-			<HoverCard>
+			<HoverCard open={previewOpen} onOpenChange={onPreviewOpenChange}>
 				<HoverCardTrigger asChild>
 					<button type="button" className={className} onClick={onOpen}>
 						{children}
@@ -58,11 +70,7 @@ const TimelineCardFace: React.FC<{
 				</button>
 			</PopoverTrigger>
 
-			<PopoverContent
-				align="start"
-				// Sin padding y recortado: el encabezado del estado llega hasta el borde.
-				className="w-64 overflow-hidden p-0"
-			>
+			<PopoverContent align="start" className="w-64 overflow-hidden p-0">
 				{preview}
 			</PopoverContent>
 		</Popover>
