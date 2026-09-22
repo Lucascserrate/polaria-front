@@ -32,7 +32,19 @@ const TrialStatus: React.FC = () => {
 	if (!subscription) return null;
 
 	if (subscription.state === 'TRIAL_ACTIVE') {
-		const days = subscription.trialDaysRemaining ?? 0;
+		const days = subscription.daysRemaining;
+
+		/*
+		 * Sin días no se dibuja nada, en lugar de escribir un cero.
+		 *
+		 * Antes acá había un `?? 0` y eso convirtió una falta de dato en un cartel
+		 * que decía "Prueba gratuita · 0 días" a negocios que tenían días de
+		 * sobra: el backend renombró el campo y el `??` tapó el hueco en silencio.
+		 * Con la prueba en curso el backend siempre manda el número, así que no
+		 * tenerlo significa que algo se rompió, y un cartel en blanco es mejor que
+		 * uno que miente.
+		 */
+		if (days === null) return null;
 
 		return (
 			<div className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/50 px-3 py-1.5 text-muted-foreground">

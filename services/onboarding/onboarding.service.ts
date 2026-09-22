@@ -33,7 +33,7 @@ export interface OnboardingStatus {
 			| 'ACTIVE'
 			| 'EXPIRED'
 			| 'CANCELED';
-		trialDaysRemaining: number | null;
+		daysRemaining: number | null;
 		hasAccess: boolean;
 	};
 }
