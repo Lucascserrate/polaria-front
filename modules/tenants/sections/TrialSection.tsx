@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { CalendarPlus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { formatDay } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { TrialSummary } from '@/types/tenant.types';
+import { subscriptionState } from '../subscription-state';
 import SectionHeader from '../SectionHeader';
 
 interface Props {
@@ -16,32 +18,6 @@ interface Props {
 	/** Devuelve si se aplicó: con `false` la selección se mantiene para reintentar. */
 	onExtend: (days: number) => Promise<boolean>;
 }
-
-/**
- * Cómo se nombra cada estado y de qué color se lee.
- *
- * Se traduce acá y no en el backend: qué estado tiene el negocio lo decide una
- * regla del producto, cómo se dice en una pantalla interna es del panel. El
- * mapa es total sobre `SubscriptionState`, con una salida por si el backend
- * gana un estado antes que esta pantalla.
- */
-const STATES: Record<string, { label: string; tone: string }> = {
-	NOT_STARTED: { label: 'Sin iniciar', tone: 'text-muted-foreground' },
-	TRIAL_ACTIVE: { label: 'Prueba en curso', tone: 'text-success' },
-	TRIAL_EXPIRED: { label: 'Prueba vencida', tone: 'text-warning' },
-	ACTIVE: { label: 'Suscripción paga', tone: 'text-success' },
-	EXPIRED: { label: 'Suscripción vencida', tone: 'text-destructive' },
-	CANCELED: { label: 'Cancelada', tone: 'text-destructive' },
-};
-
-const dateFormatter = new Intl.DateTimeFormat('es', {
-	day: 'numeric',
-	month: 'long',
-	year: 'numeric',
-});
-
-/** `9 de septiembre de 2026`. La hora no importa: la prueba se cuenta en días. */
-const formatDay = (iso: string): string => dateFormatter.format(new Date(iso));
 
 /**
  * La prueba gratuita de un negocio, y el botón para estirarla.
@@ -90,10 +66,7 @@ const TrialSection: React.FC<Props> = ({
 		);
 	}
 
-	const state = STATES[trial.state] ?? {
-		label: trial.state,
-		tone: 'text-muted-foreground',
-	};
+	const state = subscriptionState(trial.state);
 
 	const option = trial.options.find((item) => item.days === selected) ?? null;
 

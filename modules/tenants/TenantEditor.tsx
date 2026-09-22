@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AlertCircle, ArrowLeft, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { formatDay } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type {
 	Tenant,
@@ -22,9 +23,7 @@ import SystemSection from './sections/SystemSection';
 
 interface Props {
 	tenant: Tenant;
-	/** Relee la ficha desde el servidor. Lo necesita la sección de WhatsApp. */
 	onRefresh: () => void;
-	/** Abre una sesión de soporte dentro del negocio. */
 	onEnter: () => void;
 	saving?: boolean;
 	error?: string | null;
@@ -124,9 +123,14 @@ const TenantEditor: React.FC<Props> = ({
 							<ArrowLeft className="size-4" />
 						</Link>
 					</Button>
-					<h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
-						{tenant.name}
-					</h1>
+					<div className="min-w-0">
+						<h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
+							{tenant.name}
+						</h1>
+						<p className="text-sm text-muted-foreground">
+							Cliente desde el {formatDay(tenant.createdAt)}
+						</p>
+					</div>
 				</div>
 
 				<div className="flex items-center gap-2">

@@ -3,6 +3,7 @@ import type { EmbeddedSignupResult } from '@/modules/settings/WhatsappEmbeddedSi
 import type {
 	CreateTenantDto,
 	Tenant,
+	TenantListItem,
 	TrialSummary,
 	UpdateTenantDto,
 } from '@/types/tenant.types';
@@ -13,7 +14,7 @@ const DEFAULT_TIMEZONE =
 	'America/La_Paz';
 
 class TenantsService {
-	async getAll(): Promise<Tenant[]> {
+	async getAll(): Promise<TenantListItem[]> {
 		const { data } = await axiosInstance.get('/tenants');
 		return data;
 	}

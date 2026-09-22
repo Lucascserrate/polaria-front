@@ -1,5 +1,12 @@
 export type TenantStatus = 'active' | 'inactive';
 
+export interface TenantSubscription {
+	/** `NOT_STARTED` | `TRIAL_ACTIVE` | `TRIAL_EXPIRED` | `ACTIVE` | `EXPIRED` | `CANCELED`. */
+	state: string;
+	daysRemaining: number | null;
+	trialEndsAt: string | null;
+}
+
 /** Las coordenadas del local. Van juntas: una sola no ubica nada. */
 export interface TenantLocation {
 	latitude: number;
@@ -42,6 +49,18 @@ export interface Tenant {
 	calendarId?: string;
 	createdAt: string;
 	updatedAt: string;
+}
+
+/**
+ * Un negocio tal como viene del listado de soporte.
+ *
+ * Tipo aparte y no un campo opcional en `Tenant`: la suscripción la arma el
+ * listado, y el alta, la edición y la ficha devuelven el negocio sin ella.
+ * Declararla opcional en todos obligaría a cada consumidor a contemplar un
+ * `undefined` que en el listado no ocurre nunca.
+ */
+export interface TenantListItem extends Tenant {
+	subscription: TenantSubscription;
 }
 
 /**

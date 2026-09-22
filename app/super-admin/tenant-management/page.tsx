@@ -21,11 +21,15 @@ import { CreateTenantDialog } from '@/modules/tenants/CreateTenantDialog';
 import { TenantTable } from '@/modules/tenants/TenantTable';
 import { tenantRoute } from '@/modules/tenants/routes';
 import { tenantsService } from '@/services/tenants.service';
-import type { CreateTenantDto, Tenant } from '@/types/tenant.types';
+import type {
+	CreateTenantDto,
+	Tenant,
+	TenantListItem,
+} from '@/types/tenant.types';
 
 export default function TenantManagementPage() {
 	const router = useRouter();
-	const [tenants, setTenants] = useState<Tenant[]>([]);
+	const [tenants, setTenants] = useState<TenantListItem[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [createOpen, setCreateOpen] = useState(false);
 	const [creating, setCreating] = useState(false);

@@ -33,6 +33,22 @@ const longDateFormatter = new Intl.DateTimeFormat('es', {
 export const formatLongDate = (key: string): string =>
 	longDateFormatter.format(parseDateKey(key));
 
+const dayFormatter = new Intl.DateTimeFormat('es', {
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric',
+});
+
+/**
+ * `9 de septiembre de 2026`, a partir de un instante ISO.
+ *
+ * Con año y sin hora: es para fechas que se cuentan en días y que pueden estar
+ * a varios meses de hoy —cuándo vence una prueba, desde cuándo existe una
+ * cuenta—, donde omitir el año deja la frase ambigua.
+ */
+export const formatDay = (iso: string): string =>
+	dayFormatter.format(new Date(iso));
+
 const relativeFormatter = new Intl.RelativeTimeFormat('es', {
 	numeric: 'auto',
 });

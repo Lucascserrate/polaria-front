@@ -18,12 +18,17 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { formatDate } from '@/lib/date-utils';
+import { cn } from '@/lib/utils';
 import { businessTypeLabel } from '@/modules/onboarding/constants';
-import type { Tenant } from '@/types/tenant.types';
+import type {
+	Tenant,
+	TenantListItem,
+	TenantSubscription,
+} from '@/types/tenant.types';
+import { subscriptionLabel, subscriptionState } from './subscription-state';
 
 interface TenantTableProps {
-	tenants: Tenant[];
+	tenants: TenantListItem[];
 	onOpen: (tenant: Tenant) => void;
 	onEnter: (tenant: Tenant) => void;
 	onDelete: (tenant: Tenant) => void;
@@ -34,6 +39,30 @@ const statusLabel: Record<string, string> = {
 	active: 'Activo',
 	inactive: 'Inactivo',
 };
+
+/**
+ * Cómo paga el negocio, en el ancho de una etiqueta.
+ *
+ * Columna propia y no un valor más de la de al lado: son dos preguntas
+ * distintas —si soporte tiene la cuenta habilitada, y si el negocio está
+ * probando o ya paga— y fundirlas escondería una de las dos. Una cuenta
+ * desactivada con la prueba corriendo es exactamente el caso que hay que poder
+ * ver de un vistazo.
+ */
+const SubscriptionCell = ({
+	subscription,
+}: {
+	subscription: TenantSubscription;
+}) => (
+	<span
+		className={cn(
+			'text-sm font-medium',
+			subscriptionState(subscription.state).tone,
+		)}
+	>
+		{subscriptionLabel(subscription)}
+	</span>
+);
 
 /**
  * El listado de negocios.
@@ -107,7 +136,7 @@ export function TenantTable({
 							<TableHead>Correo principal</TableHead>
 							<TableHead>WhatsApp</TableHead>
 							<TableHead>Estado</TableHead>
-							<TableHead>Fecha de creación</TableHead>
+							<TableHead>Suscripción</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -145,7 +174,7 @@ export function TenantTable({
 											</Badge>
 										</TableCell>
 										<TableCell>
-											{formatDate(new Date(tenant.createdAt))}
+											<SubscriptionCell subscription={tenant.subscription} />
 										</TableCell>
 									</TableRow>
 								</ContextMenuTrigger>
@@ -198,9 +227,9 @@ export function TenantTable({
 										</span>
 									</span>
 									<span className="flex items-center justify-between gap-3">
-										<span className="text-muted-foreground">Creado</span>
-										<span className="font-medium">
-											{formatDate(new Date(tenant.createdAt))}
+										<span className="text-muted-foreground">Suscripción</span>
+										<span className="text-right">
+											<SubscriptionCell subscription={tenant.subscription} />
 										</span>
 									</span>
 								</span>
