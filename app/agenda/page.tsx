@@ -241,7 +241,7 @@ const AgendaPage = () => {
 			for (const warning of warnings) {
 				toast.warning('Cita guardada.', {
 					description: warning.message,
-					duration: Infinity,
+					duration: 10000,
 					closeButton: true,
 				});
 			}
