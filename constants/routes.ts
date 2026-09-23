@@ -6,6 +6,11 @@ export const ROUTES = {
 	analytics: '/analytics',
 	services: '/services',
 	servicesNew: '/services/new',
+	/**
+	 * Las categorías cuelgan del catálogo porque son parte de él: no son una
+	 * sección propia del menú, se llega desde Servicios.
+	 */
+	categoryNew: '/services/categories/new',
 	myPage: '/my-page',
 	settings: '/settings',
 	settingsBusiness: '/settings/business',
@@ -21,6 +26,9 @@ export const ROUTES = {
 	myAgenda: '/my-agenda',
 	myStats: '/my-stats',
 };
+
+/** La pantalla de una categoría. */
+export const categoryRoute = (id: string) => `/services/categories/${id}`;
 
 /**
  * La ficha de un cliente, abierta sobre la lista.

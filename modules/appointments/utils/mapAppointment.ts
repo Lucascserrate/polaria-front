@@ -17,7 +17,15 @@ export const mapAppointment = (apt: AppointmentApi): Appointment => ({
 	service: (apt.serviceNames ?? []).join(', ') || 'Sin servicio',
 	staff: apt.staffName ?? 'Sin personal',
 	status: apt.status,
-	duration: Number.isFinite(apt.totalDuration) ? Number(apt.totalDuration) : 0,
+	/*
+	 * Lo que **ocupa** la cita, no la suma de sus servicios.
+	 *
+	 * Los dos números dejaron de coincidir: cuando una manicure y una pedicure se
+	 * atienden a la vez son 120 minutos de trabajo en un bloque de 60, y acá se
+	 * dibuja el bloque. `totalDuration` queda de respaldo para las citas que
+	 * llegaron antes de que el backend distinguiera las dos cosas.
+	 */
+	duration: firstFinite(apt.blockDurationMinutes, apt.totalDuration),
 	// Los instantes crudos viajan sin tocar: la agenda necesita ubicarlos en la
 	// zona del negocio, y cualquier formateo previo perdería esa información.
 	startTime: apt.startTime ?? '',
@@ -27,6 +35,14 @@ export const mapAppointment = (apt: AppointmentApi): Appointment => ({
 	segments: apt.segments ?? [],
 	reminder: apt.reminder ?? null,
 });
+
+/** El primero de los dos que sea un número, o `0`. */
+const firstFinite = (...values: Array<number | undefined>): number => {
+	for (const value of values) {
+		if (Number.isFinite(value)) return Number(value);
+	}
+	return 0;
+};
 
 /**
  * Milisegundos del instante, o `0` si falta o no es una fecha válida.

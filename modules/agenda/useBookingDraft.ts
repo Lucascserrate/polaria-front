@@ -4,10 +4,12 @@ import { useMemo, useState } from 'react';
 import type { AppointmentDetailApi } from '@/types/appointments.types';
 import type { BookingSlotItem } from '@/services/availability/useGetSlotsForBooking';
 import type { EditableService } from './BookingServicesEditor';
+import useGetBookingLayout from '@/services/availability/useGetBookingLayout';
 import {
 	itemsChanged,
 	offsetsOf,
 	pricesOf,
+	savedOffsetsOf,
 	summarizeDraft,
 	toDraftItems,
 	type DraftItem,
@@ -115,10 +117,42 @@ const useBookingDraft = ({
 		[segments],
 	);
 
-	const offsets = useMemo(
-		() => offsetsOf({ items, services }),
-		[items, services],
-	);
+	/**
+	 * Dónde arranca cada tramo.
+	 *
+	 * Lo decide el servidor, porque depende de qué categorías declaró el negocio
+	 * que se atienden a la vez y de a quién se asignó cada servicio: es la misma
+	 * cuenta que va a hacer al guardar. Calcularla también acá era lo que hacía
+	 * que el drawer mostrara dos horas para una reserva que se escribía en una.
+	 *
+	 * Mientras la respuesta no llegó se dibuja lo mejor que se sabe, en este
+	 * orden: los tramos **guardados**, cuando se está editando y los servicios no
+	 * cambiaron —ésa es la verdad sobre esa cita—, y si no, encadenado, que es lo
+	 * correcto en un negocio sin reglas cargadas.
+	 */
+	const layout = useGetBookingLayout(items, items.length > 1);
+
+	/** El inicio **guardado**, que es contra el que se miden los tramos guardados. */
+	const savedStart = booking?.startTime ?? null;
+
+	const offsets = useMemo(() => {
+		const resolved = layout.data?.offsetsMinutes;
+		if (resolved && resolved.length === items.length) return resolved;
+
+		if (savedStart && !servicesChanged) {
+			const saved = savedOffsetsOf(savedStart, segments);
+			if (saved.length === items.length) return saved;
+		}
+
+		return offsetsOf({ items, services });
+	}, [
+		layout.data,
+		items,
+		services,
+		savedStart,
+		segments,
+		servicesChanged,
+	]);
 
 	const prices = useMemo(
 		() => pricesOf({ items, services, agreedPrices }),
@@ -126,8 +160,8 @@ const useBookingDraft = ({
 	);
 
 	const summary = useMemo(
-		() => summarizeDraft({ items, services, agreedPrices }),
-		[items, services, agreedPrices],
+		() => summarizeDraft({ items, services, agreedPrices, offsets }),
+		[items, services, agreedPrices, offsets],
 	);
 
 	/**

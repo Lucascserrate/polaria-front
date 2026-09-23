@@ -42,6 +42,32 @@ export const toDraftItems = (segments: AppointmentSegment[]): DraftItem[] =>
 	);
 
 /**
+ * En qué minuto arrancó cada tramo de una cita **ya guardada**.
+ *
+ * Es la verdad sobre esa reserva: si sus dos servicios se atendieron a la vez,
+ * los dos dan `0`. Se usa al abrir el drawer para que los horarios se dibujen
+ * como están en la agenda desde el primer cuadro, sin esperar a que el servidor
+ * confirme el reparto y sin pasar por el encadenado, que mostraría el segundo
+ * servicio una hora más tarde de lo que realmente es.
+ */
+export const savedOffsetsOf = (
+	appointmentStart: string,
+	segments: AppointmentSegment[],
+): number[] => {
+	const start = new Date(appointmentStart).getTime();
+	if (Number.isNaN(start)) return [];
+
+	return segments.flatMap((segment) => {
+		if (!segment.staffId) return [];
+
+		const segmentStart = new Date(segment.startTime).getTime();
+		if (Number.isNaN(segmentStart)) return [0];
+
+		return [Math.max(0, Math.round((segmentStart - start) / 60_000))];
+	});
+};
+
+/**
  * Si el borrador difiere de lo guardado.
  *
  * El orden cuenta: mover la barba antes del corte cambia a qué hora atiende cada
@@ -124,6 +150,11 @@ export const pricesOf = (input: {
  * La duración es siempre la vigente del servicio: es la que va a usar el backend
  * para reacomodar los tramos, y con la vieja la agenda diría una cosa y la
  * disponibilidad otra.
+ *
+ * **`totalMinutes` es lo que la reserva ocupa, no la suma de los servicios.** Con
+ * dos servicios simultáneos son dos cosas distintas: una manicure y una pedicure
+ * de una hora cada una ocupan una hora, y sumarlas diría dos. Por eso se mide
+ * sobre los `offsets`, que son los que saben qué arranca junto con qué.
  */
 export const summarizeDraft = (input: {
 	items: DraftItem[];
@@ -134,6 +165,11 @@ export const summarizeDraft = (input: {
 	 * no conserva nada.
 	 */
 	agreedPrices?: Map<string, DraftPrice>;
+	/**
+	 * En qué minuto arranca cada servicio. Ausente encadena, que es lo que hacen
+	 * las reservas sin servicios simultáneos.
+	 */
+	offsets?: number[];
 }): DraftSummary => {
 	const byId = new Map(input.services.map((service) => [service.id, service]));
 
@@ -147,6 +183,7 @@ export const summarizeDraft = (input: {
 
 	const prices = pricesOf(input);
 
+	let chained = 0;
 	let totalMinutes = 0;
 	let unpriced = 0;
 	const priced: DraftPrice[] = [];
@@ -155,7 +192,14 @@ export const summarizeDraft = (input: {
 		const service = byId.get(item.serviceId);
 		if (!service) return;
 
-		totalMinutes += service.durationMinutes;
+		const offsetMinutes = input.offsets?.[index] ?? chained;
+		chained = offsetMinutes + service.durationMinutes;
+
+		// El que termina más tarde, que con servicios simultáneos no es el último.
+		totalMinutes = Math.max(
+			totalMinutes,
+			offsetMinutes + service.durationMinutes,
+		);
 
 		const entry = prices[index];
 		if (entry.price === null) unpriced += 1;
@@ -175,6 +219,13 @@ export const summarizeDraft = (input: {
  *
  * Es lo que necesita la consulta de disponibilidad: el primero arranca con la
  * reserva y cada siguiente después de lo que duró el anterior.
+ *
+ * **Es el respaldo, no la respuesta.** Encadena siempre, y eso deja de ser
+ * cierto en cuanto el negocio declara que dos categorías se atienden a la vez:
+ * ahí el reparto depende de sus reglas y de a quién se asignó cada servicio, que
+ * son datos del servidor. La respuesta buena la da `useGetBookingLayout`; esto
+ * es lo que se dibuja mientras llega, y lo único que hace falta en un negocio
+ * sin reglas cargadas, que son casi todos.
  */
 export const offsetsOf = (input: {
 	items: DraftItem[];

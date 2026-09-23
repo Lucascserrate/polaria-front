@@ -1,8 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
 	Select,
 	SelectContent,
@@ -11,7 +8,6 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import useGetServiceCategories from '@/services/service-categories/useGetServiceCategories';
-import CategoryDialog from './CategoryDialog';
 
 /**
  * El valor del `<select>` para "sin categoría".
@@ -37,57 +33,32 @@ interface Props {
  * tiene la mayoría de los servicios y va a seguir estando bien, así que se ve
  * escrito en lugar de quedar como un campo vacío que parece incompleto.
  *
- * Crear una categoría se puede desde acá porque el momento en que se descubre que
- * hace falta es justo este: alguien está cargando el décimo servicio y se da
- * cuenta de que la lista ya no se lee. Mandarlo a otra pantalla es hacerle perder
- * lo que estaba escribiendo.
+ * **Sólo elige entre las que existen.** Acá hubo un botón para crear una sin
+ * salir del servicio, y dejó de tener sentido cuando una categoría pasó a ser
+ * algo más que un nombre: además de cómo se agrupa el menú decide con qué otras
+ * se puede atender al mismo tiempo, y eso es una pantalla, no un campo al
+ * costado. Se crean desde Servicios, que es donde se ven todas juntas.
  */
 const CategoryField: React.FC<Props> = ({ value, onChange, id }) => {
 	const { data: categories = [] } = useGetServiceCategories();
-	const [creating, setCreating] = useState(false);
 
 	return (
-		<>
-			<div className="flex gap-2">
-				<Select
-					value={value || NONE}
-					onValueChange={(next) => onChange(next === NONE ? '' : next)}
-				>
-					<SelectTrigger id={id} className="flex-1">
-						<SelectValue />
-					</SelectTrigger>
-					<SelectContent className="max-h-72">
-						<SelectItem value={NONE}>Sin categoría</SelectItem>
-						{categories.map((category) => (
-							<SelectItem key={category.id} value={category.id}>
-								{category.name}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-
-				<Button
-					type="button"
-					variant="outline"
-					size="icon"
-					aria-label="Añadir categoría"
-					onClick={() => setCreating(true)}
-				>
-					<Plus className="size-4" />
-				</Button>
-			</div>
-
-			{/*
-			 * La recién creada queda elegida. Crearla desde acá es un rodeo para
-			 * poder asignarla, y dejar el campo en "Sin categoría" obligaría a
-			 * repetir la elección justo después de haberla hecho.
-			 */}
-			<CategoryDialog
-				open={creating}
-				onOpenChange={setCreating}
-				onCreated={(category) => onChange(category.id)}
-			/>
-		</>
+		<Select
+			value={value || NONE}
+			onValueChange={(next) => onChange(next === NONE ? '' : next)}
+		>
+			<SelectTrigger id={id} className="w-full">
+				<SelectValue />
+			</SelectTrigger>
+			<SelectContent className="max-h-72">
+				<SelectItem value={NONE}>Sin categoría</SelectItem>
+				{categories.map((category) => (
+					<SelectItem key={category.id} value={category.id}>
+						{category.name}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
 	);
 };
 

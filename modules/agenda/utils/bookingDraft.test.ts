@@ -3,6 +3,7 @@ import type { AppointmentSegment } from '@/types/appointments.types';
 import {
 	itemsChanged,
 	offsetsOf,
+	savedOffsetsOf,
 	summarizeDraft,
 	toDraftItems,
 } from './bookingDraft';
@@ -202,5 +203,99 @@ describe('offsetsOf', () => {
 				services: SERVICES,
 			}),
 		).toEqual([0, 20, 50]);
+	});
+});
+
+/**
+ * Lo que cambia cuando dos servicios de la reserva se atienden a la vez.
+ *
+ * El reparto lo decide el servidor —depende de las reglas del negocio y de a
+ * quién se asignó cada servicio— y llega como `offsets`. Acá se prueba que las
+ * cuentas del drawer lo respeten en lugar de volver a encadenar por su cuenta,
+ * que es lo que hacía que la pantalla dijera dos horas para una reserva de una.
+ */
+describe('summarizeDraft con servicios simultáneos', () => {
+	const items = [
+		{ serviceId: 'corte', staffId: 'diego' },
+		{ serviceId: 'barba', staffId: 'carlos' },
+	];
+
+	it('el total es lo que la reserva ocupa, no la suma de los servicios', () => {
+		const summary = summarizeDraft({
+			items,
+			services: SERVICES,
+			offsets: [0, 0],
+		});
+
+		expect(summary.totalMinutes).toBe(30);
+	});
+
+	it('sin offsets encadena, que es la reserva de siempre', () => {
+		expect(summarizeDraft({ items, services: SERVICES }).totalMinutes).toBe(60);
+	});
+
+	/*
+	 * Con duraciones distintas la tanda dura lo que el más largo, y el total no
+	 * puede salir del último de la lista: la barba termina antes que el online
+	 * aunque esté escrita después.
+	 */
+	it('mide hasta el que termina más tarde, no hasta el último', () => {
+		const summary = summarizeDraft({
+			items: [
+				{ serviceId: 'online', staffId: 'diego' },
+				{ serviceId: 'barba', staffId: 'carlos' },
+			],
+			services: SERVICES,
+			offsets: [0, 0],
+		});
+
+		expect(summary.totalMinutes).toBe(40);
+	});
+});
+
+describe('savedOffsetsOf', () => {
+	const START = '2026-08-24T13:00:00.000Z';
+
+	const at = (serviceId: string, startTime: string): AppointmentSegment => ({
+		...segment(serviceId, 'diego'),
+		startTime,
+	});
+
+	it('de una reserva encadenada devuelve los minutos acumulados', () => {
+		expect(
+			savedOffsetsOf(START, [
+				at('corte', '2026-08-24T13:00:00.000Z'),
+				at('barba', '2026-08-24T13:30:00.000Z'),
+			]),
+		).toEqual([0, 30]);
+	});
+
+	/*
+	 * La razón de existir: al abrir el drawer de una cita simultánea, sus tramos
+	 * tienen que dibujarse como están en la agenda desde el primer cuadro. Con el
+	 * encadenado se veía el segundo servicio una hora más tarde de lo que es.
+	 */
+	it('de una reserva simultánea devuelve cero en los dos', () => {
+		expect(
+			savedOffsetsOf(START, [
+				at('corte', '2026-08-24T13:00:00.000Z'),
+				at('barba', '2026-08-24T13:00:00.000Z'),
+			]),
+		).toEqual([0, 0]);
+	});
+
+	it('saltea los tramos sin profesional, igual que `toDraftItems`', () => {
+		expect(
+			savedOffsetsOf(START, [
+				at('corte', '2026-08-24T13:00:00.000Z'),
+				{ ...at('barba', '2026-08-24T13:30:00.000Z'), staffId: null },
+			]),
+		).toEqual([0]);
+	});
+
+	it('con un inicio que no es una fecha no devuelve nada', () => {
+		expect(
+			savedOffsetsOf('no es una fecha', [segment('corte', 'diego')]),
+		).toEqual([]);
 	});
 });

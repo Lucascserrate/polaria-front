@@ -102,6 +102,18 @@ const BookingServicesEditor: React.FC<Props> = ({
 		return formatMinute(startMinute + (offsets[index] ?? 0));
 	};
 
+	/**
+	 * Si este servicio se atiende a la vez que otro de la reserva.
+	 *
+	 * Se deduce de compartir instante de arranque, que es lo único que puede
+	 * significar. Sin decirlo, dos filas con la misma hora se leen como un error
+	 * de la pantalla justo cuando son lo que la función vino a hacer.
+	 */
+	const isSimultaneous = (index: number): boolean =>
+		offsets.some(
+			(offset, position) => position !== index && offset === offsets[index],
+		);
+
 	const replaceStaff = (index: number, staffId: string) =>
 		onChange(
 			items.map((item, position) =>
@@ -219,6 +231,11 @@ const BookingServicesEditor: React.FC<Props> = ({
 								 */}
 								<div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
 									<span className="tabular-nums">{timeOf(index)}</span>
+									{isSimultaneous(index) && (
+										<span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs">
+											a la vez
+										</span>
+									)}
 									<span aria-hidden="true">·</span>
 									<span>{formatDuration(service?.durationMinutes ?? 0)}</span>
 									<span aria-hidden="true">·</span>

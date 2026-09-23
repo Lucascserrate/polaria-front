@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, categoryRoute } from '@/constants/routes';
 import { TOUR } from '@/modules/onboarding/tour/anchors';
-import CategoryDialog from '@/modules/services/CategoryDialog';
 import CategoryFilter, {
 	ALL_CATEGORIES,
 } from '@/modules/services/CategoryFilter';
@@ -49,9 +49,8 @@ const ServicesPage = () => {
 	const assignCategory = useAssignServiceCategory();
 	const setServiceActive = useSetServiceActive();
 
+	const router = useRouter();
 	const [filter, setFilter] = useState<string>(ALL_CATEGORIES);
-	const [editing, setEditing] = useState<ServiceCategory | null>(null);
-	const [dialogOpen, setDialogOpen] = useState(false);
 	const [deleting, setDeleting] = useState<ServiceCategory | null>(null);
 	const [reordering, setReordering] = useState(false);
 	const [showInactive, setShowInactive] = useState(false);
@@ -112,11 +111,6 @@ const ServicesPage = () => {
 		if (filter === UNCATEGORIZED_ID) return group.category === null;
 		return group.category?.id === filter;
 	});
-
-	const openNewCategory = () => {
-		setEditing(null);
-		setDialogOpen(true);
-	};
 
 	const handleToggleActive = (service: Service) => {
 		if (service.isActive === false) {
@@ -196,7 +190,7 @@ const ServicesPage = () => {
 					total={services.length}
 					value={filter}
 					onChange={setFilter}
-					onAdd={openNewCategory}
+					onAdd={() => router.push(ROUTES.categoryNew)}
 					dropTarget={drag.over}
 					// Con una sola categoría no hay orden que elegir.
 					onReorder={
@@ -207,10 +201,9 @@ const ServicesPage = () => {
 				<div className="min-w-0 flex-1">
 					<ServicesTable
 						groups={visibleGroups}
-						onEditCategory={(category) => {
-							setEditing(category);
-							setDialogOpen(true);
-						}}
+						onEditCategory={(category) =>
+							router.push(categoryRoute(category.id))
+						}
 						onDeleteCategory={setDeleting}
 						onToggleActive={handleToggleActive}
 						togglingId={
@@ -255,12 +248,6 @@ const ServicesPage = () => {
 					)}
 				</div>
 			)}
-
-			<CategoryDialog
-				open={dialogOpen}
-				category={editing}
-				onOpenChange={setDialogOpen}
-			/>
 
 			<ReorderCategoriesDialog
 				categories={categories}

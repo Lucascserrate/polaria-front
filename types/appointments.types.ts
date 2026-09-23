@@ -50,7 +50,15 @@ export interface AppointmentApi {
 	staffName?: string;
 	businessName?: string;
 	serviceNames?: string[];
+	/**
+	 * Minutos de **trabajo**: la suma de lo que dura cada servicio.
+	 *
+	 * Con dos servicios simultáneos es más que lo que la cita ocupa en la agenda.
+	 * Para eso está `blockDurationMinutes`.
+	 */
 	totalDuration?: number;
+	/** Lo que ocupa la cita, de que empieza a que termina. */
+	blockDurationMinutes?: number;
 	timezone?: string;
 	segments?: AppointmentSegmentApi[];
 	reminder?: AppointmentReminderApi | null;
