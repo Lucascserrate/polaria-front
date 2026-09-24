@@ -24,7 +24,15 @@ export interface BookingSlot {
 export const getBookingSlots = async (params: {
 	date: string;
 	serviceId: string;
-	staffId: string;
+	/**
+	 * Omitirlo pregunta por **todo el equipo**: el motor devuelve los horarios en
+	 * que alguien puede, con la lista de quiénes en `eligibleStaffIds`.
+	 *
+	 * Es lo que permite ofrecer la agenda real del negocio en lugar de la de la
+	 * primera persona de la lista, que era lo que dejaba la pantalla sin horarios
+	 * cuando esa persona justo estaba ocupada.
+	 */
+	staffId?: string;
 	/**
 	 * Reserva que se está editando: sus minutos no cuentan como ocupados.
 	 *

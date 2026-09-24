@@ -4,8 +4,8 @@ import { axiosInstance } from '@/lib/axios';
 /** Un servicio de la reserva que se está armando. */
 export interface BookingLayoutItem {
 	serviceId: string;
-	/** Omitirlo es "todavía sin asignar". */
-	staffId?: string;
+	/** `null` o ausente es "todavía sin asignar". Ver `pickPlanForAssignment`. */
+	staffId?: string | null;
 }
 
 export interface BookingLayout {

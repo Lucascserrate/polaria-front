@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { eligibleStaffFor } from './utils/eligibleStaff';
 import type { StaffMember } from '@/types/staff.types';
+import { draftItemFor } from './utils/bookingDraft';
 import type { DraftItem, DraftPrice } from './utils/bookingDraft';
 import { formatServiceMoney } from '@/lib/money';
 import { formatDuration } from '@/lib/duration';
@@ -78,6 +79,15 @@ interface Props {
  * Las horas que muestra son las que van a quedar: se recalculan encadenando las
  * duraciones vigentes, igual que hace el backend al guardar.
  */
+/**
+ * El valor del `<select>` para "cualquiera".
+ *
+ * Un centinela y no cadena vacía porque Radix reserva `""` para "no hay nada
+ * elegido" y se niega a renderizar un item con ese valor. Hacia afuera,
+ * cualquiera sigue siendo `null`.
+ */
+const ANY_STAFF = 'any';
+
 const BookingServicesEditor: React.FC<Props> = ({
 	items,
 	onChange,
@@ -114,10 +124,20 @@ const BookingServicesEditor: React.FC<Props> = ({
 			(offset, position) => position !== index && offset === offsets[index],
 		);
 
-	const replaceStaff = (index: number, staffId: string) =>
+	/**
+	 * Fijar un profesional a mano, o volver a "cualquiera".
+	 *
+	 * Elegirlo a mano apaga `autoStaff`: a partir de ahí es una decisión del
+	 * negocio y cambiar la hora ya no se lo reemplaza por otro.
+	 */
+	const replaceStaff = (index: number, value: string) =>
 		onChange(
 			items.map((item, position) =>
-				position === index ? { ...item, staffId } : item,
+				position === index
+					? value === ANY_STAFF
+						? { ...item, staffId: null, autoStaff: true }
+						: { ...item, staffId: value, autoStaff: false }
+					: item,
 			),
 		);
 
@@ -128,19 +148,10 @@ const BookingServicesEditor: React.FC<Props> = ({
 		const eligible = eligibleStaffFor(staff, serviceId);
 		if (eligible.length === 0) return;
 
-		/*
-		 * Se propone al profesional que ya está en la reserva si puede hacerlo. Es
-		 * lo más probable —el cliente vino a atenderse con alguien— y evita una
-		 * segunda elección para el caso normal.
-		 */
-		const preferred =
-			eligible.find((member) =>
-				items.some((item) => item.staffId === member.id),
-			) ??
-			eligible.find((member) => member.id === preferredStaffId) ??
-			eligible[0];
-
-		onChange([...items, { serviceId, staffId: preferred.id }]);
+		onChange([
+			...items,
+			draftItemFor({ serviceId, eligible, items, preferredStaffId }),
+		]);
 		setAdding(false);
 	};
 
@@ -247,7 +258,7 @@ const BookingServicesEditor: React.FC<Props> = ({
 									 * servicio, que es lo que la fila viene a decir.
 									 */}
 									<Select
-										value={item.staffId}
+										value={item.staffId ?? ANY_STAFF}
 										disabled={disabled || eligible.length === 0}
 										onValueChange={(value) => replaceStaff(index, value)}
 									>
@@ -266,6 +277,12 @@ const BookingServicesEditor: React.FC<Props> = ({
 											<SelectValue placeholder="Elegir profesional" />
 										</SelectTrigger>
 										<SelectContent>
+											{/*
+											 * "Cualquiera" primero y no al final: es el valor por
+											 * defecto de un servicio recién agregado, y con la hora
+											 * puesta el sistema lo reemplaza por quien esté libre.
+											 */}
+											<SelectItem value={ANY_STAFF}>Cualquiera</SelectItem>
 											{eligible.map((member) => (
 												<SelectItem key={member.id} value={member.id}>
 													{member.name}

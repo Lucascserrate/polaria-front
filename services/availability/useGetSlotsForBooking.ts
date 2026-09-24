@@ -1,5 +1,6 @@
 import { useQueries } from '@tanstack/react-query';
 import {
+	eligibleStaffAt,
 	intersectSlotStarts,
 	startsEndingAfterHours,
 	type SlotItemAvailability,
@@ -8,7 +9,14 @@ import { getBookingSlots } from './bookingSlots.service';
 
 export interface BookingSlotItem {
 	serviceId: string;
-	staffId: string;
+	/**
+	 * Profesional de este tramo, o `null` para preguntar por todo el equipo.
+	 *
+	 * Con `null` el motor responde los horarios en que **alguien** puede, y de
+	 * quiénes son se encarga `eligibleAt`. Es lo que permite ofrecer la agenda
+	 * real del negocio en vez de la de la primera persona de la lista.
+	 */
+	staffId: string | null;
 	/** Minutos desde el inicio de la reserva en que arranca este tramo. */
 	offsetMinutes: number;
 }
@@ -47,7 +55,7 @@ const useGetSlotsForBooking = (params: {
 				'booking-slots',
 				date,
 				item.serviceId,
-				item.staffId,
+				item.staffId ?? null,
 				excludeAppointmentId ?? null,
 				scope,
 			],
@@ -55,7 +63,7 @@ const useGetSlotsForBooking = (params: {
 				getBookingSlots({
 					date,
 					serviceId: item.serviceId,
-					staffId: item.staffId,
+					staffId: item.staffId ?? undefined,
 					excludeAppointmentId,
 					scope,
 				}),
@@ -78,6 +86,9 @@ const useGetSlotsForBooking = (params: {
 					afterHours: slots
 						.filter((slot) => slot.endsAfterHours)
 						.map((slot) => slot.startTime),
+					eligibleByStart: Object.fromEntries(
+						slots.map((slot) => [slot.startTime, slot.eligibleStaffIds]),
+					),
 				};
 			})
 		: [];
@@ -91,6 +102,15 @@ const useGetSlotsForBooking = (params: {
 		afterHoursStartTimes: new Set(
 			startsEndingAfterHours(availability, startTimes),
 		),
+		/**
+		 * Quiénes pueden atender cada tramo si la reserva empieza a esa hora.
+		 *
+		 * Es lo que permite asignar solo a alguien que esté libre en vez de
+		 * proponer al primero de la lista y dejar la pantalla esperando una hora
+		 * que para esa persona no existe.
+		 */
+		eligibleAt: (bookingStart: string): string[][] =>
+			eligibleStaffAt(availability, bookingStart),
 		isLoading,
 		isError,
 	};

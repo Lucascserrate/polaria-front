@@ -25,7 +25,14 @@ interface Props {
 	onDayChange: (day: string) => void;
 	/** Inicio elegido, en ISO. `null` mientras no haya ninguno. */
 	startTime: string | null;
-	onStartTimeChange: (startTime: string) => void;
+	/**
+	 * La hora elegida, con quiénes pueden atender cada tramo a esa hora.
+	 *
+	 * Los candidatos viajan junto con la hora y no se piden aparte porque son lo
+	 * mismo: quién está libre **depende** de la hora. Es lo que permite repartir
+	 * los tramos que quedaron en "cualquiera" sin volver a consultar.
+	 */
+	onStartTimeChange: (startTime: string, eligibleByItem: string[][]) => void;
 	/** Hoy en la zona del negocio. */
 	todayKey: string;
 	timezone?: string;
@@ -151,8 +158,8 @@ const BookingWhenField: React.FC<Props> = ({
 						totalMinutes={totalMinutes}
 						excludeAppointmentId={excludeAppointmentId}
 						selected={startTime}
-						onSelect={(next) => {
-							onStartTimeChange(next);
+						onSelect={(next, eligibleByItem) => {
+							onStartTimeChange(next, eligibleByItem);
 							setTimeOpen(false);
 						}}
 					/>
@@ -170,7 +177,7 @@ interface TimeListProps {
 	totalMinutes: number;
 	excludeAppointmentId?: string;
 	selected: string | null;
-	onSelect: (startTime: string) => void;
+	onSelect: (startTime: string, eligibleByItem: string[][]) => void;
 }
 
 /**
@@ -194,14 +201,15 @@ const TimeList: React.FC<TimeListProps> = ({
 }) => {
 	const listRef = useRef<HTMLDivElement>(null);
 
-	const { options, isPast, isLoading, isError } = useBookingTimeOptions({
-		date: dayKey,
-		todayKey,
-		timezone,
-		items,
-		totalMinutes,
-		excludeAppointmentId,
-	});
+	const { options, isPast, isLoading, isError, eligibleAt } =
+		useBookingTimeOptions({
+			date: dayKey,
+			todayKey,
+			timezone,
+			items,
+			totalMinutes,
+			excludeAppointmentId,
+		});
 
 	/*
 	 * La opción elegida queda a la vista al abrir. Sin esto, una lista que
@@ -295,7 +303,9 @@ const TimeList: React.FC<TimeListProps> = ({
 							role="option"
 							aria-selected={isSelected}
 							data-selected={isSelected}
-							onClick={() => onSelect(option.startTime)}
+							onClick={() =>
+								onSelect(option.startTime, eligibleAt(option.startTime))
+							}
 							className={cn(
 								'flex w-full items-baseline justify-between gap-2 rounded-md px-3 py-2 text-left text-sm tabular-nums transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
 								isSelected

@@ -20,6 +20,14 @@ export interface SlotItemAvailability {
 	startTimes: string[];
 	/** De esos, los que terminan después del horario de atención. */
 	afterHours?: string[];
+	/**
+	 * Quiénes pueden atender este tramo, por instante de arranque **del tramo**.
+	 *
+	 * Del tramo y no de la reserva: el motor responde por tramo, y con servicios
+	 * encadenados el segundo arranca más tarde. Quien pregunte por la reserva
+	 * entera tiene que desplazar, que es lo que hace `eligibleStaffAt`.
+	 */
+	eligibleByStart?: Record<string, string[]>;
 }
 
 const toMillis = (iso: string): number => new Date(iso).getTime();
@@ -88,3 +96,22 @@ export const startsEndingAfterHours = (
 			),
 		);
 	});
+
+/**
+ * Quiénes pueden atender cada tramo si la reserva empieza en ese instante.
+ *
+ * Devuelve una lista por tramo, en el mismo orden. Vacía significa que ese tramo
+ * no tiene a nadie a esa hora, que es lo que hace que ese horario ni siquiera
+ * esté entre los ofrecidos.
+ */
+export const eligibleStaffAt = (
+	items: SlotItemAvailability[],
+	bookingStart: string,
+): string[][] => {
+	const start = toMillis(bookingStart);
+
+	return items.map((item) => {
+		const at = new Date(start + item.offsetMinutes * 60_000).toISOString();
+		return item.eligibleByStart?.[at] ?? [];
+	});
+};

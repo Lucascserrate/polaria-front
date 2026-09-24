@@ -76,6 +76,7 @@ const useBookingTimeOptions = ({
 	const {
 		startTimes,
 		afterHoursStartTimes,
+		eligibleAt,
 		isLoading: loadingSlots,
 		isError,
 	} = useGetSlotsForBooking({
@@ -175,6 +176,14 @@ const useBookingTimeOptions = ({
 	return {
 		options,
 		isPast,
+		/**
+		 * Quiénes pueden atender cada tramo si la reserva empieza a esa hora.
+		 *
+		 * En el pasado devuelve listas vacías: ahí no se está reservando contra la
+		 * disponibilidad de nadie, se está registrando lo que ya ocurrió, y quién
+		 * atendió lo dice el negocio.
+		 */
+		eligibleAt: isPast ? () => items.map(() => []) : eligibleAt,
 		isLoading: isPast ? loadingDay : loadingSlots,
 		isError,
 	};

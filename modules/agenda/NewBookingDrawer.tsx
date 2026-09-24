@@ -30,6 +30,7 @@ import BookingWhenField from './BookingWhenField';
 import useBookingDraft from './useBookingDraft';
 import { eligibleStaffFor } from './utils/eligibleStaff';
 import { minutesInTimeZone } from './utils/calendarLayout';
+import { toBookingItems, draftItemFor } from './utils/bookingDraft';
 
 /**
  * Lo que el click en la agenda ya dijo.
@@ -130,7 +131,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 	// Sin servicios no hay nada que elegir todavía: la pantalla es el buscador.
 	const showPicker = !hasServices || picking;
 
-	const { startTimes } = useGetSlotsForBooking({
+	const { startTimes, eligibleAt } = useGetSlotsForBooking({
 		date: day,
 		items: draft.slotItems,
 		scope: 'panel',
@@ -155,27 +156,24 @@ const NewBookingForm: React.FC<FormProps> = ({
 		if (!match) return;
 
 		seedApplied.current = true;
-		draft.setStartTime(match);
-	}, [seed.minute, startTimes, timezone, draft]);
+		// El hueco clickeado también reparte: entrar por una celda de la agenda no
+		// tiene por qué dejar la reserva sin profesional.
+		draft.chooseStartTime(match, eligibleAt(match));
+	}, [seed.minute, startTimes, timezone, draft, eligibleAt]);
 
 	const addService = (serviceId: string) => {
 		const eligible = eligibleStaffFor(staff, serviceId);
 		if (eligible.length === 0) return;
 
-		/*
-		 * Se propone al profesional que ya está en la reserva si puede hacerlo, y
-		 * si no al de la columna donde se clickeó. Es lo más probable —el cliente
-		 * vino a atenderse con alguien— y evita una segunda elección para el caso
-		 * normal.
-		 */
-		const preferred =
-			eligible.find((member) =>
-				draft.items.some((item) => item.staffId === member.id),
-			) ??
-			eligible.find((member) => member.id === seed.staffId) ??
-			eligible[0];
-
-		draft.setItems([...draft.items, { serviceId, staffId: preferred.id }]);
+		draft.setItems([
+			...draft.items,
+			draftItemFor({
+				serviceId,
+				eligible,
+				items: draft.items,
+				preferredStaffId: seed.staffId,
+			}),
+		]);
 		setPicking(false);
 		setSaveError(null);
 	};
@@ -185,7 +183,16 @@ const NewBookingForm: React.FC<FormProps> = ({
 		draft.client.id !== null && hasServices && draft.startTime !== null;
 
 	const canSave =
-		!busy && isComplete && draft.summary.unknownServiceIds.length === 0;
+		!busy &&
+		isComplete &&
+		/*
+		 * Sin profesional en algún tramo no se guarda. No debería pasar con una
+		 * hora elegida —al elegirla se reparten los que quedaron en "cualquiera"—
+		 * pero es la barrera que impide mandar un tramo a medias al backend, que
+		 * lo rechazaría con un error de validación en vez de decir qué falta.
+		 */
+		draft.isStaffed &&
+		draft.summary.unknownServiceIds.length === 0;
 
 	const handleSave = async () => {
 		if (!draft.startTime || !canSave) return;
@@ -196,7 +203,7 @@ const NewBookingForm: React.FC<FormProps> = ({
 			const created = await create({
 				clientId: draft.client.id as string,
 				startTime: draft.startTime,
-				items: draft.items,
+				items: toBookingItems(draft.items),
 			});
 
 			onSaved?.(created.warnings, draft.dayKey);
@@ -285,8 +292,8 @@ const NewBookingForm: React.FC<FormProps> = ({
 								setSaveError(null);
 							}}
 							startTime={draft.startTime}
-							onStartTimeChange={(next) => {
-								draft.setStartTime(next);
+							onStartTimeChange={(next, eligibleByItem) => {
+								draft.chooseStartTime(next, eligibleByItem);
 								setSaveError(null);
 							}}
 							todayKey={todayKey}

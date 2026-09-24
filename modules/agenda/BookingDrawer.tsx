@@ -42,6 +42,7 @@ import { getAppointmentStatusText } from '@/modules/appointments/utils/constants
 import { formatMinute, minutesInTimeZone } from './utils/calendarLayout';
 import { describeReminder } from './utils/reminderStatus';
 import { eligibleStaffFor } from './utils/eligibleStaff';
+import { toBookingItems, draftItemFor } from './utils/bookingDraft';
 
 interface Props {
 	/** Reserva a editar. `null` deja el panel cerrado. */
@@ -196,20 +197,23 @@ const BookingEditor: React.FC<EditorProps> = ({
 		// servicio: quitar el último es un paso del camino, guardarlo así no.
 		hasServices &&
 		timeMatchesDay &&
+		/*
+		 * Sin profesional en algún tramo no se guarda. No debería pasar con una
+		 * hora elegida —al elegirla se reparten los que quedaron en "cualquiera"—
+		 * pero es la barrera que impide mandar un tramo a medias al backend, que
+		 * lo rechazaría con un error de validación en vez de decir qué falta.
+		 */
+		draft.isStaffed &&
 		draft.summary.unknownServiceIds.length === 0;
 
 	const addService = (serviceId: string) => {
 		const eligible = eligibleStaffFor(staff, serviceId);
 		if (eligible.length === 0) return;
 
-		// Se propone al profesional que ya está en la reserva si puede hacerlo: el
-		// cliente vino a atenderse con alguien.
-		const preferred =
-			eligible.find((member) =>
-				draft.items.some((item) => item.staffId === member.id),
-			) ?? eligible[0];
-
-		draft.setItems([...draft.items, { serviceId, staffId: preferred.id }]);
+		draft.setItems([
+			...draft.items,
+			draftItemFor({ serviceId, eligible, items: draft.items }),
+		]);
 		setPicking(false);
 		setSaveError(null);
 	};
@@ -278,7 +282,10 @@ const BookingEditor: React.FC<EditorProps> = ({
 		try {
 			const edited = await save({
 				id: appointmentId,
-				payload: { startTime: draft.startTime, items: draft.items },
+				payload: {
+					startTime: draft.startTime,
+					items: toBookingItems(draft.items),
+				},
 			});
 
 			onSaved?.(edited.warnings, draft.dayKey);
@@ -372,8 +379,8 @@ const BookingEditor: React.FC<EditorProps> = ({
 										setSaveError(null);
 									}}
 									startTime={draft.startTime}
-									onStartTimeChange={(next) => {
-										draft.setStartTime(next);
+									onStartTimeChange={(next, eligibleByItem) => {
+										draft.chooseStartTime(next, eligibleByItem);
 										setSaveError(null);
 									}}
 									todayKey={todayKey}

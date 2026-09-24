@@ -6,6 +6,8 @@ import type { BookingSlotItem } from '@/services/availability/useGetSlotsForBook
 import type { EditableService } from './BookingServicesEditor';
 import useGetBookingLayout from '@/services/availability/useGetBookingLayout';
 import {
+	assignPendingStaff,
+	isFullyStaffed,
 	itemsChanged,
 	offsetsOf,
 	pricesOf,
@@ -81,6 +83,17 @@ export interface BookingDraftState {
 	 * a un instante que ya no pertenece al día que se está mirando.
 	 */
 	setStartTime: (startTime: string | null) => void;
+	/**
+	 * Elige la hora y reparte los tramos que quedaron en "cualquiera".
+	 *
+	 * Van juntos porque quién puede atender **depende** de la hora: elegirlos por
+	 * separado es lo que dejaba a la reserva con alguien ocupado y sin horarios
+	 * que ofrecer. `eligibleByItem` trae, para esa hora, los candidatos de cada
+	 * tramo, en el mismo orden.
+	 */
+	chooseStartTime: (startTime: string, eligibleByItem: string[][]) => void;
+	/** Si todos los tramos tienen ya un profesional: sin esto no se puede guardar. */
+	isStaffed: boolean;
 	/** Vuelve todo a lo guardado. */
 	discard: () => void;
 }
@@ -145,19 +158,28 @@ const useBookingDraft = ({
 		}
 
 		return offsetsOf({ items, services });
-	}, [
-		layout.data,
-		items,
-		services,
-		savedStart,
-		segments,
-		servicesChanged,
-	]);
+	}, [layout.data, items, services, savedStart, segments, servicesChanged]);
 
 	const prices = useMemo(
 		() => pricesOf({ items, services, agreedPrices }),
 		[items, services, agreedPrices],
 	);
+
+	/**
+	 * Elegir la hora y repartir van en la misma acción: quién está libre depende
+	 * de la hora, así que hacerlo en dos pasos deja un estado intermedio en el
+	 * que la reserva tiene hora y un profesional que a esa hora no puede.
+	 */
+	const chooseStartTime = (startTime: string, eligibleByItem: string[][]) => {
+		setDraftStart(startTime);
+		setDraftItems(
+			assignPendingStaff({
+				items,
+				eligibleByItem,
+				offsets,
+			}),
+		);
+	};
 
 	const summary = useMemo(
 		() => summarizeDraft({ items, services, agreedPrices, offsets }),
@@ -175,7 +197,16 @@ const useBookingDraft = ({
 		() =>
 			items.map((item, index) => ({
 				serviceId: item.serviceId,
-				staffId: item.staffId,
+				/*
+				 * Sólo se fija el profesional que se eligió **a mano**.
+				 *
+				 * Al que propuso el sistema se le pregunta por todo el equipo, y no
+				 * es un detalle: preguntando por él, los horarios que vuelven son los
+				 * suyos y la lista de candidatos de cada hora lo tiene sólo a él. Con
+				 * esa respuesta el reparto no puede elegir a nadie más, por más que
+				 * esté ocupado — la pregunta se contestaba a sí misma.
+				 */
+				staffId: item.autoStaff ? null : item.staffId,
 				offsetMinutes: offsets[index] ?? 0,
 			})),
 		[items, offsets],
@@ -203,6 +234,8 @@ const useBookingDraft = ({
 		setClient: setDraftClient,
 		setItems: setDraftItems,
 		setStartTime: setDraftStart,
+		chooseStartTime,
+		isStaffed: isFullyStaffed(items),
 		discard: () => {
 			setDraftItems(null);
 			setDraftStart(null);

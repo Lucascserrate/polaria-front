@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { AppointmentSegment } from '@/types/appointments.types';
 import {
+	assignPendingStaff,
+	draftItemFor,
+	isFullyStaffed,
 	itemsChanged,
 	offsetsOf,
 	savedOffsetsOf,
 	summarizeDraft,
+	toBookingItems,
 	toDraftItems,
 } from './bookingDraft';
 
@@ -297,5 +301,198 @@ describe('savedOffsetsOf', () => {
 		expect(
 			savedOffsetsOf('no es una fecha', [segment('corte', 'diego')]),
 		).toEqual([]);
+	});
+});
+
+/**
+ * El reparto de los tramos que quedaron en "cualquiera".
+ *
+ * Es lo que arregla el caso que trajo un negocio: al agregar un servicio el
+ * panel elegía al primero de la lista sin mirar si estaba libre, y después
+ * ofrecía los horarios **de esa persona**. Con el profesional ocupado, la
+ * pantalla quedaba esperando una hora que no existía.
+ */
+describe('assignPendingStaff', () => {
+	it('le da el tramo a alguien que pueda atenderlo', () => {
+		const assigned = assignPendingStaff({
+			items: [{ serviceId: 'corte', staffId: null }],
+			eligibleByItem: [['ana', 'beto']],
+			offsets: [0],
+		});
+
+		expect(assigned[0].staffId).toBe('ana');
+		expect(assigned[0].autoStaff).toBe(true);
+	});
+
+	it('no toca al que se eligió a mano', () => {
+		const assigned = assignPendingStaff({
+			items: [{ serviceId: 'corte', staffId: 'beto', autoStaff: false }],
+			eligibleByItem: [['ana']],
+			offsets: [0],
+		});
+
+		expect(assigned[0].staffId).toBe('beto');
+	});
+
+	/*
+	 * Dos servicios que arrancan en el mismo minuto no los puede hacer la misma
+	 * persona. Encadenados sí, y es lo normal: el corte y la barba, el mismo
+	 * barbero.
+	 */
+	it('no repite persona entre tramos que arrancan a la vez', () => {
+		const assigned = assignPendingStaff({
+			items: [
+				{ serviceId: 'manicure', staffId: null },
+				{ serviceId: 'pedicure', staffId: null },
+			],
+			eligibleByItem: [
+				['ana', 'beto'],
+				['ana', 'beto'],
+			],
+			offsets: [0, 0],
+		});
+
+		expect(assigned.map((item) => item.staffId)).toEqual(['ana', 'beto']);
+	});
+
+	it('sí la repite entre tramos encadenados', () => {
+		const assigned = assignPendingStaff({
+			items: [
+				{ serviceId: 'corte', staffId: null },
+				{ serviceId: 'barba', staffId: null },
+			],
+			eligibleByItem: [['ana'], ['ana']],
+			offsets: [0, 30],
+		});
+
+		expect(assigned.map((item) => item.staffId)).toEqual(['ana', 'ana']);
+	});
+
+	it('respeta al elegido a mano aunque otro tramo lo quisiera a la misma hora', () => {
+		const assigned = assignPendingStaff({
+			items: [
+				{ serviceId: 'manicure', staffId: null },
+				{ serviceId: 'pedicure', staffId: 'ana', autoStaff: false },
+			],
+			eligibleByItem: [
+				['ana', 'beto'],
+				['ana', 'beto'],
+			],
+			offsets: [0, 0],
+		});
+
+		expect(assigned.map((item) => item.staffId)).toEqual(['beto', 'ana']);
+	});
+
+	/*
+	 * Cambiar de profesional en cada toque de la lista de horarios se lee como un
+	 * error de la pantalla, aunque los dos sean válidos.
+	 */
+	it('conserva al asignado antes si sigue pudiendo', () => {
+		const assigned = assignPendingStaff({
+			items: [{ serviceId: 'corte', staffId: 'beto', autoStaff: true }],
+			eligibleByItem: [['ana', 'beto']],
+			offsets: [0],
+		});
+
+		expect(assigned[0].staffId).toBe('beto');
+	});
+
+	it('lo reemplaza si a esa hora ya no puede', () => {
+		const assigned = assignPendingStaff({
+			items: [{ serviceId: 'corte', staffId: 'beto', autoStaff: true }],
+			eligibleByItem: [['ana']],
+			offsets: [0],
+		});
+
+		expect(assigned[0].staffId).toBe('ana');
+	});
+
+	it('sin nadie disponible lo deja sin asignar', () => {
+		const assigned = assignPendingStaff({
+			items: [{ serviceId: 'corte', staffId: null }],
+			eligibleByItem: [[]],
+			offsets: [0],
+		});
+
+		expect(assigned[0].staffId).toBeNull();
+		expect(isFullyStaffed(assigned)).toBe(false);
+	});
+});
+
+describe('toBookingItems', () => {
+	it('manda sólo los tramos que tienen profesional', () => {
+		expect(
+			toBookingItems([
+				{ serviceId: 'corte', staffId: 'ana' },
+				{ serviceId: 'barba', staffId: null },
+			]),
+		).toEqual([{ serviceId: 'corte', staffId: 'ana' }]);
+	});
+});
+
+/**
+ * Qué profesional se propone al agregar un servicio.
+ *
+ * El caso que trajo el negocio: se crea una cita con Fernando a las 10:00 y
+ * después otra a la misma hora. Antes el panel volvía a proponer a Fernando y lo
+ * dejaba fijo, así que los horarios que ofrecía eran los suyos —ninguno, porque
+ * estaba ocupado— y la pantalla quedaba esperando una hora imposible.
+ */
+describe('draftItemFor', () => {
+	const eligible = [{ id: 'fernando' }, { id: 'ana' }];
+
+	it('propone al de la columna desde la que se abrió el drawer', () => {
+		expect(
+			draftItemFor({
+				serviceId: 'corte',
+				eligible,
+				items: [],
+				preferredStaffId: 'fernando',
+			}),
+		).toEqual({ serviceId: 'corte', staffId: 'fernando', autoStaff: true });
+	});
+
+	/*
+	 * Lo importante es `autoStaff`: la propuesta tiene que poder reemplazarse
+	 * cuando se elija una hora en la que esa persona esté ocupada.
+	 */
+	it('lo propone como automático, no como elegido', () => {
+		const item = draftItemFor({
+			serviceId: 'corte',
+			eligible,
+			items: [],
+			preferredStaffId: 'fernando',
+		});
+
+		const [reassigned] = assignPendingStaff({
+			items: [item],
+			// A esa hora Fernando está ocupado: sólo queda Ana.
+			eligibleByItem: [['ana']],
+			offsets: [0],
+		});
+
+		expect(reassigned.staffId).toBe('ana');
+	});
+
+	it('propone al que ya está en la reserva', () => {
+		expect(
+			draftItemFor({
+				serviceId: 'barba',
+				eligible,
+				items: [{ serviceId: 'corte', staffId: 'ana' }],
+			}).staffId,
+		).toBe('ana');
+	});
+
+	/*
+	 * Sin ninguna pista no se elige a nadie. Caer al primero de la lista es
+	 * elegir a ciegas, porque todavía no hay horario contra el cual saber quién
+	 * está libre.
+	 */
+	it('sin pistas lo deja en cualquiera', () => {
+		expect(
+			draftItemFor({ serviceId: 'corte', eligible, items: [] }).staffId,
+		).toBeNull();
 	});
 });
