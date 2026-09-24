@@ -1,6 +1,14 @@
 'use client';
 
-import { EllipsisVertical, Trash2 } from 'lucide-react';
+import {
+	CalendarPlus,
+	CalendarX,
+	CircleCheck,
+	EllipsisVertical,
+	ThumbsUp,
+	Trash2,
+	type LucideIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -12,13 +20,29 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-	APPOINTMENT_STATUS,
-	getAppointmentStatusText,
-} from '@/modules/appointments/utils/constants';
+import { cn } from '@/lib/utils';
 import type { AppointmentStatus } from '@/types/appointments.types';
 
-const STATUSES = Object.values(APPOINTMENT_STATUS) as AppointmentStatus[];
+/*
+ * En verbo y no con el nombre del estado: cada opción es algo que se le hace a
+ * la cita. Pendiente es la excepción porque no hay verbo que no suene raro.
+ */
+const STATUS_OPTIONS: {
+	status: AppointmentStatus;
+	label: string;
+	Icon: LucideIcon;
+	destructive?: boolean;
+}[] = [
+	{ status: 'pending', label: 'Pendiente', Icon: CalendarPlus },
+	{ status: 'confirmed', label: 'Confirmar', Icon: ThumbsUp },
+	{ status: 'completed', label: 'Finalizar', Icon: CircleCheck },
+	{
+		status: 'cancelled',
+		label: 'Cancelar',
+		Icon: CalendarX,
+		destructive: true,
+	},
+];
 
 /**
  * El estado y el borrado de una reserva, desde el panel de la reserva.
@@ -72,9 +96,17 @@ const BookingActionsMenu: React.FC<{
 					if (next !== status) onStatusChange(next as AppointmentStatus);
 				}}
 			>
-				{STATUSES.map((option) => (
-					<DropdownMenuRadioItem key={option} value={option}>
-						{getAppointmentStatusText(option)}
+				{STATUS_OPTIONS.map(({ status: option, label, Icon, destructive }) => (
+					<DropdownMenuRadioItem
+						key={option}
+						value={option}
+						className={cn(
+							destructive &&
+								'text-destructive focus:bg-destructive/10 focus:text-destructive focus:**:text-destructive',
+						)}
+					>
+						<Icon />
+						{label}
 					</DropdownMenuRadioItem>
 				))}
 			</DropdownMenuRadioGroup>
