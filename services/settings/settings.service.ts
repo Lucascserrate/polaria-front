@@ -16,6 +16,18 @@ export type SettingsResponse = {
 	publicBookingUrl: string | null;
 	/** Dirección del local en texto, para la página pública. */
 	address: string | null;
+	/**
+	 * La indicación que el cliente lee junto a su turno.
+	 *
+	 * El límite lo manda el backend en lugar de estar escrito acá: dos copias del
+	 * número se desincronizan, y el contador diría que entra algo que la API
+	 * rechaza.
+	 */
+	appointmentNote: {
+		/** `null` es "no hay nada que decir": la sección no se dibuja. */
+		text: string | null;
+		maxLength: number;
+	};
 	/** Ver `BUSINESS_TYPES`. `null` hasta que la configuración inicial lo carga. */
 	businessType: string | null;
 	timezone: string;
@@ -120,6 +132,8 @@ export type UpdateSettingsPayload = {
 	currency?: string;
 	location?: { latitude: number; longitude: number } | null;
 	address?: string | null;
+	/** Vaciarla la borra y apaga la sección. No hay texto de fábrica. */
+	appointmentNote?: string | null;
 	businessHours?: WeeklyRange[];
 	/** Apagado, Polaria deja de responder por WhatsApp en todo el negocio. */
 	aiEnabled?: boolean;

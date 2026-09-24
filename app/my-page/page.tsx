@@ -1,5 +1,6 @@
 'use client';
 
+import AppointmentNoteCard from '@/modules/public-page/AppointmentNoteCard';
 import BookingLinkCard from '@/modules/public-page/BookingLinkCard';
 import PhotosSection from '@/modules/public-page/PhotosSection';
 import PublicPagePreview from '@/modules/public-page/PublicPagePreview';
@@ -48,6 +49,13 @@ const MyPagePage = () => {
 
 			<PhotosSection kind="gallery" />
 			<PhotosSection kind="portfolio" />
+
+			{/*
+			 * Después de las fotos y antes de la vista previa, siguiendo el orden en
+			 * que el cliente lo vive: primero entra y mira el local, después reserva,
+			 * y recién entonces lee esto.
+			 */}
+			<AppointmentNoteCard />
 
 			{/* La vista previa necesita una dirección que exista. */}
 			{url && <PublicPagePreview url={url} />}
