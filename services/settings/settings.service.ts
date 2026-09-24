@@ -28,6 +28,14 @@ export type SettingsResponse = {
 		text: string | null;
 		maxLength: number;
 	};
+	/**
+	 * Qué hace WhatsApp cuando alguien quiere agendar.
+	 *
+	 * Llega el modo **vigente**, no la columna: un negocio sin página lee
+	 * `GUIDED_CHAT` aunque alguna vez se haya guardado el enlace, porque sin
+	 * página no hay enlace que mandar. El panel dibuja lo que de verdad pasa.
+	 */
+	bookingMode: 'GUIDED_CHAT' | 'BOOKING_LINK';
 	/** Ver `BUSINESS_TYPES`. `null` hasta que la configuración inicial lo carga. */
 	businessType: string | null;
 	timezone: string;
@@ -134,6 +142,8 @@ export type UpdateSettingsPayload = {
 	address?: string | null;
 	/** Vaciarla la borra y apaga la sección. No hay texto de fábrica. */
 	appointmentNote?: string | null;
+	/** Elegir el enlace sin tener página es un 400 con el motivo. */
+	bookingMode?: 'GUIDED_CHAT' | 'BOOKING_LINK';
 	businessHours?: WeeklyRange[];
 	/** Apagado, Polaria deja de responder por WhatsApp en todo el negocio. */
 	aiEnabled?: boolean;
