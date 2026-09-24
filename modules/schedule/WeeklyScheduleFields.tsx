@@ -55,23 +55,25 @@ const WeeklyScheduleFields: React.FC<Props> = ({
 
 				return (
 					<div key={dayOfWeek} className="p-3">
-						<label className="flex items-center gap-3 cursor-pointer">
-							<Checkbox
-								checked={isOpen}
-								onCheckedChange={(next) =>
-									setDayRanges(
-										dayOfWeek,
-										next === true ? [{ ...DEFAULT_RANGE }] : [],
-									)
-								}
-							/>
-							<span className="text-sm font-medium w-24">{label}</span>
+						<div className="flex items-center gap-3">
+							<label className="flex items-center gap-3 cursor-pointer">
+								<Checkbox
+									checked={isOpen}
+									onCheckedChange={(next) =>
+										setDayRanges(
+											dayOfWeek,
+											next === true ? [{ ...DEFAULT_RANGE }] : [],
+										)
+									}
+								/>
+								<span className="text-sm font-medium w-24">{label}</span>
+							</label>
 							{!isOpen && (
 								<span className="text-sm text-muted-foreground">
 									{emptyDayLabel}
 								</span>
 							)}
-						</label>
+						</div>
 
 						{isOpen && (
 							<div className="pl-8 mt-2 space-y-2">
