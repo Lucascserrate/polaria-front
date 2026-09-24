@@ -18,6 +18,7 @@ import useDeleteBooking from '@/services/appointments/useDeleteBooking';
 import useUpdateAppointmentStatus from '@/services/appointments/useUpdateAppointmentStatus';
 import useGetSettings from '@/services/settings/useGetSettings';
 import type { BookingWarning } from '@/services/appointments/appointments.service';
+import type { AppointmentStatus } from '@/types/appointments.types';
 import useGetServices from '@/services/services/useGetServices';
 import useGetStaff from '@/services/staff/useGetStaff';
 import useGetSlotsForBooking from '@/services/availability/useGetSlotsForBooking';
@@ -112,7 +113,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 	const { data: staff = [] } = useGetStaff();
 	const { data: settings } = useGetSettings();
 	const { mutateAsync: save, isPending: saving } = useEditBooking();
-	const { mutate: updateStatus, isPending: cancelling } =
+	const { mutate: updateStatus, isPending: changingStatus } =
 		useUpdateAppointmentStatus();
 	const { mutate: deleteBooking, isPending: deleting } = useDeleteBooking();
 
@@ -128,7 +129,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 	});
 	const finishing = finishingId !== null;
 
-	const busy = saving || finishing || cancelling || deleting;
+	const busy = saving || finishing || changingStatus || deleting;
 
 	const timezone = booking?.timezone ?? settings?.timezone;
 	// Sin configuración todavía, el código ISO es el del negocio por defecto.
@@ -264,6 +265,34 @@ const BookingEditor: React.FC<EditorProps> = ({
 		);
 	};
 
+	/**
+	 * Cualquier estado a cualquier otro, desde el menú del encabezado.
+	 *
+	 * Finalizar y cancelar van por sus propios caminos —el de los precios y el de
+	 * la confirmación— para que den lo mismo se lleguen por donde se lleguen. Volver
+	 * a pendiente o confirmada deja el panel abierto: es justamente lo que vuelve
+	 * a hacer editable la cita.
+	 */
+	const handleStatusChange = (next: AppointmentStatus) => {
+		if (next === 'completed') return handleFinish();
+		if (next === 'cancelled') return setConfirming('cancel');
+
+		setSaveError(null);
+		updateStatus(
+			{ id: appointmentId, status: next },
+			{
+				// El 409 es el horario ocupado por otra cita mientras ésta no lo tenía.
+				onError: (error) =>
+					setSaveError(
+						(axios.isAxiosError(error) &&
+							(error.response?.data as { message?: string } | undefined)
+								?.message) ||
+							'No se pudo cambiar el estado. Intentá de nuevo.',
+					),
+			},
+		);
+	};
+
 	const handleDeleteBooking = () => {
 		setSaveError(null);
 
@@ -395,7 +424,7 @@ const BookingEditor: React.FC<EditorProps> = ({
 							<BookingActionsMenu
 								status={booking.status}
 								disabled={busy}
-								onRequestCancel={() => setConfirming('cancel')}
+								onStatusChange={handleStatusChange}
 								onRequestDelete={() => setConfirming('delete')}
 							/>
 						</div>
